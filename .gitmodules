@@ -1,0 +1,9 @@
+[submodule ".cargo"]
+	path = .cargo
+	url = https://github.com/lemonrock/.cargo.git
+[submodule "workspace/ucx-sys/lib/ucx"]
+	path = workspace/ucx-sys/lib/ucx
+	url = https://github.com/openucx/ucx.git
+[submodule "workspace/ucx-sys/tools/bindgen-wrapper"]
+	path = workspace/ucx-sys/tools/bindgen-wrapper
+	url = https://github.com/lemonrock/bindgen-wrapper.git
