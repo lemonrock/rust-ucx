@@ -3,6 +3,7 @@
 
 
 extern crate libc;
+#[macro_use] extern crate quick_error;
 extern crate ucx_sys;
 
 

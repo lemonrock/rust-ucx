@@ -2,82 +2,113 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// Error codes; far more useful than `ucs_status_t`.
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub enum ErrorCode
+quick_error!
 {
+	//// Error codes; far more useful than `ucs_status_t`.
 	#[allow(missing_docs)]
-	NoPendingMessage,
-	
-	#[allow(missing_docs)]
-	NoResourcesAreAvailableToInitiateTheOperation,
-	
-	#[allow(missing_docs)]
-	InputOutputError,
-	
-	#[allow(missing_docs)]
-	OutOfMemory,
-	
-	#[allow(missing_docs)]
-	InvalidParameter,
-	
-	#[allow(missing_docs)]
-	DestinationIsUnreachable,
-	
-	#[allow(missing_docs)]
-	InvalidAddress,
-	
-	#[allow(missing_docs)]
-	FunctionNotImplemented,
-	
-	#[allow(missing_docs)]
-	MessageTruncated,
-	
-	#[allow(missing_docs)]
-	NoProgress,
-	
-	#[allow(missing_docs)]
-	ProvidedBufferIsTooSmall,
-	
-	#[allow(missing_docs)]
-	NoSuchElement,
-	
-	#[allow(missing_docs)]
-	FailedToConnectToSomeOfTheRequestedEndPoints,
-	
-	#[allow(missing_docs)]
-	NoSuchDevice,
-	
-	#[allow(missing_docs)]
-	DeviceIsBusy,
-	
-	#[allow(missing_docs)]
-	RequestCancelled,
-	
-	#[allow(missing_docs)]
-	ShmemSegment,
-	
-	#[allow(missing_docs)]
-	ElementAlreadyExists,
-	
-	#[allow(missing_docs)]
-	IndexOutOfRange,
-	
-	#[allow(missing_docs)]
-	OperationTimedOut,
-	
-	#[allow(missing_docs)]
-	UserDefinedLimitWasExceeded,
-	
-	#[allow(missing_docs)]
-	UnsupportedOperation,
-	
-	#[allow(missing_docs)]
-	LinkFailure(u8),
-	
-	#[allow(missing_docs)]
-	EndPointFailure(u8),
-	
-	#[allow(missing_docs)]
-	EndPointTimeOut,
+	#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+	pub enum ErrorCode
+	{
+		NoPendingMessage
+		{
+		}
+		
+		NoResourcesAreAvailableToInitiateTheOperation
+		{
+		}
+
+		InputOutputError
+		{
+		}
+
+		OutOfMemory
+		{
+		}
+
+		InvalidParameter
+		{
+		}
+
+		DestinationIsUnreachable
+		{
+		}
+
+		InvalidAddress
+		{
+		}
+
+		FunctionNotImplemented
+		{
+		}
+
+		MessageTruncated
+		{
+		}
+
+		NoProgress
+		{
+		}
+
+		ProvidedBufferIsTooSmall
+		{
+		}
+
+		NoSuchElement
+		{
+		}
+
+		FailedToConnectToSomeOfTheRequestedEndPoints
+		{
+		}
+
+		NoSuchDevice
+		{
+		}
+
+		DeviceIsBusy
+		{
+		}
+
+		RequestCancelled
+		{
+		}
+
+		ShmemSegment
+		{
+		}
+
+		ElementAlreadyExists
+		{
+		}
+
+		IndexOutOfRange
+		{
+		}
+
+		OperationTimedOut
+		{
+		}
+
+		UserDefinedLimitWasExceeded
+		{
+		}
+
+		UnsupportedOperation
+		{
+		}
+
+		LinkFailure(index: u8)
+		{
+			display("LinkFailure {}", index)
+		}
+
+		EndPointFailure(index: u8)
+		{
+			display("EndPointFailure {}", index)
+		}
+
+		EndPointTimeOut
+		{
+		}
+	}
 }

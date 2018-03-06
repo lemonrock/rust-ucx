@@ -3,6 +3,7 @@
 
 
 #![deny(missing_docs)]
+#![recursion_limit = "128"]
 
 
 //! # ucx
