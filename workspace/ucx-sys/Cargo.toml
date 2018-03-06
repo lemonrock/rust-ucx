@@ -20,13 +20,5 @@ readme = "README.md"
 publish = false
 version = "0.0.0"
 
-[profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = true
-debug-assertions = false
-codegen-units = 1
-
-[dependencies]
+[target.'cfg(target_os = "linux")'.dependencies]
 libc = "0.2"

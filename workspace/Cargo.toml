@@ -7,3 +7,11 @@ members = [
     "ucx",
 	"ucx-sys",
 ]
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1

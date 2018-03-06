@@ -7,4 +7,4 @@
 #![feature(untagged_unions)]
 
 
-include!("bindgen/lib.rs");
+#[cfg(target_os = "linux")] include!("bindgen/lib.rs");

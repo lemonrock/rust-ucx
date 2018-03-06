@@ -120,8 +120,6 @@ compile_prepareForMacOSX()
 	_compile_prepareForMacOSX_brewInstall coreutils
 	_compile_prepareForMacOSX_brewInstall FiloSottile/musl-cross/musl-cross
 
-	#_compile_prepareForMacOSX_brewInstall pkg-config
-	#_compile_prepareForMacOSX_brewInstall grep
 	_compile_prepareForMacOSX_brewInstall autoconf@2.69
 	_compile_prepareForMacOSX_brewInstall automake
 }
@@ -204,8 +202,6 @@ compile_platformSpecificPreparation()
 
 			export PATH="$(brew --prefix coreutils)"/libexec/gnubin:"$(brew --prefix gnu-sed)"/libexec/gnubin:"$PATH"
 
-			#ln -s /usr/local/bin/ggrep "$additionalPath"/grep
-
 			muslIncludeFolderPath="$(brew --prefix musl-cross)"/libexec/x86_64-linux-musl/include
 
 			if [ $numberOfMakeJobs -eq 0 ]; then
@@ -235,16 +231,6 @@ compile_makeCopyToAlter()
 {
 	rsync --archive --quiet --exclude=.git "$homeFolderPath"/lib/ucx/ "$temporaryFolderPath"/
 }
-
-# compile_fix_toIncludeIbVerbsWholeArchive()
-# {
-# 	sed -i -e 's;-libverbs;-libibverbs -Wl,--whole-archive -lmlx5 -lrxe -Wl,--no-whole-archive;g' "$temporaryFolderPath"/config/m4/ib.m4
-# }
-
-# compile_musl_fix_compilerToNotFailOnWarnings()
-# {
-# 	sed -i -e 's;BASE_CFLAGS="-g -Wall -Werror";BASE_CFLAGS="-Werror=implicit-function-declaration";g' "$temporaryFolderPath"/config/m4/compiler.m4
-# }
 
 compile_musl_fix_patchBrokenCode()
 {
@@ -341,7 +327,7 @@ compile_main()
 	#compile_fix_toIncludeIbVerbsWholeArchive
 	#compile_musl_fix_compilerToNotFailOnWarnings
 	compile_musl_fix_patchBrokenCode
-	
+
 	compile_autoreconf
 	compile_configure
 	compile_make

@@ -6,6 +6,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "ucx"
 version = "0.0.0"
+dependencies = [
+ "ucx-sys 0.0.0",
+]
 
 [[package]]
 name = "ucx-sys"

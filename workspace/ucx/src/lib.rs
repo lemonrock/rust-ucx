@@ -2,3 +2,17 @@
 // Copyright © 2018 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+#![deny(missing_docs)]
+
+
+//! # ucx
+//!
+//! This is a crate to provide mid-level wrappers around OpenUCX.
+//!
+
+
+extern crate ucx_sys;
+
+
+/// Wrapper around UCX services (ucs) component of UCX
+pub mod ucx_services;

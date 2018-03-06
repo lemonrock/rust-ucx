@@ -89,38 +89,74 @@ build_under_cargo_fail()
 
 build_under_cargo_compile()
 {
-	"$homeFolder"/tools/compile
+	"$CARGO_MANIFEST_DIR"/tools/compile
 }
 
 build_under_cargo_generatingRustBindings()
 {
-	"$homeFolder"/tools/bindgen-wrapper/bindgen-wrapper
+	"$CARGO_MANIFEST_DIR"/tools/bindgen-wrapper/bindgen-wrapper
 }
 
 build_under_cargo_outputCargoKeyValuePairs()
 {
-	# Search path
-	#printf 'cargo:rustc-link-search=native=%s\n' "$libFolderPath"
+	_build_under_cargo_outputCargoKeyValuePairs_rerun_if_changed_recurse()
+	{
+		local relativeRoot="$1"
 
-	printf 'cargo:rustc-link-lib=static-nobundle=ucx\n'
+		set +f
+		local file
+		for file in "$relativeRoot"/*
+		do
+			set -f
 
-	# Not used by us, but useful for downstream potentially
-	#printf 'cargo:root=%s\n' "$rootFolderPath"
-	printf 'cargo:include=%s\n' "$includeFolderPath"
-	#printf 'cargo:libdir=%s\n' "$libFolderPath"
+			if [ ! -e "$file" ]; then
+				continue
+			fi
+
+			case "$file" in
+
+				"$relativeRoot"/.gitignore|"$relativeRoot"/temporary)
+					continue
+				;;
+
+			esac
+
+			if [ -L "$file" ]; then
+				printf 'cargo:rerun-if-changed=%s\n' "$file"
+			elif [ -f "$file" ]; then
+				printf 'cargo:rerun-if-changed=%s\n' "$file"
+			elif [ -d "$file" ]; then
+				printf 'cargo:rerun-if-changed=%s\n' "$file"
+				_build_under_cargo_outputCargoKeyValuePairs_rerun_if_changed_recurse "$file"
+			fi
+		done
+		set -f
+	}
+
+	cd "$CARGO_MANIFEST_DIR" 1>/dev/null 2>/dev/null
+
+		_build_under_cargo_outputCargoKeyValuePairs_rerun_if_changed_recurse 'bindgen-wrapper.conf.d'
+		_build_under_cargo_outputCargoKeyValuePairs_rerun_if_changed_recurse 'compile.conf.d'
+
+	cd - 1>/dev/null 2>/dev/null
+
+
+	printf 'cargo:rustc-link-lib=static-nobundle=ucm\n'
+	printf 'cargo:rustc-link-lib=static-nobundle=ucs\n'
+	printf 'cargo:rustc-link-lib=static-nobundle=ucp\n'
+	printf 'cargo:rustc-link-lib=static-nobundle=uct\n'
 }
 
 build_under_cargo_steps()
 {
-	local srcFolderPath="$homeFolder"/src
-	local includeFolderPath="$srcFolderPath"/include
-	local rustBindingsFolderPath="$srcFolderPath"/bindgen
+	if [ ! -d "$CARGO_MANIFEST_DIR"/bindgen-wrapper.conf.d/temporary/usr/lib ]; then
+		build_under_cargo_compile
+	fi
 
-	build_under_cargo_compile
-
-	if [ ! -e "$rustBindingsFolderPath"/lib.rs ]; then
+	if [ ! -e "$CARGO_MANIFEST_DIR"/src/bindgen/lib.rs ]; then
 		build_under_cargo_generatingRustBindings
 	fi
+
 	build_under_cargo_outputCargoKeyValuePairs
 }
 

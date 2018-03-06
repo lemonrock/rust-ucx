@@ -13,17 +13,10 @@ documentation = "https://github.com/lemonrock/ucx/blob/master/README.md"
 homepage = "https://github.com/lemonrock/ucx"
 repository = "https://github.com/lemonrock/ucx.git"
 exclude = ["*"]
-include = ["README.md", "LICENSE", "COPYRIGHT", "src/**/*.rs", "benches/**/*.rs", "examples/**/*.rs", "tests/**/*.rs", "Cargo.toml", "rustfmt.toml", "clippy.toml", "lib/**/*", "src/**/*.h", "tools/**/*", "bindgen-wrapper.conf.d/**/*", "compile-*.conf.d/**/*"]
-build = "src/build.rs"
-# Relative to Cargo.toml
+include = ["README.md", "LICENSE", "COPYRIGHT", "src/**/*.rs", "Cargo.toml", "rustfmt.toml", "clippy.toml"]
 readme = "README.md"
 publish = false
 version = "0.0.0"
 
-[profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = true
-debug-assertions = false
-codegen-units = 1
+[target.'cfg(target_os = "linux")'.dependencies]
+ucx-sys = { path = "../ucx-sys", version = "0.0.0" }
