@@ -1,0 +1,11 @@
+// This file is part of ucx. It is subject to the license terms in the COPYRIGHT file found in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT. No part of ucx, including this file, may be copied, modified, propagated, or distributed except according to the terms contained in the COPYRIGHT file.
+// Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
+
+
+extern "C"
+{
+	#[link_name = "\u{1}_ucm_set_event_handler"] pub fn ucm_set_event_handler(events: c_int, priority: c_int, cb: ucm_event_callback_t, arg: *mut c_void) -> ucs_status_t;
+	#[link_name = "\u{1}_ucm_set_external_event"] pub fn ucm_set_external_event(events: c_int);
+	#[link_name = "\u{1}_ucm_unset_event_handler"] pub fn ucm_unset_event_handler(events: c_int, cb: ucm_event_callback_t, arg: *mut c_void);
+	#[link_name = "\u{1}_ucm_unset_external_event"] pub fn ucm_unset_external_event(events: c_int);
+}

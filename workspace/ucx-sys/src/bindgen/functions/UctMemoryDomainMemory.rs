@@ -1,0 +1,12 @@
+// This file is part of ucx. It is subject to the license terms in the COPYRIGHT file found in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT. No part of ucx, including this file, may be copied, modified, propagated, or distributed except according to the terms contained in the COPYRIGHT file.
+// Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
+
+
+extern "C"
+{
+	#[link_name = "\u{1}_uct_md_mem_advise"] pub fn uct_md_mem_advise(md: uct_md_h, memh: uct_mem_h, addr: *mut c_void, length: usize, advice: uct_mem_advice_t) -> ucs_status_t;
+	#[link_name = "\u{1}_uct_md_mem_alloc"] pub fn uct_md_mem_alloc(md: uct_md_h, length_p: *mut usize, address_p: *mut *mut c_void, flags: c_uint, name: *const c_char, memh_p: *mut uct_mem_h) -> ucs_status_t;
+	#[link_name = "\u{1}_uct_md_mem_dereg"] pub fn uct_md_mem_dereg(md: uct_md_h, memh: uct_mem_h) -> ucs_status_t;
+	#[link_name = "\u{1}_uct_md_mem_free"] pub fn uct_md_mem_free(md: uct_md_h, memh: uct_mem_h) -> ucs_status_t;
+	#[link_name = "\u{1}_uct_md_mem_reg"] pub fn uct_md_mem_reg(md: uct_md_h, address: *mut c_void, length: usize, flags: c_uint, memh_p: *mut uct_mem_h) -> ucs_status_t;
+}

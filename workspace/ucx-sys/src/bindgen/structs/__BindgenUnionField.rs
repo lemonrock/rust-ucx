@@ -8,16 +8,19 @@ pub struct __BindgenUnionField<T>(PhantomData<T>);
 impl<T> __BindgenUnionField<T>
 {
 	
+	#[inline(always)]
 	pub fn new() -> Self
 	{
 		__BindgenUnionField(PhantomData)
 	}
 	
+	#[inline(always)]
 	pub unsafe fn as_ref(&self) -> &T
 	{
 		transmute(self)
 	}
 	
+	#[inline(always)]
 	pub unsafe fn as_mut(&mut self) -> &mut T
 	{
 		transmute(self)
@@ -27,6 +30,7 @@ impl<T> __BindgenUnionField<T>
 impl<T> Default for __BindgenUnionField<T>
 {
 	
+	#[inline(always)]
 	fn default() -> Self
 	{
 		Self::new()
@@ -36,6 +40,7 @@ impl<T> Default for __BindgenUnionField<T>
 impl<T> Clone for __BindgenUnionField<T>
 {
 	
+	#[inline(always)]
 	fn clone(&self) -> Self
 	{
 		Self::new()
@@ -48,27 +53,30 @@ impl<T> Copy for __BindgenUnionField<T>
 
 impl<T> Debug for __BindgenUnionField<T>
 {
+	#[inline(always)]
 	fn fmt(&self, fmt: &mut Formatter) -> Result
 	{
 		fmt.write_str("__BindgenUnionField")
 	}
 }
 
-impl<T> ::std::hash::Hash for __BindgenUnionField<T>
+impl<T> Hash for __BindgenUnionField<T>
 {
-	fn hash<H: ::std::hash::Hasher>(&self, _state: &mut H)
+	#[inline(always)]
+	fn hash<H: Hasher>(&self, _state: &mut H)
 	{
 	}
 }
 
-impl<T> ::std::cmp::PartialEq for __BindgenUnionField<T>
+impl<T> PartialEq for __BindgenUnionField<T>
 {
+	#[inline(always)]
 	fn eq(&self, _other: &__BindgenUnionField<T>) -> bool
 	{
 		true
 	}
 }
 
-impl<T> ::std::cmp::Eq for __BindgenUnionField<T>
+impl<T> Eq for __BindgenUnionField<T>
 {
 }

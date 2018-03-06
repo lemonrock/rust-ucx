@@ -137,7 +137,7 @@ final_chance_to_tweak()
 	{
 		local enum="$1"
 		
-		grep -v "^\tpub const .*_LAST" "$outputFolderPath"/enums/"$enum".rs >"$outputFolderPath"/enums/"$enum".rs.tmp
+		grep -v "^\t.*_LAST" "$outputFolderPath"/enums/"$enum".rs >"$outputFolderPath"/enums/"$enum".rs.tmp
 		rm "$outputFolderPath"/enums/"$enum".rs
 		mv "$outputFolderPath"/enums/"$enum".rs.tmp "$outputFolderPath"/enums/"$enum".rs
 	}
