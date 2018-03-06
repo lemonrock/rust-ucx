@@ -2,18 +2,5 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use self::ucs_status_t::*;
-use ::std::ffi::CStr;
-use ::std::mem::size_of_val;
-use ::std::mem::transmute;
-use ::std::mem::zeroed;
-use ::ucx_sys::*;
-
-
-include!("ErrorCode.rs");
-include!("Status.rs");
-include!("StatusOrPointer.rs");
-include!("ucs_cpu_set_tExt.rs");
-include!("ucs_status_tExt.rs");
-include!("ucs_status_ptr_tExt.rs");
-include!("ZeroBasedHyperThreadIndex.rs");
+/// Simple type to encapsulate a CPU index.
+pub type ZeroBasedHyperThreadIndex = u16;

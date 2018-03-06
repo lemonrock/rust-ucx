@@ -7,6 +7,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "ucx"
 version = "0.0.0"
 dependencies = [
+ "libc 0.2.39 (registry+https://github.com/rust-lang/crates.io-index)",
  "ucx-sys 0.0.0",
 ]
 

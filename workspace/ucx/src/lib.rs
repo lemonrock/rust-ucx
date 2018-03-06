@@ -11,8 +11,4 @@
 //!
 
 
-extern crate ucx_sys;
-
-
-/// Wrapper around UCX services (ucs) component of UCX
-pub mod ucx_services;
+include!("lib.linux.rs");

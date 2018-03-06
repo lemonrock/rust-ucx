@@ -6,6 +6,10 @@
 #[allow(non_camel_case_types)]
 pub trait ucs_status_tExt
 {
+	/// A function to convert this enum into something more useful.
+	#[inline(always)]
+	fn convert(self) -> Result<Status, i8>;
+	
 	/// A function equivalent to the ucs macro `UCS_IS_LINK_ERROR`.
 	#[allow(non_snake_case)]
 	#[inline(always)]
@@ -28,25 +32,31 @@ pub trait ucs_status_tExt
 	#[inline(always)]
 	fn is_in_progress(self) -> bool;
 	
-	/// Is this error actually just in progress?
+	/// To a status pointer
 	#[inline(always)]
-	fn is_error(self) -> bool;
+	fn to_pointer(self) -> ucs_status_ptr_t;
 }
 
 impl ucs_status_tExt for ucs_status_t
 {
 	#[inline(always)]
+	fn convert(self) -> Result<Status, i8>
+	{
+		Status::parse_ucs_status_t(self)
+	}
+	
+	#[inline(always)]
 	fn UCS_IS_LINK_ERROR(self) -> bool
 	{
 		let code = self as i8;
-		code <= ucs_status_t::UCS_ERR_FIRST_LINK_FAILURE as i8 && code >= ucs_status_t::UCS_ERR_LAST_LINK_FAILURE as i8
+		code <= UCS_ERR_FIRST_LINK_FAILURE as i8 && code >= UCS_ERR_LAST_LINK_FAILURE as i8
 	}
 	
 	#[inline(always)]
 	fn UCS_IS_ENDPOINT_ERROR(self) -> bool
 	{
 		let code = self as i8;
-		code <= ucs_status_t::UCS_ERR_FIRST_ENDPOINT_FAILURE as i8 && code >= ucs_status_t::UCS_ERR_LAST_ENDPOINT_FAILURE as i8
+		code <= UCS_ERR_FIRST_ENDPOINT_FAILURE as i8 && code >= UCS_ERR_LAST_ENDPOINT_FAILURE as i8
 	}
 	
 	#[inline(always)]
@@ -58,19 +68,18 @@ impl ucs_status_tExt for ucs_status_t
 	#[inline(always)]
 	fn is_ok(self) -> bool
 	{
-		self == ucs_status_t::UCS_OK
+		self == UCS_OK
 	}
 	
 	#[inline(always)]
 	fn is_in_progress(self) -> bool
 	{
-		self == ucs_status_t::UCS_INPROGRESS
+		self == UCS_INPROGRESS
 	}
 	
 	#[inline(always)]
-	fn is_error(self) -> bool
+	fn to_pointer(self) -> ucs_status_ptr_t
 	{
-		let code = self as i8;
-		code < (ucs_status_t::UCS_OK as i8) && code > (ucs_status_t::UCS_ERR_LAST as i8)
+		unsafe { transmute(self as isize as *mut u8) }
 	}
 }
