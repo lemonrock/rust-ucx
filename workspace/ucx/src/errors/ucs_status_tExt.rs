@@ -8,7 +8,7 @@ pub trait ucs_status_tExt
 {
 	/// A function to convert this enum into something more useful.
 	#[inline(always)]
-	fn convert(self) -> Result<Status, i8>;
+	fn parse(self) -> Result<Status, InvalidStatusError>;
 	
 	/// A function equivalent to the ucs macro `UCS_IS_LINK_ERROR`.
 	#[allow(non_snake_case)]
@@ -40,7 +40,7 @@ pub trait ucs_status_tExt
 impl ucs_status_tExt for ucs_status_t
 {
 	#[inline(always)]
-	fn convert(self) -> Result<Status, i8>
+	fn parse(self) -> Result<Status, InvalidStatusError>
 	{
 		Status::parse_ucs_status_t(self)
 	}

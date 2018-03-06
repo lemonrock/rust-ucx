@@ -18,7 +18,7 @@ impl Default for StatusOrPointer
 	#[inline(always)]
 	fn default() -> Self
 	{
-		StatusOrPointer::Status(Status::Ok)
+		StatusOrPointer::Status(Status::IsOk)
 	}
 }
 
@@ -27,7 +27,7 @@ impl StatusOrPointer
 	/// Parses a status into something useful.
 	/// Returns an error if the status is invalid in some way.
 	#[inline(always)]
-	pub fn parse_ucs_status_ptr_t(status_or_status_pointer: ucs_status_ptr_t) -> Result<Self, i8>
+	pub fn parse_ucs_status_ptr_t(status_or_status_pointer: ucs_status_ptr_t) -> Result<Self, InvalidStatusError>
 	{
 		let as_isize = status_or_status_pointer as isize;
 		match as_isize

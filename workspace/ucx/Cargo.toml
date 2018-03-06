@@ -19,6 +19,7 @@ publish = false
 version = "0.0.0"
 
 [target.'cfg(target_os = "linux")'.dependencies]
+indexmap = "0.4"
 libc = "0.2"
 quick-error = "1.2"
 ucx-sys = { path = "../ucx-sys", version = "0.0.0" }

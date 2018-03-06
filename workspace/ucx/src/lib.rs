@@ -3,7 +3,7 @@
 
 
 #![deny(missing_docs)]
-#![recursion_limit = "128"]
+#![recursion_limit = "256"]
 
 
 //! # ucx
@@ -12,4 +12,5 @@
 //!
 
 
+include!("c_str.rs");
 include!("lib.linux.rs");

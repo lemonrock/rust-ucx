@@ -2,17 +2,13 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use self::ucs_status_t::*;
-use ::std::ffi::CStr;
-use ::std::mem::transmute;
-use ::ucx_sys::ucs_status_ptr_t;
-use ::ucx_sys::ucs_status_string;
-use ::ucx_sys::ucs_status_t;
-
-
-include!("ErrorCode.rs");
-include!("InvalidStatusError.rs");
-include!("Status.rs");
-include!("StatusOrPointer.rs");
-include!("ucs_status_tExt.rs");
-include!("ucs_status_ptr_tExt.rs");
+macro_rules! c_str
+{
+    ($literal: expr) =>
+    {
+        unsafe
+        {
+            ::std::ffi::CStr::from_ptr(concat!($literal, "\0").as_ptr() as *const ::libc::c_char)
+        }
+    }
+}

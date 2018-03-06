@@ -2,17 +2,10 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use self::ucs_status_t::*;
-use ::std::ffi::CStr;
-use ::std::mem::transmute;
-use ::ucx_sys::ucs_status_ptr_t;
-use ::ucx_sys::ucs_status_string;
-use ::ucx_sys::ucs_status_t;
-
-
-include!("ErrorCode.rs");
-include!("InvalidStatusError.rs");
-include!("Status.rs");
-include!("StatusOrPointer.rs");
-include!("ucs_status_tExt.rs");
-include!("ucs_status_ptr_tExt.rs");
+/// Configuration value joiner for values in a HashSet, OrderMap, etc
+pub trait ConfigurationValueJoin
+{
+	/// Push a string value.
+	#[inline(always)]
+	fn push(&self, string: &mut String);
+}

@@ -7,7 +7,7 @@
 pub enum Status
 {
 	/// Status is OK.
-	Ok,
+	IsOk,
 	
 	/// Operation in progress
 	OperationInProgress,
@@ -24,7 +24,7 @@ impl Default for Status
 	#[inline(always)]
 	fn default() -> Self
 	{
-		Status::Ok
+		Status::IsOk
 	}
 }
 
@@ -33,13 +33,13 @@ impl Status
 	/// Parses a status into something useful.
 	/// Returns an error if the status is invalid in some way.
 	#[inline(always)]
-	pub fn parse_ucs_status_t(status: ucs_status_t) -> Result<Self, i8>
+	pub fn parse_ucs_status_t(status: ucs_status_t) -> Result<Self, InvalidStatusError>
 	{
 		let status_code = status as i8;
 		match status_code
 		{
 			1 => Ok(Status::OperationInProgress),
-			0 => Ok(Status::Ok),
+			0 => Ok(Status::IsOk),
 			-1 => Ok(Status::Error(ErrorCode::NoPendingMessage)),
 			-2 => Ok(Status::Error(ErrorCode::NoResourcesAreAvailableToInitiateTheOperation)),
 			-3 => Ok(Status::Error(ErrorCode::InputOutputError)),
@@ -67,7 +67,7 @@ impl Status
 			-79 ... -60 => Ok(Status::Error(ErrorCode::EndPointFailure((-status_code) as u8 - 60))),
 			-80 => Ok(Status::Error(ErrorCode::EndPointTimeOut)),
 			-100 ... -81 => Ok(Status::UnknownErrorCode(status_code)),
-			_ => Err(status_code),
+			_ => Err(InvalidStatusError::InvalidStatus(status_code)),
 		}
 	}
 }

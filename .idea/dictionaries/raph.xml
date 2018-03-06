@@ -3,7 +3,10 @@
     <words>
       <w>alloca</w>
       <w>appendv</w>
+      <w>bcopy</w>
       <w>bindgen</w>
+      <w>bitand</w>
+      <w>bitor</w>
       <w>calloc</w>
       <w>chunksize</w>
       <w>condvar</w>
@@ -27,11 +30,13 @@
       <w>errnum</w>
       <w>errormsg</w>
       <w>etimedout</w>
+      <w>fclose</w>
       <w>fffd</w>
       <w>funcs</w>
       <w>getcpu</w>
       <w>growable</w>
       <w>homebrew</w>
+      <w>indexmap</w>
       <w>initializable</w>
       <w>inprogress</w>
       <w>iovcnt</w>
@@ -39,6 +44,7 @@
       <w>isize</w>
       <w>isystem</w>
       <w>jemalloc</w>
+      <w>knem</w>
       <w>libpmem</w>
       <w>libpmemblk</w>
       <w>libpmemcto</w>
@@ -68,6 +74,7 @@
       <w>nonoverlapping</w>
       <w>nprocs</w>
       <w>nvml</w>
+      <w>perf</w>
       <w>philippas</w>
       <w>pmdk</w>
       <w>pmem</w>
@@ -80,6 +87,7 @@
       <w>pobj</w>
       <w>poolsize</w>
       <w>prefault</w>
+      <w>prio</w>
       <w>pthread</w>
       <w>rdrand</w>
       <w>rdrnd</w>
@@ -87,17 +95,22 @@
       <w>recurses</w>
       <w>repr</w>
       <w>rerelease</w>
+      <w>rndv</w>
       <w>rpmem</w>
       <w>rwlock</w>
       <w>setjmp</w>
+      <w>smsg</w>
       <w>spinlock</w>
       <w>strdup</w>
       <w>structs</w>
       <w>sundell</w>
       <w>sysconf</w>
       <w>sysctl</w>
+      <w>sysv</w>
       <w>toid</w>
       <w>tsigas</w>
+      <w>ugni</w>
+      <w>unaccelerated</w>
       <w>unbagged</w>
       <w>unsafety</w>
       <w>wakeups</w>
@@ -109,7 +122,9 @@
       <w>wrlock</w>
       <w>xadd</w>
       <w>xalloc</w>
+      <w>xpmem</w>
       <w>zalloc</w>
+      <w>zcopy</w>
       <w>zrealloc</w>
     </words>
   </dictionary>

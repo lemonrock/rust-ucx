@@ -2,17 +2,15 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use self::ucs_status_t::*;
-use ::std::ffi::CStr;
-use ::std::mem::transmute;
-use ::ucx_sys::ucs_status_ptr_t;
-use ::ucx_sys::ucs_status_string;
-use ::ucx_sys::ucs_status_t;
+use ::libc::EOF;
+use ::libc::FILE;
+use ::libc::fdopen;
+use ::libc::fclose;
+use ::std::io;
+use ::std::fs::File;
+use ::std::os::unix::io::IntoRawFd;
 
 
-include!("ErrorCode.rs");
-include!("InvalidStatusError.rs");
-include!("Status.rs");
-include!("StatusOrPointer.rs");
-include!("ucs_status_tExt.rs");
-include!("ucs_status_ptr_tExt.rs");
+include!("PrintInformation.rs");
+include!("stderr.rs");
+include!("stdout.rs");
