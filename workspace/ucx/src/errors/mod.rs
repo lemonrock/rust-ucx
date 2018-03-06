@@ -2,16 +2,11 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::errors::*;
-use self::ucs_status_t::*;
-use ::std::ffi::CStr;
-use ::std::mem::size_of_val;
 use ::std::mem::transmute;
-use ::std::mem::zeroed;
-use ::ucx_sys::*;
+use ::ucx_sys::ucs_status_t;
+use ::ucx_sys::ucs_status_ptr_t;
 
 
-include!("ucs_cpu_set_tExt.rs");
-include!("ucs_status_tExt.rs");
-include!("ucs_status_ptr_tExt.rs");
-include!("ZeroBasedHyperThreadIndex.rs");
+include!("ErrorCode.rs");
+include!("Status.rs");
+include!("StatusOrPointer.rs");

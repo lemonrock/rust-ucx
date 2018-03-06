@@ -7,28 +7,28 @@
 pub enum ErrorCode
 {
 	#[allow(missing_docs)]
-	NoMessage,
+	NoPendingMessage,
 	
 	#[allow(missing_docs)]
-	NoResource,
+	NoResourcesAreAvailableToInitiateTheOperation,
 	
 	#[allow(missing_docs)]
-	IoError,
+	InputOutputError,
 	
 	#[allow(missing_docs)]
-	NoMemory,
+	OutOfMemory,
 	
 	#[allow(missing_docs)]
 	InvalidParameter,
 	
 	#[allow(missing_docs)]
-	Unreachable,
+	DestinationIsUnreachable,
 	
 	#[allow(missing_docs)]
 	InvalidAddress,
 	
 	#[allow(missing_docs)]
-	NotImplemented,
+	FunctionNotImplemented,
 	
 	#[allow(missing_docs)]
 	MessageTruncated,
@@ -37,40 +37,40 @@ pub enum ErrorCode
 	NoProgress,
 	
 	#[allow(missing_docs)]
-	BufferTooSmall,
+	ProvidedBufferIsTooSmall,
 	
 	#[allow(missing_docs)]
-	NoElement,
+	NoSuchElement,
 	
 	#[allow(missing_docs)]
-	SomeConnectsFailed,
+	FailedToConnectToSomeOfTheRequestedEndPoints,
 	
 	#[allow(missing_docs)]
-	NoDevice,
+	NoSuchDevice,
 	
 	#[allow(missing_docs)]
-	Busy,
+	DeviceIsBusy,
 	
 	#[allow(missing_docs)]
-	Cancelled,
+	RequestCancelled,
 	
 	#[allow(missing_docs)]
 	ShmemSegment,
 	
 	#[allow(missing_docs)]
-	AlreadyExists,
+	ElementAlreadyExists,
 	
 	#[allow(missing_docs)]
-	OutOfRange,
+	IndexOutOfRange,
 	
 	#[allow(missing_docs)]
-	TimedOut,
+	OperationTimedOut,
 	
 	#[allow(missing_docs)]
-	ExceedsLimit,
+	UserDefinedLimitWasExceeded,
 	
 	#[allow(missing_docs)]
-	Unsupported,
+	UnsupportedOperation,
 	
 	#[allow(missing_docs)]
 	LinkFailure(u8),
