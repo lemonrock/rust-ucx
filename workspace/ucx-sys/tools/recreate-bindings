@@ -83,12 +83,11 @@ recreate_bindings_main()
 
 	cd "$homeFolder" 1>/dev/null 2>/dev/null
 	rm -rf src/bindgen
-	rm -rf src/include
+	rm -rf bindgen-wrapper.conf.d/temporary
 	rm -rf tools/bindgen-wrapper/temporary
-	rm -rf compile.conf.d/temporary
 
 	cargo clean
-	rm -rf .cargo/target target
+	rm -rf ../target
 
 	tools/build-under-cargo
 

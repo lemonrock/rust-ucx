@@ -30,7 +30,9 @@
       <w>fffd</w>
       <w>funcs</w>
       <w>growable</w>
+      <w>homebrew</w>
       <w>initializable</w>
+      <w>inprogress</w>
       <w>iovcnt</w>
       <w>iovec</w>
       <w>isize</w>

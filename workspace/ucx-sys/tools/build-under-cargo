@@ -195,11 +195,18 @@ build_under_cargo_main()
 		local homeFolder="$(pwd)"
 	cd - 1>/dev/null 2>/dev/null
 
-	if [ -z "{CARGO_MANIFEST_DIR+defined}" ]; then
-		:
-	else
+	if [ -z "${CARGO_MANIFEST_DIR+is_unset}" ]; then
 		export CARGO_MANIFEST_DIR="$homeFolder"
-		printf 'build-under-cargo:%s\n' "Whilst this script is designed to be run under cargo, it can run independently. We're setting CARGO_MANIFEST_DIR to '$CARGO_MANIFEST_DIR'" 1>&2
+		printf 'build-under-cargo:%s\n' "Whilst this script (build-under-cargo) is designed to be run under cargo, it can run independently. We're setting CARGO_MANIFEST_DIR to '$CARGO_MANIFEST_DIR'" 1>&2
+	else
+		:
+	fi
+
+	if [ -z "${OUT_DIR+is_unset}" ]; then
+		export OUT_DIR="$homeFolder"/bindgen-wrapper.conf.d/temporary
+		printf 'build-under-cargo:%s\n' "Whilst this script (build-under-cargo) is designed to be run under cargo, it can run independently. We're setting OUT_DIR to '$OUT_DIR'" 1>&2
+	else
+		:
 	fi
 
 	build_under_cargo_steps

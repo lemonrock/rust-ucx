@@ -3,6 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/.cargo" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/workspace/nvml-sys/lib/ucx" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/workspace/ucx-sys/lib/ucx" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/workspace/ucx-sys/tools/bindgen-wrapper" vcs="Git" />
   </component>
 </project>

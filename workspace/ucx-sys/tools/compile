@@ -164,13 +164,27 @@ compile_findFolderPaths()
 		homeFolderPath="$(pwd)"
 	cd - 1>/dev/null 2>/dev/null
 
-	configurationFolderPath="$homeFolderPath"/compile.conf.d
-	bindgenWrapperConfDFolderPath="$homeFolderPath"/bindgen-wrapper.conf.d
+	if [ -z "${CARGO_MANIFEST_DIR+is_unset}" ]; then
+		export CARGO_MANIFEST_DIR="$homeFolderPath"
+		printf 'build-under-cargo:%s\n' "Whilst this script (compile) is designed to be run under cargo, it can run independently. We're setting CARGO_MANIFEST_DIR to '$CARGO_MANIFEST_DIR'" 1>&2
+	else
+		:
+	fi
+
+	configurationFolderPath="$CARGO_MANIFEST_DIR"/compile.conf.d
+	bindgenWrapperConfDFolderPath="$CARGO_MANIFEST_DIR"/bindgen-wrapper.conf.d
+
+	if [ -z "${OUT_DIR+is_unset}" ]; then
+		export OUT_DIR="$bindgenWrapperConfDFolderPath"/temporary
+		printf 'build-under-cargo:%s\n' "Whilst this script (compile) is designed to be run under cargo, it can run independently. We're setting OUT_DIR to '$OUT_DIR'" 1>&2
+	else
+		:
+	fi
 }
 
 compile_createTemporaryFolder()
 {
-	temporaryFolderPath="$bindgenWrapperConfDFolderPath"/temporary/root
+	temporaryFolderPath="$OUT_DIR"/root
 	rm -rf "$temporaryFolderPath"
 	mkdir -m 0700 -p "$temporaryFolderPath"/
 }
@@ -229,7 +243,7 @@ compile_platformSpecificPreparation()
 
 compile_makeCopyToAlter()
 {
-	rsync --archive --quiet --exclude=.git "$homeFolderPath"/lib/ucx/ "$temporaryFolderPath"/
+	rsync --archive --quiet --exclude=.git "$CARGO_MANIFEST_DIR"/lib/ucx/ "$temporaryFolderPath"/
 }
 
 compile_musl_fix_patchBrokenCode()
@@ -324,8 +338,6 @@ compile_main()
 
 	compile_makeCopyToAlter
 
-	#compile_fix_toIncludeIbVerbsWholeArchive
-	#compile_musl_fix_compilerToNotFailOnWarnings
 	compile_musl_fix_patchBrokenCode
 
 	compile_autoreconf
