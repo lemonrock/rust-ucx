@@ -3,7 +3,7 @@
 
 
 /// Memory unit.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum MemoryUnit
 {
 	#[allow(missing_docs)]

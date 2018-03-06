@@ -15,7 +15,7 @@ macro_rules! configuration_setting
 	($struct_name: ident, $configuration_name: expr, $default_type: ty, $default: expr) =>
 	{
 		#[allow(missing_docs)]
-		#[derive(Debug, Clone)]
+		#[derive(Serialize, Deserialize, Debug, Clone)]
 		pub struct $struct_name(pub $default_type);
 		
 		impl Default for $struct_name
@@ -205,7 +205,7 @@ configuration_setting!
 	"USE_MT_MUTEX",
 	bool,
 	{
-		false
+		true
 	}
 }
 

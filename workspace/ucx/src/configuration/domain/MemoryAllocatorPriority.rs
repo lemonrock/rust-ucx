@@ -4,7 +4,7 @@
 
 /// Memory allocator priority.
 #[allow(non_camel_case_types)]
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum MemoryAllocatorPriority
 {
 	/// Transparent Huge Pages.

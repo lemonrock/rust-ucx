@@ -5,6 +5,8 @@
 extern crate indexmap;
 extern crate libc;
 #[macro_use] extern crate quick_error;
+extern crate serde;
+#[macro_use] extern crate serde_derive;
 extern crate ucx_sys;
 
 

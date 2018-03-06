@@ -2,26 +2,28 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use self::configuration_settings::*;
-use super::errors::*;
-use super::print_information::PrintInformation;
-use ::libc::FILE;
-use ::std::ffi::CString;
-use ::std::mem::uninitialized;
-use ::std::ptr::null;
-use ::ucx_sys::*;
-
-
-/// Domain.
-pub mod domain;
-
-
-/// Configuration settings.
-pub mod configuration_settings;
-
-
-include!("UcxConfigurationWrapper.rs");
-include!("ConfigurationModifyError.rs");
-include!("ConfigurationParseError.rs");
-include!("CouldNotConfigureUcxError.rs");
-include!("Configuration.rs");
+quick_error!
+{
+	/// Errors when creating UCX configuration.
+	#[derive(Debug, Clone, PartialEq, Eq)]
+	pub enum CouldNotConfigureUcxError
+	{
+		/// Parse error.
+		Parse(cause: ConfigurationParseError)
+		{
+			cause(cause)
+			description(cause.description())
+			display("Parse failed: {}", cause)
+			from()
+		}
+		
+		/// Modify error.
+		Modify(cause: ConfigurationModifyError)
+		{
+			cause(cause)
+			description(cause.description())
+			display("Modify failed: {}", cause)
+			from()
+		}
+	}
+}

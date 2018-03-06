@@ -8,7 +8,7 @@ quick_error!
 	#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 	pub enum ConfigurationModifyError
 	{
-		/// Invalid status (fatal).
+		/// Invalid status.
 		InvalidStatus(cause: ::errors::InvalidStatusError)
 		{
 			cause(cause)
