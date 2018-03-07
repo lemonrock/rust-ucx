@@ -5,9 +5,9 @@
 // We use this rather than force the public API to deal with `Rc<HyperThreadContext>`.
 // This also has the benefit of eliminating a pointer dereference to get to `handle: ucp_context_h`, as we do not need to got through `Rc::deref()`.
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
-struct HyperThreadContextDropSafety(pub(crate) ucp_context_h);
+struct HyperThreadContextHandleDropSafety(pub(crate) ucp_context_h);
 
-impl Drop for HyperThreadContextDropSafety
+impl Drop for HyperThreadContextHandleDropSafety
 {
 	#[inline(always)]
 	fn drop(&mut self)

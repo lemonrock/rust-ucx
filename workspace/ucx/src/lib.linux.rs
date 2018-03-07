@@ -17,11 +17,16 @@ use self::configuration::values::*;
 use self::print_information::PrintInformation;
 use self::attributes::*;
 use self::ucx_services::ZeroBasedHyperThreadIndex;
+use ::libc::c_void;
 use ::libc::FILE;
 use ::std::fmt;
 use ::std::fmt::Debug;
 use ::std::fmt::Formatter;
 use ::std::marker::PhantomData;
+use ::std::mem::uninitialized;
+use ::std::ptr::NonNull;
+use ::std::ptr::null_mut;
+use ::std::rc::Rc;
 use ::std::sync::Arc;
 use ::ucx_sys::*;
 
@@ -48,4 +53,8 @@ pub mod ucx_services;
 
 include!("Application.rs");
 include!("HyperThreadContext.rs");
-include!("HyperThreadContextDropSafety.rs");
+include!("HyperThreadContextHandleDropSafety.rs");
+include!("MemoryAdvice.rs");
+include!("OurRemotelyAccessibleMemory.rs");
+include!("OurRemotelyAccessibleMemoryHandleDropSafety.rs");
+include!("OurRemotelyAccessibleMemoryKey.rs");

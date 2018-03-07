@@ -52,7 +52,7 @@ impl ApplicationContextConfiguration
 				HyperThreadContext
 				{
 					handle,
-					hyper_thread_context_drop_safety: HyperThreadContextDropSafety(handle),
+					hyper_thread_context_handle_drop_safety: Rc::new(HyperThreadContextHandleDropSafety(handle)),
 				}
 			),
 			

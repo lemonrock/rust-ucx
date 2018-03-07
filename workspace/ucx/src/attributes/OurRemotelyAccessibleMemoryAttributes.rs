@@ -4,9 +4,9 @@
 
 /// Mapped memory attributes.
 #[derive(Debug)]
-pub struct MappedMemoryAttributes(ucp_mem_attr_t);
+pub struct OurRemotelyAccessibleMemoryAttributes(ucp_mem_attr_t);
 
-impl PartialEq for MappedMemoryAttributes
+impl PartialEq for OurRemotelyAccessibleMemoryAttributes
 {
 	#[inline(always)]
 	fn eq(&self, other: &Self) -> bool
@@ -15,11 +15,11 @@ impl PartialEq for MappedMemoryAttributes
 	}
 }
 
-impl Eq for MappedMemoryAttributes
+impl Eq for OurRemotelyAccessibleMemoryAttributes
 {
 }
 
-impl PartialOrd for MappedMemoryAttributes
+impl PartialOrd for OurRemotelyAccessibleMemoryAttributes
 {
 	#[inline(always)]
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering>
@@ -28,7 +28,7 @@ impl PartialOrd for MappedMemoryAttributes
 	}
 }
 
-impl Ord for MappedMemoryAttributes
+impl Ord for OurRemotelyAccessibleMemoryAttributes
 {
 	#[inline(always)]
 	fn cmp(&self, other: &Self) -> Ordering
@@ -37,7 +37,7 @@ impl Ord for MappedMemoryAttributes
 	}
 }
 
-impl Hash for MappedMemoryAttributes
+impl Hash for OurRemotelyAccessibleMemoryAttributes
 {
 	#[inline(always)]
 	fn hash<H: Hasher>(&self, state: &mut H)
@@ -47,13 +47,13 @@ impl Hash for MappedMemoryAttributes
 	}
 }
 
-impl MappedMemoryAttributes
+impl OurRemotelyAccessibleMemoryAttributes
 {
 	/// Mapped memory address.
 	#[inline(always)]
-	pub fn address(&self) -> *mut u8
+	pub fn address(&self) -> NonNull<u8>
 	{
-		self.0.address as *mut u8
+		unsafe { NonNull::new_unchecked(self.0.address as *mut u8) }
 	}
 	
 	/// Mapped memory length.
@@ -64,12 +64,12 @@ impl MappedMemoryAttributes
 	}
 	
 	#[inline(always)]
-	pub(crate) fn query(&self, handle: ucp_mem_h) -> Self
+	pub(crate) fn query(handle: ucp_mem_h) -> Self
 	{
 		let mut attributes: ucp_mem_attr_t = unsafe { uninitialized() };
 		attributes.field_mask = (ucp_mem_attr_field::ADDRESS | ucp_mem_attr_field::LENGTH).0 as u64;
 		
 		panic_on_error!(ucp_mem_query, handle, &mut attributes);
-		MappedMemoryAttributes(attributes)
+		OurRemotelyAccessibleMemoryAttributes(attributes)
 	}
 }
