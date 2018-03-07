@@ -4,7 +4,7 @@
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct ucm_event_type(u32);
+pub struct ucm_event_type(pub u32);
 
 impl BitOr<ucm_event_type> for ucm_event_type
 {

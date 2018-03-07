@@ -4,7 +4,7 @@
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct uct_md_mem_flags(u32);
+pub struct uct_md_mem_flags(pub u32);
 
 impl BitOr<uct_md_mem_flags> for uct_md_mem_flags
 {

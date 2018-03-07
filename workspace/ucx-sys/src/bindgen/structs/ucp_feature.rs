@@ -4,7 +4,7 @@
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct ucp_feature(u32);
+pub struct ucp_feature(pub u32);
 
 impl BitOr<ucp_feature> for ucp_feature
 {

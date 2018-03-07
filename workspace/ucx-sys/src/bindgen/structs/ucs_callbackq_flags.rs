@@ -4,7 +4,7 @@
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct ucs_callbackq_flags(u32);
+pub struct ucs_callbackq_flags(pub u32);
 
 impl BitOr<ucs_callbackq_flags> for ucs_callbackq_flags
 {

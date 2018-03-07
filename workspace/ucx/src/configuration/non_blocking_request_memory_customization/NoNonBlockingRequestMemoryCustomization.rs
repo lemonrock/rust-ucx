@@ -2,14 +2,15 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::configuration_settings::*;
-use ::std::borrow::Cow;
-use ::std::ffi::CString;
+/// Default NonBlockingRequestMemoryCustomization which does nothing.
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
+pub struct NoNonBlockingRequestMemoryCustomization;
 
-
-include!("AtomicOperationsSynchronizationMode.rs");
-include!("DeviceName.rs");
-include!("MemoryAllocatorPriority.rs");
-include!("MemoryDomain.rs");
-include!("MemoryUnit.rs");
-include!("TransportLayerCollectionName.rs");
+impl NonBlockingRequestMemoryCustomization for NoNonBlockingRequestMemoryCustomization
+{
+	#[inline(always)]
+	fn function_pointers() -> (ucp_request_init_callback_t, ucp_request_cleanup_callback_t)
+	{
+		(None, None)
+	}
+}

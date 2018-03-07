@@ -3,7 +3,7 @@
 
 
 /// A wrapper around UCX configuration.
-#[derive(Debug)]
+#[derive(Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct UcxConfigurationWrapper
 {
 	handle: *mut ucp_config_t,
@@ -20,6 +20,8 @@ impl Drop for UcxConfigurationWrapper
 
 impl PrintInformation for UcxConfigurationWrapper
 {
+	const DebugName: &'static str = "UcxConfigurationWrapper";
+	
 	#[inline(always)]
 	fn print_information_to_stream(&self, stream: *mut FILE)
 	{
@@ -30,14 +32,25 @@ impl PrintInformation for UcxConfigurationWrapper
 	}
 }
 
+impl Debug for UcxConfigurationWrapper
+{
+	#[inline(always)]
+	fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error>
+	{
+		self.debug_fmt(f)
+	}
+}
+
 impl UcxConfigurationWrapper
 {
 	/// Parses a new configuration from environment variables.
+	/// The prefix defaults to `UCX_` if not specified.
 	#[inline(always)]
-	pub fn parse_environment_variables(environment_variable_prefix: &str) -> Result<Self, ConfigurationParseError>
+	pub fn parse_environment_variables(environment_variable_prefix: Option<&str>) -> Result<Self, ConfigurationParseError>
 	{
 		let mut handle = unsafe { uninitialized() };
 		
+		let environment_variable_prefix = environment_variable_prefix.unwrap_or("UCX_");
 		let status = if environment_variable_prefix.is_empty()
 		{
 			unsafe { ucp_config_read(null(), null(), &mut handle) }
@@ -111,66 +124,10 @@ impl UcxConfigurationWrapper
 		}
 	}
 	
-//	/// applicationContextFeaturesIdeallySupported and contextWillBeSharedByMultipleWorkersFromDifferentThreads are programmer choices; how the code will be designed
-//	/// tagSenderMask and estimatedNumberOfEndPoints are configuration / per-invocation choices
-//	/// contextWillBeSharedByMultipleWorkersFromDifferentThreads should ideally be false
-//	#[inline(always)]
-//	pub fn initialiseApplicationContext(&self, applicationContextFeaturesIdeallySupported: &ApplicationContextFeaturesIdeallySupported, contextWillBeSharedByMultipleWorkersFromDifferentThreads: bool, tagSenderMask: u64, estimatedNumberOfEndPoints: usize) -> Result<ApplicationContext, ApplicationContextInitialisationError>
-//	{
-//		use ucp_params_field::*;
-//
-//		let parameters = ucp_params_t
-//		{
-//			field_mask: UCP_PARAM_FIELD_FEATURES as u64 | UCP_PARAM_FIELD_REQUEST_SIZE as u64 | UCP_PARAM_FIELD_REQUEST_INIT as u64 | UCP_PARAM_FIELD_REQUEST_CLEANUP as u64 | UCP_PARAM_FIELD_TAG_SENDER_MASK as u64 | UCP_PARAM_FIELD_MT_WORKERS_SHARED as u64 | UCP_PARAM_FIELD_ESTIMATED_NUM_EPS as u64,
-//			features: applicationContextFeaturesIdeallySupported.as_u64(tagSenderMask),
-//
-//			// Really of use to MPI
-//			request_size: 0, // reservedSpaceInNonBlockingRequests,
-//			request_init: None,
-//			request_cleanup: None,
-//
-//			tag_sender_mask: tagSenderMask,
-//			mt_workers_shared: if contextWillBeSharedByMultipleWorkersFromDifferentThreads
-//			{
-//				1
-//			}
-//			else
-//			{
-//				0
-//			},
-//			estimated_num_eps: estimatedNumberOfEndPoints,
-//		};
-//
-//		let mut context = unsafe { uninitialized() };
-//
-//		let status = unsafe { ucp_init_version(UCP_API_MAJOR, UCP_API_MINOR, &parameters, self.handle, &mut context) };
-//
-//		if likely(status.isOk())
-//		{
-//			Ok
-//			(
-//				ApplicationContext::new(context)
-//			)
-//		}
-//		else
-//		{
-//			use self::UcpFailure::*;
-//			use self::UcpPermanentFailureReason::*;
-//			use self::ApplicationContextInitialisationError::*;
-//
-//			let failure = UcpFailure::convertError(status);
-//
-//			match failure
-//			{
-//				Permanent(reason) => match reason
-//				{
-//					OutOfMemory => panic!("Out of memory"),
-//					UnimplementedFunctionality => Err(FunctionalityNotImplementedOrSupported),
-//					UnsupportedSubSetOfFunctionality => Err(FunctionalityNotImplementedOrSupported),
-//					_ => panic!("Permanent failure to initialise an application context because '{:?}'", reason)
-//				},
-//				_ => panic!("Inappropriate failure for UCP API '{}'", failure)
-//			}
-//		}
-//	}
+	/// Creates a per-hyper thread application context.
+	#[inline(always)]
+	pub fn per_hyper_thread_application_context<MemoryCustomization: NonBlockingRequestMemoryCustomization>(&self, application_context_configuration: &ApplicationContextConfiguration) -> Result<HyperThreadContext, HyperThreadContextCreationError>
+	{
+		application_context_configuration.per_hyper_thread::<MemoryCustomization>(self)
+	}
 }

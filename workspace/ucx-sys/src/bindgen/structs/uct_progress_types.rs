@@ -4,7 +4,7 @@
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct uct_progress_types(u32);
+pub struct uct_progress_types(pub u32);
 
 impl BitOr<uct_progress_types> for uct_progress_types
 {

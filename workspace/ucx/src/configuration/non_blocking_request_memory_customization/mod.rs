@@ -2,7 +2,9 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-extern "C"
-{
-	static mut stderr: *const FILE;
-}
+use ::libc::c_void;
+use ::ucx_sys::*;
+
+
+include!("NonBlockingRequestMemoryCustomization.rs");
+include!("NoNonBlockingRequestMemoryCustomization.rs");

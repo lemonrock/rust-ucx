@@ -4,7 +4,7 @@
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct uct_flush_flags(u32);
+pub struct uct_flush_flags(pub u32);
 
 impl BitOr<uct_flush_flags> for uct_flush_flags
 {

@@ -2,17 +2,17 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use configuration::domain::DeviceName;
-use configuration::domain::DeviceName::all as AllDevices;
-use configuration::domain::TransportLayerCollectionName;
-use configuration::domain::TransportLayerCollectionName::all as AllTransportLayers;
-use configuration::domain::MemoryAllocatorPriority;
-use configuration::domain::MemoryAllocatorPriority::*;
-use configuration::domain::MemoryDomain;
-use configuration::domain::MemoryUnit;
-use configuration::domain::MemoryUnit::*;
-use configuration::domain::AtomicOperationsSynchronizationMode;
-use configuration::domain::AtomicOperationsSynchronizationMode::*;
+use super::values::DeviceName;
+use super::values::DeviceName::all as AllDevices;
+use super::values::TransportLayerCollectionName;
+use super::values::TransportLayerCollectionName::all as AllTransportLayers;
+use super::values::MemoryAllocatorPriority;
+use super::values::MemoryAllocatorPriority::*;
+use super::values::MemoryDomain;
+use super::values::MemoryUnit;
+use super::values::MemoryUnit::*;
+use super::values::AtomicOperationsSynchronizationMode;
+use super::values::AtomicOperationsSynchronizationMode::*;
 use ::indexmap::IndexSet;
 use ::std::collections::HashSet;
 use ::std::hash::Hash;

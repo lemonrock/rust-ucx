@@ -4,7 +4,7 @@
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct uct_iface_event_types(u32);
+pub struct uct_iface_event_types(pub u32);
 
 impl BitOr<uct_iface_event_types> for uct_iface_event_types
 {

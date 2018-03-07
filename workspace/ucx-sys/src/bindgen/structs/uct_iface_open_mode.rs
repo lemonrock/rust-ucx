@@ -4,7 +4,7 @@
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct uct_iface_open_mode(u32);
+pub struct uct_iface_open_mode(pub u32);
 
 impl BitOr<uct_iface_open_mode> for uct_iface_open_mode
 {

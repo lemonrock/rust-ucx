@@ -3,10 +3,9 @@
 
 
 /// Configuration suitable for use with Serde and so JSON, HJSON, XML, etc.
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(deny_unknown_fields)]
-#[serde(default)]
 #[allow(missing_docs)]
+#[serde(deny_unknown_fields, default)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Configuration
 {
 	pub network_device_names: NetworkDeviceNames,
@@ -25,6 +24,8 @@ pub struct Configuration
 	pub maximum_length_of_worker_name: MaximumLengthOfWorkerName,
 	pub prefer_spin_lock_over_mutex_when_multi_threading: PreferSpinLockOverMutexWhenMultiThreading,
 	pub threshold_for_using_tag_matching_offload_capabilities: ThresholdForUsingTagMatchingOffloadCapabilities,
+
+	pub hyper_threads_application_contexts: Arc<HyperThreadsApplicationContextConfigurations>,
 }
 
 /*
@@ -54,26 +55,6 @@ pub struct Configuration
   {"SEG_SIZE", "8192",
    "Size of a segment in the worker preregistered memory pool.",
    ucs_offsetof(ucp_config_t, ctx.seg_size), UCS_CONFIG_TYPE_MEMUNITS},
-
-  {"TM_THRESH", "1024", /* TODO: calculate automaticlly */
-   "Threshold for using tag matching offload capabilities.\n"
-   "Smaller buffers will not be posted to the transport.",
-   ucs_offsetof(ucp_config_t, ctx.tm_thresh), UCS_CONFIG_TYPE_MEMUNITS},
-
-  {"TM_MAX_BCOPY", "1024", /* TODO: calculate automaticlly */
-   "Maximal size for posting \"bounce buffer\" (UCX interal preregistered memory) for\n"
-   "tag offload receives. When message arrives, it is copied into the user buffer (similar\n"
-   "to eager protocol). The size values has to be equal or less than segment size.\n"
-   "Also the value has to be bigger than UCX_TM_THRESH to take an effect." ,
-   ucs_offsetof(ucp_config_t, ctx.tm_max_bcopy), UCS_CONFIG_TYPE_MEMUNITS},
-
-  {"TM_FORCE_THRESH", "8192", /* TODO: calculate automaticlly */
-   "Threshold for forcing tag matching offload mode. Every tag receive operation\n"
-   "with buffer bigger than this threshold would force offloading of all uncompleted\n"
-   "non-offloaded receive operations to the transport (e. g. operations with\n"
-   "buffers below the UCX_TM_THRESH value). Offloading may be unsuccessful in certain\n"
-   "cases (non-contig buffer, or sender wildcard).",
-   ucs_offsetof(ucp_config_t, ctx.tm_force_thresh), UCS_CONFIG_TYPE_MEMUNITS},
 
   {"NUM_EPS", "auto",
    "An optimization hint of how many endpoints would be created on this context.\n"
@@ -110,17 +91,36 @@ impl Default for Configuration
 			maximum_length_of_worker_name: Default::default(),
 			prefer_spin_lock_over_mutex_when_multi_threading: Default::default(),
 			threshold_for_using_tag_matching_offload_capabilities: Default::default(),
+			
+			hyper_threads_application_contexts: Default::default(),
 		}
 	}
 }
 
 impl Configuration
 {
-	/// Creates a new Open UCX configuration wrapper.
+	/// Creates a new application.
 	#[inline(always)]
-	pub fn ucx_configuration_wrapper(&self) -> Result<UcxConfigurationWrapper, CouldNotConfigureUcxError>
+	pub fn new_application<MemoryCustomization: NonBlockingRequestMemoryCustomization>(&self) -> Result<Arc<Application<MemoryCustomization>>, CouldNotConfigureUcxError>
 	{
-		let ucx_configuration_wrapper = UcxConfigurationWrapper::parse_environment_variables("")?;
+		Ok
+		(
+			Arc::new
+			(
+				Application
+				{
+					ucx_configuration_wrapper: self.ucx_configuration_wrapper()?,
+					hyper_threads_application_contexts: self.hyper_threads_application_contexts.clone(),
+					phantom_data: PhantomData,
+				}
+			)
+		)
+	}
+	
+	#[inline(always)]
+	fn ucx_configuration_wrapper(&self) -> Result<UcxConfigurationWrapper, CouldNotConfigureUcxError>
+	{
+		let ucx_configuration_wrapper = UcxConfigurationWrapper::parse_environment_variables(None)?;
 		ucx_configuration_wrapper.modify(&self.network_device_names)?;
 		ucx_configuration_wrapper.modify(&self.accelerated_device_names)?;
 		ucx_configuration_wrapper.modify(&self.self_device_names)?;

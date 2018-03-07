@@ -4,7 +4,7 @@
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct uct_cb_param_flags(u32);
+pub struct uct_cb_param_flags(pub u32);
 
 impl BitOr<uct_cb_param_flags> for uct_cb_param_flags
 {

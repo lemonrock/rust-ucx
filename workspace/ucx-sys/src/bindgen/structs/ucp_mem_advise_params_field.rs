@@ -4,7 +4,7 @@
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct ucp_mem_advise_params_field(u32);
+pub struct ucp_mem_advise_params_field(pub u32);
 
 impl BitOr<ucp_mem_advise_params_field> for ucp_mem_advise_params_field
 {

@@ -61,8 +61,6 @@ final_chance_to_tweak()
 		local constant_prefix="$1"
 		local bitfield_struct="$2"
 
-		sed -i -e 's/(pub /(/g' "$outputFolderPath"/structs/"$bitfield_struct".rs
-
 		{
 			printf '\nimpl %s\n' "$bitfield_struct"
 			printf '{\n'
@@ -78,7 +76,6 @@ final_chance_to_tweak()
 		grep -v "^pub const $constant_prefix" "$outputFolderPath"/constants/miscellany.rs >"$outputFolderPath"/constants/miscellany.rs.tmp
 		rm "$outputFolderPath"/constants/miscellany.rs
 		mv "$outputFolderPath"/constants/miscellany.rs.tmp "$outputFolderPath"/constants/miscellany.rs
-
 	}
 
 	_fix_bitfield UCM_EVENT_ ucm_event_type

@@ -32,6 +32,8 @@
       <w>etimedout</w>
       <w>fclose</w>
       <w>fffd</w>
+      <w>fflus</w>
+      <w>fflush</w>
       <w>funcs</w>
       <w>getcpu</w>
       <w>growable</w>
@@ -61,6 +63,7 @@
       <w>memcpy</w>
       <w>memmove</w>
       <w>memset</w>
+      <w>memstream</w>
       <w>mlogpool</w>
       <w>mmap</w>
       <w>mmutex</w>

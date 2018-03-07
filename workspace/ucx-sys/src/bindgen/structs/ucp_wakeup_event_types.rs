@@ -4,7 +4,7 @@
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct ucp_wakeup_event_types(u32);
+pub struct ucp_wakeup_event_types(pub u32);
 
 impl BitOr<ucp_wakeup_event_types> for ucp_wakeup_event_types
 {

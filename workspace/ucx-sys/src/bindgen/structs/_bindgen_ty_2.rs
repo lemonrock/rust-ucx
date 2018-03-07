@@ -4,7 +4,7 @@
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct _bindgen_ty_2(u32);
+pub struct _bindgen_ty_2(pub u32);
 
 impl BitOr<_bindgen_ty_2> for _bindgen_ty_2
 {

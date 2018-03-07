@@ -4,7 +4,7 @@
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct ucp_context_attr_field(u32);
+pub struct ucp_context_attr_field(pub u32);
 
 impl BitOr<ucp_context_attr_field> for ucp_context_attr_field
 {

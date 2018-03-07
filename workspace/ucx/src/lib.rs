@@ -2,6 +2,7 @@
 // Copyright © 2018 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+#![allow(non_upper_case_globals)]
 #![deny(missing_docs)]
 #![recursion_limit = "256"]
 
