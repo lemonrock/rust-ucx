@@ -9,6 +9,7 @@ pub struct ApplicationContext<MemoryCustomization = NoNonBlockingRequestMemoryCu
 	application_context_handle_drop_safety: Rc<ApplicationContextHandleDropSafety>,
 	application_context_configuration: ApplicationContextConfiguration,
 	sealing_key: SealingKey,
+	opening_key: OpeningKey,
 	phantom_data: PhantomData<MemoryCustomization>,
 }
 

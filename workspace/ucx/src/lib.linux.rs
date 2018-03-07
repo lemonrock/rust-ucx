@@ -26,6 +26,7 @@ use self::errors::*;
 use self::print_information::PrintInformation;
 use ::libc::c_void;
 use ::libc::FILE;
+use ::ring::aead::OpeningKey;
 use ::ring::aead::SealingKey;
 use ::std::fmt;
 use ::std::fmt::Debug;

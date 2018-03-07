@@ -39,7 +39,7 @@ impl ApplicationContextConfiguration
 {
 	/// Creates a new application context.
 	#[inline(always)]
-	pub fn new<MemoryCustomization: NonBlockingRequestMemoryCustomization>(self, sealing_key: SealingKey, ucx_configuration_wrapper: UcxConfigurationWrapper) -> Result<ApplicationContext<MemoryCustomization>, ApplicationContextCreationError>
+	pub fn new<MemoryCustomization: NonBlockingRequestMemoryCustomization>(self, sealing_key: SealingKey, opening_key: OpeningKey, ucx_configuration_wrapper: UcxConfigurationWrapper) -> Result<ApplicationContext<MemoryCustomization>, ApplicationContextCreationError>
 	{
 		let parameters = self.parameters_for_new_application_context::<MemoryCustomization>();
 		let mut handle = unsafe { uninitialized() };
@@ -55,6 +55,7 @@ impl ApplicationContextConfiguration
 					application_context_handle_drop_safety: Rc::new(ApplicationContextHandleDropSafety(handle)),
 					application_context_configuration: self,
 					sealing_key,
+					opening_key,
 					phantom_data: PhantomData,
 				}
 			),

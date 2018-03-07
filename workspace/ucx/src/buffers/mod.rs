@@ -2,6 +2,8 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+use ::ring::aead::open_in_place;
+use ::ring::aead::OpeningKey;
 use ::ring::aead::seal_in_place;
 use ::ring::aead::SealingKey;
 use ::ring::rand::SecureRandom;
@@ -13,3 +15,4 @@ use ::std::slice::from_raw_parts;
 
 
 include!("ByteBuffer.rs");
+include!("Sealed.rs");

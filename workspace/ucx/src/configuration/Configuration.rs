@@ -7,8 +7,8 @@
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Configuration
 {
-	/// Used to control encryption of messages sent out-of-band to other peers.
-	pub sealing_key_bytes: SealingKeyBytes,
+	/// Used to control encryption of AEAD-encrypted messages sent out-of-band to other peers.
+	pub secret_key_bytes: SecretKeyBytes,
 	
 	/// UCX settings.
 	#[serde(default)] pub ucx_settings: UcxSettings,
@@ -23,10 +23,11 @@ impl Configuration
 	#[inline(always)]
 	pub fn new_application_context<MemoryCustomization: NonBlockingRequestMemoryCustomization>(self) -> Result<ApplicationContext<MemoryCustomization>, ApplicationContextCreationError>
 	{
-		let sealing_key = self.sealing_key_bytes.new_sealing_key();
+		let sealing_key = self.secret_key_bytes.new_sealing_key();
+		let opening_key = self.secret_key_bytes.new_opening_key();
 		
 		let ucx_configuration_wrapper = self.ucx_settings.ucx_configuration_wrapper()?;
 		
-		self.application_context.new(sealing_key, ucx_configuration_wrapper)
+		self.application_context.new(sealing_key, opening_key, ucx_configuration_wrapper)
 	}
 }

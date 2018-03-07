@@ -23,23 +23,8 @@ pub trait ByteBuffer
 	/// Seals using AEAD encryption.
 	/// Returns an encrypted data 'box' with a trailing suffix (also known as a `tag`).
 	#[inline(always)]
-	fn seal(&self, sealing_key: &SealingKey, random_source: &SystemRandom) -> Vec<u8>
+	fn seal(&self, sealing_key: &SealingKey, random_source: &SystemRandom) -> Sealed
 	{
-		// All the AEADs we support use 96-bit nonces.
-		const MaximumNonceLength: usize = 96 / 8;
-		let mut nonce: [u8; MaximumNonceLength] = unsafe { uninitialized() };
-		random_source.fill(&mut nonce).expect("Could not fill nonce with random bytes");
-		
-		let additional_authenticated_data = [];
-		
-		// Currently always 128-bit (16 bytes).
-		let out_suffix_capacity = sealing_key.algorithm().tag_len();
-		
-		let mut in_out = Vec::with_capacity(self.length() + out_suffix_capacity);
-		unsafe { copy_nonoverlapping(self.address().as_ptr(), in_out.as_mut_ptr(), self.length()) };
-		
-		let out_length = seal_in_place(sealing_key, &nonce, &additional_authenticated_data, &mut in_out, out_suffix_capacity).expect("Could not seal");
-		unsafe { in_out.set_len(out_length) };
-		in_out
+		Sealed::seal(sealing_key, random_source, self.address(), self.length())
 	}
 }
