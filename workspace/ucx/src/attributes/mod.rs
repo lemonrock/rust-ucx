@@ -2,11 +2,17 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use ::libc_extra::sched::sched_getcpu;
-use ::std::mem::size_of_val;
-use ::std::mem::zeroed;
 use ::ucx_sys::*;
+use ::std::cmp::Eq;
+use ::std::cmp::Ord;
+use ::std::cmp::Ordering;
+use ::std::cmp::PartialEq;
+use ::std::cmp::PartialOrd;
+use ::std::hash::Hash;
+use ::std::hash::Hasher;
+use ::std::mem::uninitialized;
 
 
-include!("ucs_cpu_set_tExt.rs");
-include!("ZeroBasedHyperThreadIndex.rs");
+include!("HasAttributes.rs");
+include!("HyperThreadContextAttributes.rs");
+include!("WorkerThreadMode.rs");

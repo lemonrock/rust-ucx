@@ -18,6 +18,15 @@ impl Drop for UcxConfigurationWrapper
 	}
 }
 
+impl Debug for UcxConfigurationWrapper
+{
+	#[inline(always)]
+	fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error>
+	{
+		self.debug_fmt(f)
+	}
+}
+
 impl PrintInformation for UcxConfigurationWrapper
 {
 	const DebugName: &'static str = "UcxConfigurationWrapper";
@@ -29,15 +38,6 @@ impl PrintInformation for UcxConfigurationWrapper
 		
 		let title = c_str!("UCP Configuration");
 		unsafe { ucp_config_print(self.handle, stream, title.as_ptr(), print_flags) };
-	}
-}
-
-impl Debug for UcxConfigurationWrapper
-{
-	#[inline(always)]
-	fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error>
-	{
-		self.debug_fmt(f)
 	}
 }
 

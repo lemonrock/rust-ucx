@@ -2,11 +2,12 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use ::libc_extra::sched::sched_getcpu;
-use ::std::mem::size_of_val;
-use ::std::mem::zeroed;
-use ::ucx_sys::*;
-
-
-include!("ucs_cpu_set_tExt.rs");
-include!("ZeroBasedHyperThreadIndex.rs");
+macro_rules! panic_on_error
+{
+	($function: path$(,$argument: expr)*) =>
+	{
+		{
+			panic_on_error_with_clean_up!(status, {}, $function$(,$argument)*);
+		}
+	}
+}

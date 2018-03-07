@@ -101,6 +101,7 @@
       <w>rndv</w>
       <w>rpmem</w>
       <w>rwlock</w>
+      <w>sched</w>
       <w>setjmp</w>
       <w>smsg</w>
       <w>spinlock</w>
@@ -116,6 +117,7 @@
       <w>unaccelerated</w>
       <w>unbagged</w>
       <w>unsafety</w>
+      <w>vdso</w>
       <w>wakeups</w>
       <w>wcsdup</w>
       <w>werror</w>

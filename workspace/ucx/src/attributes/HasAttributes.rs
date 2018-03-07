@@ -2,11 +2,14 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use ::libc_extra::sched::sched_getcpu;
-use ::std::mem::size_of_val;
-use ::std::mem::zeroed;
-use ::ucx_sys::*;
-
-
-include!("ucs_cpu_set_tExt.rs");
-include!("ZeroBasedHyperThreadIndex.rs");
+/// A trait that some objects that wrap UCX handles implement.
+/// Allows access to the attributes (if you like, read-only fields) of a UCX object instance.
+pub trait HasAttributes
+{
+	/// The type of Attributes.
+	type Attributes: Sized;
+	
+	/// Query attributes.
+	#[inline(always)]
+	fn attributes(&self) -> Self::Attributes;
+}

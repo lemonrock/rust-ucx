@@ -76,7 +76,7 @@ impl ucs_cpu_set_tExt for ucs_cpu_set_t
 	fn index_and_offset(&self, hyper_thread_index: ZeroBasedHyperThreadIndex) -> (usize, usize)
 	{
 		let size_in_bits = 8 * size_of_val(&self.ucs_bits[0]);
-		let hyper_thread = hyper_thread_index as usize;
+		let hyper_thread = hyper_thread_index.as_usize();
 		(hyper_thread / size_in_bits, hyper_thread % size_in_bits)
 	}
 }

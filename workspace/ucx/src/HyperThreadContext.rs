@@ -10,6 +10,15 @@ pub struct HyperThreadContext
 	hyper_thread_context_drop_safety: HyperThreadContextDropSafety,
 }
 
+impl Debug for HyperThreadContext
+{
+	#[inline(always)]
+	fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error>
+	{
+		self.debug_fmt(f)
+	}
+}
+
 impl PrintInformation for HyperThreadContext
 {
 	const DebugName: &'static str = "ApplicationContext";
@@ -21,11 +30,13 @@ impl PrintInformation for HyperThreadContext
 	}
 }
 
-impl Debug for HyperThreadContext
+impl HasAttributes for HyperThreadContext
 {
+	type Attributes = HyperThreadContextAttributes;
+	
 	#[inline(always)]
-	fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error>
+	fn attributes(&self) -> Self::Attributes
 	{
-		self.debug_fmt(f)
+		Self::Attributes::query(self.handle)
 	}
 }

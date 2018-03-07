@@ -2,11 +2,19 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use ::libc_extra::sched::sched_getcpu;
-use ::std::mem::size_of_val;
-use ::std::mem::zeroed;
-use ::ucx_sys::*;
-
-
-include!("ucs_cpu_set_tExt.rs");
-include!("ZeroBasedHyperThreadIndex.rs");
+macro_rules! panic_on_error_with_clean_up
+{
+	($status: ident, $failureBlock: block, $function: path$(,$argument: expr)*) =>
+	{
+		{
+			let $status = unsafe { $function($($argument),*) };
+			if $status != $crate::ucx_sys::ucs_status_t::UCS_OK
+			{
+				$failureBlock
+				
+				let status = $crate::errors::Status::parse_ucs_status_t($status).expect("Invalid status");
+				panic!("{} failed with status code '{:?}'", stringify!($function), status);
+			}
+		}
+	}
+}

@@ -15,6 +15,7 @@ use self::configuration::*;
 use self::configuration::non_blocking_request_memory_customization::*;
 use self::configuration::values::*;
 use self::print_information::PrintInformation;
+use self::attributes::*;
 use self::ucx_services::ZeroBasedHyperThreadIndex;
 use ::libc::FILE;
 use ::std::fmt;
@@ -35,6 +36,10 @@ pub mod errors;
 
 /// Print information helpers.
 pub mod print_information;
+
+
+/// Attributes of some UCX objects.
+pub mod attributes;
 
 
 /// Wrapper around UCX services (ucs) component of UCX.
