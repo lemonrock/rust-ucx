@@ -2,7 +2,7 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// A special trait to allow customization of request memory used for non-blocking requests in hyper thread application contexts.
+/// A special trait to allow customization of request memory used for non-blocking requests in application contexts.
 pub trait NonBlockingRequestMemoryCustomization
 {
 	/// The size of a reserved space in a non-blocking requests.

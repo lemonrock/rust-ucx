@@ -2,11 +2,11 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// Attributes for a hyper thread context.
+/// Attributes for an application context.
 #[derive(Debug)]
-pub struct HyperThreadContextAttributes(pub(crate) ucp_context_attr);
+pub struct ApplicationContextAttributes(pub(crate) ucp_context_attr);
 
-impl PartialEq for HyperThreadContextAttributes
+impl PartialEq for ApplicationContextAttributes
 {
 	#[inline(always)]
 	fn eq(&self, other: &Self) -> bool
@@ -15,11 +15,11 @@ impl PartialEq for HyperThreadContextAttributes
 	}
 }
 
-impl Eq for HyperThreadContextAttributes
+impl Eq for ApplicationContextAttributes
 {
 }
 
-impl PartialOrd for HyperThreadContextAttributes
+impl PartialOrd for ApplicationContextAttributes
 {
 	#[inline(always)]
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering>
@@ -28,7 +28,7 @@ impl PartialOrd for HyperThreadContextAttributes
 	}
 }
 
-impl Ord for HyperThreadContextAttributes
+impl Ord for ApplicationContextAttributes
 {
 	#[inline(always)]
 	fn cmp(&self, other: &Self) -> Ordering
@@ -37,7 +37,7 @@ impl Ord for HyperThreadContextAttributes
 	}
 }
 
-impl Hash for HyperThreadContextAttributes
+impl Hash for ApplicationContextAttributes
 {
 	#[inline(always)]
 	fn hash<H: Hasher>(&self, state: &mut H)
@@ -47,7 +47,7 @@ impl Hash for HyperThreadContextAttributes
 	}
 }
 
-impl HyperThreadContextAttributes
+impl ApplicationContextAttributes
 {
 	/// Worker thread mode; closely related to the value in the `requested_features` of the application context configuration.
 	/// NOTE: SerializedOneThreadAtATime is NEVER returned by ucx currently.
@@ -71,7 +71,7 @@ impl HyperThreadContextAttributes
 		attributes.field_mask = (ucp_context_attr_field::REQUEST_SIZE | ucp_context_attr_field::THREAD_MODE).0 as u64;
 		
 		panic_on_error!(ucp_context_query, handle, &mut attributes);
-		HyperThreadContextAttributes(attributes)
+		ApplicationContextAttributes(attributes)
 	}
 	
 	#[inline(always)]

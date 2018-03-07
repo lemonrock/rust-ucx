@@ -11,12 +11,13 @@ extern crate serde;
 extern crate ucx_sys;
 
 
-use self::configuration::*;
+use self::attributes::*;
+use self::buffers::*;
 use self::configuration::non_blocking_request_memory_customization::*;
 use self::configuration::values::*;
+use self::cpu_set::*;
+use self::errors::*;
 use self::print_information::PrintInformation;
-use self::attributes::*;
-use self::ucx_services::ZeroBasedHyperThreadIndex;
 use ::libc::c_void;
 use ::libc::FILE;
 use ::std::fmt;
@@ -24,11 +25,23 @@ use ::std::fmt::Debug;
 use ::std::fmt::Formatter;
 use ::std::marker::PhantomData;
 use ::std::mem::uninitialized;
+use ::std::os::unix::io::RawFd;
 use ::std::ptr::NonNull;
 use ::std::ptr::null_mut;
 use ::std::rc::Rc;
-use ::std::sync::Arc;
 use ::ucx_sys::*;
+
+
+/// Attributes of some UCX objects.
+pub mod attributes;
+
+
+/// Traits to help with buffers.
+pub mod buffers;
+
+
+/// Wrapper around CPU set.
+pub mod cpu_set;
 
 
 /// Configuration.
@@ -43,18 +56,13 @@ pub mod errors;
 pub mod print_information;
 
 
-/// Attributes of some UCX objects.
-pub mod attributes;
-
-
-/// Wrapper around UCX services (ucs) component of UCX.
-pub mod ucx_services;
-
-
-include!("Application.rs");
-include!("HyperThreadContext.rs");
-include!("HyperThreadContextHandleDropSafety.rs");
+include!("ApplicationContext.rs");
+include!("ApplicationContextHandleDropSafety.rs");
+include!("MemoryAddress.rs");
 include!("MemoryAdvice.rs");
 include!("OurRemotelyAccessibleMemory.rs");
 include!("OurRemotelyAccessibleMemoryHandleDropSafety.rs");
 include!("OurRemotelyAccessibleMemoryKey.rs");
+include!("OurRemotelyAccessibleWorkerAddress.rs");
+include!("Worker.rs");
+include!("WorkerHandleDropSafety.rs");

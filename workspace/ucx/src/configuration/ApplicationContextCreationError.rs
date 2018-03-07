@@ -4,9 +4,9 @@
 
 quick_error!
 {
-	/// Errors when creating application context for a hyper thread.
+	/// Errors when creating an application context.
 	#[derive(Debug, Clone, PartialEq, Eq)]
-	pub enum HyperThreadContextCreationError
+	pub enum ApplicationContextCreationError
 	{
 		/// Invalid status.
 		InvalidStatus(cause: ::errors::InvalidStatusError)
@@ -14,6 +14,15 @@ quick_error!
 			cause(cause)
 			description(cause.description())
 			display("Status was invalid: {}", cause)
+			from()
+		}
+		
+		/// Could not configure UCX.
+		CouldNotConfigureUcx(cause: CouldNotConfigureUcxError)
+		{
+			cause(cause)
+			description(cause.description())
+			display("Could not configure UCX: {}", cause)
 			from()
 		}
 		

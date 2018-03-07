@@ -6,17 +6,14 @@ use self::configuration_settings::*;
 use self::non_blocking_request_memory_customization::*;
 use self::values::*;
 use super::*;
-use super::errors::*;
 use super::print_information::PrintInformation;
 use ::libc::FILE;
 use ::std::ffi::CString;
 use ::std::fmt;
 use ::std::fmt::Debug;
 use ::std::fmt::Formatter;
-use ::std::marker::PhantomData;
 use ::std::mem::uninitialized;
 use ::std::ptr::null;
-use ::std::sync::Arc;
 
 /// Domain.
 pub mod values;
@@ -30,7 +27,7 @@ pub mod configuration_settings;
 pub mod non_blocking_request_memory_customization;
 
 
-include!("HyperThreadContextCreationError.rs");
+include!("ApplicationContextCreationError.rs");
 include!("ConfigurationModifyError.rs");
 include!("ConfigurationParseError.rs");
 include!("CouldNotConfigureUcxError.rs");

@@ -14,8 +14,8 @@ use ::std::ptr::NonNull;
 use ::ucx_sys::*;
 
 
+include!("ApplicationContextAttributes.rs");
 include!("HasAttributes.rs");
-include!("HyperThreadContextAttributes.rs");
 include!("OurRemotelyAccessibleMemoryAttributes.rs");
 include!("WorkerAttributes.rs");
 include!("WorkerThreadMode.rs");

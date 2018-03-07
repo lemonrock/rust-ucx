@@ -11,7 +11,7 @@ pub enum MemoryAdvice
 	/// No special treatment.
 	Normal,
 	
-	/// Can be used on memory originally mapped using `HyperThreadContext.register_memory_as_remotely_accessible(non_blocking = true)` to speed up memory mapping and to avoid page faults when the memory is accessed for the first time.
+	/// Can be used on memory originally mapped using `ApplicationContext.register_memory_as_remotely_accessible(non_blocking = true)` to speed up memory mapping and to avoid page faults when the memory is accessed for the first time.
 	WillNeed,
 }
 

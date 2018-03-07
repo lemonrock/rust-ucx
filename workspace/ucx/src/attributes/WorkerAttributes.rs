@@ -57,7 +57,7 @@ impl WorkerAttributes
 	}
 	
 	#[inline(always)]
-	pub(crate) fn query(&self, handle: ucp_worker_h) -> Self
+	pub(crate) fn query(handle: ucp_worker_h) -> Self
 	{
 		let mut attributes: ucp_worker_attr_t = unsafe { uninitialized() };
 		attributes.field_mask = ucp_worker_attr_field::THREAD_MODE.0 as u64;

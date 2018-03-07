@@ -8,7 +8,7 @@ pub struct OurRemotelyAccessibleMemory
 {
 	handle: ucp_mem_h,
 	our_remotely_accessible_memory_handle_drop_safety: Rc<OurRemotelyAccessibleMemoryHandleDropSafety>,
-	hyper_thread_context_handle: ucp_context_h,
+	application_context_handle: ucp_context_h,
 }
 
 impl HasAttributes for OurRemotelyAccessibleMemory
@@ -47,7 +47,7 @@ impl OurRemotelyAccessibleMemory
 			advice: memory_advice.to_ucp_mem_advice_t(),
 		};
 		
-		panic_on_error!(ucp_mem_advise, self.hyper_thread_context_handle, self.handle, &mut parameters);
+		panic_on_error!(ucp_mem_advise, self.application_context_handle, self.handle, &mut parameters);
 	}
 	
 	/// This creates a `OurRemotelyAccessibleMemoryKey`, which is an opaque piece of data that needs to be sent to other machines so that they can uniquely connect to our remotely accessible memory.
@@ -56,7 +56,7 @@ impl OurRemotelyAccessibleMemory
 	{
 		let mut address = unsafe { uninitialized() };
 		let mut length = unsafe { uninitialized() };
-		panic_on_error!(ucp_rkey_pack, self.hyper_thread_context_handle, self.handle, &mut address, &mut length);
+		panic_on_error!(ucp_rkey_pack, self.application_context_handle, self.handle, &mut address, &mut length);
 		
 		debug_assert!(!address.is_null(), "address is null");
 		debug_assert_ne!(length, 0, "length is zero");

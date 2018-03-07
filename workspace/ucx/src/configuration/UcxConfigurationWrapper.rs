@@ -123,11 +123,4 @@ impl UcxConfigurationWrapper
 			UnknownErrorCode(_) | OperationInProgress => panic!("Status should not be possible for 'ucp_config_modify'"),
 		}
 	}
-	
-	/// Creates a per-hyper thread application context.
-	#[inline(always)]
-	pub fn per_hyper_thread_application_context<MemoryCustomization: NonBlockingRequestMemoryCustomization>(&self, application_context_configuration: &ApplicationContextConfiguration) -> Result<HyperThreadContext, HyperThreadContextCreationError>
-	{
-		application_context_configuration.per_hyper_thread::<MemoryCustomization>(self)
-	}
 }

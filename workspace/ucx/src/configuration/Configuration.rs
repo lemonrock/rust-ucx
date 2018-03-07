@@ -25,7 +25,7 @@ pub struct Configuration
 	pub prefer_spin_lock_over_mutex_when_multi_threading: PreferSpinLockOverMutexWhenMultiThreading,
 	pub threshold_for_using_tag_matching_offload_capabilities: ThresholdForUsingTagMatchingOffloadCapabilities,
 
-	pub hyper_threads_application_contexts: Arc<HyperThreadsApplicationContextConfigurations>,
+	pub application_context: ApplicationContextConfiguration,
 }
 
 /*
@@ -92,29 +92,19 @@ impl Default for Configuration
 			prefer_spin_lock_over_mutex_when_multi_threading: Default::default(),
 			threshold_for_using_tag_matching_offload_capabilities: Default::default(),
 			
-			hyper_threads_application_contexts: Default::default(),
+			application_context: Default::default(),
 		}
 	}
 }
 
 impl Configuration
 {
-	/// Creates a new application.
+	/// Creates a new application context.
 	#[inline(always)]
-	pub fn new_application<MemoryCustomization: NonBlockingRequestMemoryCustomization>(&self) -> Result<Arc<Application<MemoryCustomization>>, CouldNotConfigureUcxError>
+	pub fn new_application_context<MemoryCustomization: NonBlockingRequestMemoryCustomization>(self) -> Result<ApplicationContext<MemoryCustomization>, ApplicationContextCreationError>
 	{
-		Ok
-		(
-			Arc::new
-			(
-				Application
-				{
-					ucx_configuration_wrapper: self.ucx_configuration_wrapper()?,
-					hyper_threads_application_contexts: self.hyper_threads_application_contexts.clone(),
-					phantom_data: PhantomData,
-				}
-			)
-		)
+		let ucx_configuration_wrapper = self.ucx_configuration_wrapper()?;
+		self.application_context.new(ucx_configuration_wrapper)
 	}
 	
 	#[inline(always)]

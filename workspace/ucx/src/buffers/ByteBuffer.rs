@@ -2,16 +2,21 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-// We use this rather than force the public API to deal with `Rc<OurRemotelyAccessibleMemory>`.
-// This also has the benefit of eliminating a pointer dereference to get to `handle: ucp_mem_h`, as we do not need to got through `Rc::deref()`.
-#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
-struct OurRemotelyAccessibleMemoryHandleDropSafety(ucp_mem_h, Rc<ApplicationContextHandleDropSafety>);
-
-impl Drop for OurRemotelyAccessibleMemoryHandleDropSafety
+/// This implements a buffer of bytes over raw memory.
+pub trait ByteBuffer
 {
+	/// Start address of this buffer.
 	#[inline(always)]
-	fn drop(&mut self)
+	fn address(&self) -> NonNull<u8>;
+	
+	/// Length of this buffer.
+	#[inline(always)]
+	fn length(&self) -> usize;
+	
+	/// As a slice.
+	#[inline(always)]
+	fn as_slice<'a>(&'a self) -> &'a [u8]
 	{
-		unsafe { ucp_mem_unmap((self.1).0, self.0) };
+		unsafe { from_raw_parts(self.address().as_ptr() as *const _, self.length()) }
 	}
 }

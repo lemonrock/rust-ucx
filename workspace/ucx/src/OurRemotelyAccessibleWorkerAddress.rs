@@ -2,27 +2,26 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// A `OurRemotelyAccessibleMemoryKey` is an opaque piece of data that needs to be sent to other machines so that they can uniquely connect to our remotely accessible memory.
-///
-/// In Rust terms, it's a bit like a `Vec<u8>`.
+/// This address can be passed to remote instances of the UCP library in order to to connect to this worker.
 #[derive(Debug)]
-pub struct OurRemotelyAccessibleMemoryKey
+pub struct OurRemotelyAccessibleWorkerAddress
 {
 	address: NonNull<u8>,
 	length: usize,
-	our_remotely_accessible_memory_handle_drop_safety: Rc<OurRemotelyAccessibleMemoryHandleDropSafety>
+	worker_handle: ucp_worker_h,
+	worker_handle_drop_safety: Rc<WorkerHandleDropSafety>,
 }
 
-impl Drop for OurRemotelyAccessibleMemoryKey
+impl Drop for OurRemotelyAccessibleWorkerAddress
 {
 	#[inline(always)]
 	fn drop(&mut self)
 	{
-		unsafe { ucp_rkey_buffer_release(self.address.as_ptr() as *mut c_void) }
+		unsafe { ucp_worker_release_address(self.worker_handle, self.address.as_ptr() as *mut _) }
 	}
 }
 
-impl ByteBuffer for OurRemotelyAccessibleMemoryKey
+impl ByteBuffer for OurRemotelyAccessibleWorkerAddress
 {
 	#[inline(always)]
 	fn address(&self) -> NonNull<u8>

@@ -37,11 +37,11 @@ impl Default for ApplicationContextConfiguration
 
 impl ApplicationContextConfiguration
 {
-	/// Create per hyper-thread.
+	/// Creates a new application context.
 	#[inline(always)]
-	pub fn per_hyper_thread<MemoryCustomization: NonBlockingRequestMemoryCustomization>(&self, ucx_configuration_wrapper: &UcxConfigurationWrapper) -> Result<HyperThreadContext, HyperThreadContextCreationError>
+	pub fn new<MemoryCustomization: NonBlockingRequestMemoryCustomization>(self, ucx_configuration_wrapper: UcxConfigurationWrapper) -> Result<ApplicationContext<MemoryCustomization>, ApplicationContextCreationError>
 	{
-		let parameters = self.parameters_for_hyper_thread::<MemoryCustomization>();
+		let parameters = self.parameters_for_new_application_context::<MemoryCustomization>();
 		let mut handle = unsafe { uninitialized() };
 		let status = unsafe { ucp_init_version(UCP_API_MAJOR, UCP_API_MINOR, &parameters, ucx_configuration_wrapper.handle, &mut handle) };
 		
@@ -49,16 +49,18 @@ impl ApplicationContextConfiguration
 		{
 			IsOk => Ok
 			(
-				HyperThreadContext
+				ApplicationContext
 				{
 					handle,
-					hyper_thread_context_handle_drop_safety: Rc::new(HyperThreadContextHandleDropSafety(handle)),
+					application_context_handle_drop_safety: Rc::new(ApplicationContextHandleDropSafety(handle)),
+					application_context_configuration: self,
+					phantom_data: PhantomData,
 				}
 			),
 			
 			Error(error_code) => match error_code
 			{
-				FunctionNotImplemented | UnsupportedOperation => Err(HyperThreadContextCreationError::FunctionalityNotImplementedOrSupported),
+				FunctionNotImplemented | UnsupportedOperation => Err(ApplicationContextCreationError::FunctionalityNotImplementedOrSupported),
 				
 				OutOfMemory => panic!("Out of memory"),
 				
@@ -70,7 +72,7 @@ impl ApplicationContextConfiguration
 	}
 	
 	#[inline(always)]
-	fn parameters_for_hyper_thread<MemoryCustomization: NonBlockingRequestMemoryCustomization>(&self) -> ucp_params_t
+	fn parameters_for_new_application_context<MemoryCustomization: NonBlockingRequestMemoryCustomization>(&self) -> ucp_params_t
 	{
 		const CBoolTrue: i32 = 1;
 		
@@ -104,5 +106,11 @@ impl ApplicationContextConfiguration
 			
 			estimated_num_eps: self.estimated_number_of_end_points,
 		}
+	}
+	
+	#[inline(always)]
+	pub(crate) fn wake_up_events(&self) -> ucp_wakeup_event_types
+	{
+		self.requested_features.wake_up_events(self.tag_sender_mask)
 	}
 }

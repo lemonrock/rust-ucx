@@ -32,6 +32,10 @@ pub trait ucs_status_tExt
 	#[inline(always)]
 	fn is_in_progress(self) -> bool;
 	
+	/// Is this just busy?
+	#[inline(always)]
+	fn is_busy(self) -> bool;
+	
 	/// To a status pointer
 	#[inline(always)]
 	fn to_pointer(self) -> ucs_status_ptr_t;
@@ -75,6 +79,12 @@ impl ucs_status_tExt for ucs_status_t
 	fn is_in_progress(self) -> bool
 	{
 		self == UCS_INPROGRESS
+	}
+	
+	#[inline(always)]
+	fn is_busy(self) -> bool
+	{
+		self == UCS_ERR_BUSY
 	}
 	
 	#[inline(always)]
