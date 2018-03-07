@@ -6,9 +6,15 @@ extern crate indexmap;
 extern crate libc;
 extern crate libc_extra;
 #[macro_use] extern crate quick_error;
+extern crate ring;
 extern crate serde;
 #[macro_use] extern crate serde_derive;
 extern crate ucx_sys;
+
+
+include!("c_str.rs");
+include!("panic_on_error.rs");
+include!("panic_on_error_with_clean_up.rs");
 
 
 use self::attributes::*;
@@ -20,6 +26,7 @@ use self::errors::*;
 use self::print_information::PrintInformation;
 use ::libc::c_void;
 use ::libc::FILE;
+use ::ring::aead::SealingKey;
 use ::std::fmt;
 use ::std::fmt::Debug;
 use ::std::fmt::Formatter;

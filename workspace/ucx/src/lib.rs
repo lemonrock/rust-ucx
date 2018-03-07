@@ -13,7 +13,4 @@
 //!
 
 
-include!("c_str.rs");
-include!("panic_on_error.rs");
-include!("panic_on_error_with_clean_up.rs");
-include!("lib.linux.rs");
+#[cfg(target_os = "linux")] include!("lib.linux.rs");

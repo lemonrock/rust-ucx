@@ -3,12 +3,12 @@
 
 
 /// An application context.
-#[derive(Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct ApplicationContext<MemoryCustomization = NoNonBlockingRequestMemoryCustomization>
 {
 	handle: ucp_context_h,
 	application_context_handle_drop_safety: Rc<ApplicationContextHandleDropSafety>,
 	application_context_configuration: ApplicationContextConfiguration,
+	sealing_key: SealingKey,
 	phantom_data: PhantomData<MemoryCustomization>,
 }
 

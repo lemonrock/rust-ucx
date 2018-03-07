@@ -2,7 +2,7 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use self::configuration_settings::*;
+use self::ucx::*;
 use self::non_blocking_request_memory_customization::*;
 use self::values::*;
 use super::*;
@@ -20,7 +20,7 @@ pub mod values;
 
 
 /// Configuration settings.
-pub mod configuration_settings;
+pub mod ucx;
 
 
 /// Non-blocking request memory customization.

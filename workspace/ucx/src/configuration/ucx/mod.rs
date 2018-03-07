@@ -2,6 +2,8 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+use super::UcxConfigurationWrapper;
+use super::CouldNotConfigureUcxError;
 use super::values::DeviceName;
 use super::values::DeviceName::all as AllDevices;
 use super::values::TransportLayerCollectionName;
@@ -23,3 +25,4 @@ use ::std::ffi::CString;
 include!("ConfigurationSetting.rs");
 include!("ConfigurationValueConverter.rs");
 include!("ConfigurationValueJoin.rs");
+include!("UcxSettings.rs");

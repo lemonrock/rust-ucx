@@ -43,6 +43,26 @@ impl HasAttributes for Worker
 
 impl Worker
 {
+	/*
+		Creating end points.
+		
+		- We need to be able to send, out-of-band, `OurRemotelyAccessibleWorkerAddress` and `OurRemotelyAccessibleMemoryAddress` objects.
+		- We need to be able to have an up-to-date view of all of these in our cluster.
+		- A cluster should have a name.
+		- A cluster runs on a fabric.
+		- We will be sharing the fabric with others, potentially.
+		
+		- Idea:-
+			- What we want is effectively a LVQ or etcd like configuration
+			- Multicast DNS or Broadcast DNS (we just send every second); uses epoll or can be blocking with a time out.
+			- Each 'node' (and there may be one per thread) sends messages
+			- Messages are symmetrically encrypted with a key or uses a modern libsodium packet; they may have a key identifier to make life easier.
+			- Messages have a namespace - essentially, our cluster name.
+			- There is a dedicated Multicast DNS thread which maintains an up-to-date map
+			- We should consider a logical => physical mapping for address and memory
+			
+	*/
+	
 	/// This routine returns the address of the worker object.
 	/// This address can be passed to remote instances of the UCP library in order to to connect to this worker.
 	#[inline(always)]
