@@ -2,7 +2,6 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use ::ucx_sys::*;
 use ::std::cmp::Eq;
 use ::std::cmp::Ord;
 use ::std::cmp::Ordering;
@@ -11,8 +10,11 @@ use ::std::cmp::PartialOrd;
 use ::std::hash::Hash;
 use ::std::hash::Hasher;
 use ::std::mem::uninitialized;
+use ::ucx_sys::*;
 
 
 include!("HasAttributes.rs");
 include!("HyperThreadContextAttributes.rs");
+include!("MappedMemoryAttributes.rs");
+include!("WorkerAttributes.rs");
 include!("WorkerThreadMode.rs");
