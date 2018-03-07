@@ -3,6 +3,7 @@
 
 
 include!("uses/ucm_event_type_t.rs");
+include!("uses/ucm_mem_type_t.rs");
 include!("uses/ucp_mem_advice_t.rs");
 include!("uses/ucp_wakeup_event_t.rs");
 include!("uses/ucs_ternary_value_t.rs");

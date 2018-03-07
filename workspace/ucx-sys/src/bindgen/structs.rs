@@ -13,6 +13,7 @@ include!("structs/ucm_event__bindgen_ty_4.rs");
 include!("structs/ucm_event__bindgen_ty_5.rs");
 include!("structs/ucm_event__bindgen_ty_6.rs");
 include!("structs/ucm_event__bindgen_ty_7.rs");
+include!("structs/ucm_event__bindgen_ty_8.rs");
 include!("structs/ucm_event_type.rs");
 include!("structs/ucp_address.rs");
 include!("structs/ucp_config.rs");

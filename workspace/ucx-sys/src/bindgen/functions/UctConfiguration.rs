@@ -6,6 +6,5 @@ extern "C"
 {
 	#[link_name = "\u{1}_uct_config_get"] pub fn uct_config_get(config: *mut c_void, name: *const c_char, value: *mut c_char, max: usize) -> ucs_status_t;
 	#[link_name = "\u{1}_uct_config_modify"] pub fn uct_config_modify(config: *mut c_void, name: *const c_char, value: *const c_char) -> ucs_status_t;
-	#[link_name = "\u{1}_uct_config_print"] pub fn uct_config_print(config: *const c_void, stream: *mut FILE, title: *const c_char, print_flags: ucs_config_print_flags_t);
 	#[link_name = "\u{1}_uct_config_release"] pub fn uct_config_release(config: *mut c_void);
 }

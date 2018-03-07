@@ -51,6 +51,8 @@ impl BitAndAssign for ucm_event_type
 impl ucm_event_type
 {
 	pub const FLAG_NO_INSTALL: Self = ucm_event_type(16777216);
+	pub const MEM_TYPE_ALLOC: Self = ucm_event_type(1048576);
+	pub const MEM_TYPE_FREE: Self = ucm_event_type(2097152);
 	pub const MMAP: Self = ucm_event_type(1);
 	pub const MREMAP: Self = ucm_event_type(4);
 	pub const MUNMAP: Self = ucm_event_type(2);

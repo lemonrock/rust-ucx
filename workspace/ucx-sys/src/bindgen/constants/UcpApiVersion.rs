@@ -3,4 +3,4 @@
 
 
 pub const UCP_API_MAJOR: u32 = 1;
-pub const UCP_API_MINOR: u32 = 3;
+pub const UCP_API_MINOR: u32 = 4;

@@ -3,21 +3,14 @@
 
 
 #[repr(C)]
-pub struct ucm_event
+pub struct ucm_event__bindgen_ty_8
 {
-	pub mmap: __BindgenUnionField<ucm_event__bindgen_ty_1>,
-	pub munmap: __BindgenUnionField<ucm_event__bindgen_ty_2>,
-	pub mremap: __BindgenUnionField<ucm_event__bindgen_ty_3>,
-	pub shmat: __BindgenUnionField<ucm_event__bindgen_ty_4>,
-	pub shmdt: __BindgenUnionField<ucm_event__bindgen_ty_5>,
-	pub sbrk: __BindgenUnionField<ucm_event__bindgen_ty_6>,
-	pub vm_mapped: __BindgenUnionField<ucm_event__bindgen_ty_7>,
-	pub vm_unmapped: __BindgenUnionField<ucm_event__bindgen_ty_7>,
-	pub mem_type: __BindgenUnionField<ucm_event__bindgen_ty_8>,
-	pub bindgen_union_field: [u64; 6usize],
+	pub address: *mut c_void,
+	pub size: usize,
+	pub mem_type: ucm_mem_type_t,
 }
 
-impl Default for ucm_event
+impl Default for ucm_event__bindgen_ty_8
 {
 	#[inline(always)]
 	fn default() -> Self
@@ -26,11 +19,11 @@ impl Default for ucm_event
 	}
 }
 
-impl Debug for ucm_event
+impl Debug for ucm_event__bindgen_ty_8
 {
 	#[inline(always)]
 	fn fmt(&self, f: &mut Formatter) -> Result
 	{
-		write!(f, "ucm_event {{ union }}")
+		write!(f, "ucm_event__bindgen_ty_8 {{ address: {:?}, mem_type: {:?} }}", self.address, self.mem_type)
 	}
 }

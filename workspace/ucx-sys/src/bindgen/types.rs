@@ -4,6 +4,7 @@
 
 include!("types/ucm_event_callback_t.rs");
 include!("types/ucm_event_t.rs");
+include!("types/ucm_mem_type.rs");
 include!("types/ucp_address_t.rs");
 include!("types/ucp_atomic_post_op_t.rs");
 include!("types/ucp_config_t.rs");
@@ -31,6 +32,7 @@ include!("types/ucp_request_init_callback_t.rs");
 include!("types/ucp_rkey_h.rs");
 include!("types/ucp_send_callback_t.rs");
 include!("types/ucp_stream_recv_callback_t.rs");
+include!("types/ucp_stream_recv_flags_t.rs");
 include!("types/ucp_tag_message_h.rs");
 include!("types/ucp_tag_recv_callback_t.rs");
 include!("types/ucp_tag_recv_info_t.rs");

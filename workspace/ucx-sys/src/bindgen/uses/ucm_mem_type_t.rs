@@ -2,5 +2,4 @@
 // Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-pub const UCM_MEM_TYPE_CUDA: ucm_mem_type = 1;
-pub const UCP_STREAM_RECV_FLAG_WAITALL: ucp_stream_recv_flags_t = 1;
+pub use self::ucm_mem_type as ucm_mem_type_t;
