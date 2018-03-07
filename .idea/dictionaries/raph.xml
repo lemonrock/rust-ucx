@@ -1,6 +1,7 @@
 <component name="ProjectDictionaryState">
   <dictionary name="raph">
     <words>
+      <w>aead</w>
       <w>alloca</w>
       <w>appendv</w>
       <w>bcopy</w>
@@ -74,6 +75,7 @@
       <w>msync</w>
       <w>musl</w>
       <w>nbyte</w>
+      <w>nonces</w>
       <w>nonoverlapping</w>
       <w>nprocs</w>
       <w>nvml</w>
