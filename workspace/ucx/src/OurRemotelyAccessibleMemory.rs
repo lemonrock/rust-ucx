@@ -3,6 +3,7 @@
 
 
 /// Remotely accessible memory is only needed for RMA and AMO32/AMO64 (atomic operations).
+/// It is *not* needed for sending or receiving tagged messages.
 #[derive(Debug)]
 pub struct OurRemotelyAccessibleMemory
 {
@@ -50,9 +51,9 @@ impl OurRemotelyAccessibleMemory
 		panic_on_error!(ucp_mem_advise, self.application_context_handle, self.handle, &mut parameters);
 	}
 	
-	/// This creates a `OurRemotelyAccessibleMemoryKey`, which is an opaque piece of data that needs to be sent to other machines so that they can uniquely connect to our remotely accessible memory.
+	/// This creates a `OurRemotelyAccessibleMemoryAddress`, which is an opaque piece of data that needs to be sent to other machines so that they can uniquely connect to our remotely accessible memory.
 	#[inline(always)]
-	pub fn pack_remote_memory_access_key(&self) -> OurRemotelyAccessibleMemoryKey
+	pub fn our_remotely_accessible_memory_access_address(&self) -> OurRemotelyAccessibleMemoryAddress
 	{
 		let mut address = unsafe { uninitialized() };
 		let mut length = unsafe { uninitialized() };
@@ -61,7 +62,7 @@ impl OurRemotelyAccessibleMemory
 		debug_assert!(!address.is_null(), "address is null");
 		debug_assert_ne!(length, 0, "length is zero");
 		
-		OurRemotelyAccessibleMemoryKey
+		OurRemotelyAccessibleMemoryAddress
 		{
 			address: unsafe { NonNull::new_unchecked(address as *mut u8) },
 			length,

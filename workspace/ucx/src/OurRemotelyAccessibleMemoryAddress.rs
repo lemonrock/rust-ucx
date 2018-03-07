@@ -6,14 +6,14 @@
 ///
 /// In Rust terms, it's a bit like a `Vec<u8>`.
 #[derive(Debug)]
-pub struct OurRemotelyAccessibleMemoryKey
+pub struct OurRemotelyAccessibleMemoryAddress
 {
 	address: NonNull<u8>,
 	length: usize,
 	our_remotely_accessible_memory_handle_drop_safety: Rc<OurRemotelyAccessibleMemoryHandleDropSafety>
 }
 
-impl Drop for OurRemotelyAccessibleMemoryKey
+impl Drop for OurRemotelyAccessibleMemoryAddress
 {
 	#[inline(always)]
 	fn drop(&mut self)
@@ -22,7 +22,7 @@ impl Drop for OurRemotelyAccessibleMemoryKey
 	}
 }
 
-impl ByteBuffer for OurRemotelyAccessibleMemoryKey
+impl ByteBuffer for OurRemotelyAccessibleMemoryAddress
 {
 	#[inline(always)]
 	fn address(&self) -> NonNull<u8>

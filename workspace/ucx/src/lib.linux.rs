@@ -62,7 +62,7 @@ include!("MemoryAddress.rs");
 include!("MemoryAdvice.rs");
 include!("OurRemotelyAccessibleMemory.rs");
 include!("OurRemotelyAccessibleMemoryHandleDropSafety.rs");
-include!("OurRemotelyAccessibleMemoryKey.rs");
+include!("OurRemotelyAccessibleMemoryAddress.rs");
 include!("OurRemotelyAccessibleWorkerAddress.rs");
 include!("Worker.rs");
 include!("WorkerHandleDropSafety.rs");
