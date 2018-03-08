@@ -2,20 +2,16 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::Worker;
-use self::ucs_status_t::*;
-use ::std::ffi::CStr;
-use ::std::mem::transmute;
-use ::std::mem::uninitialized;
-use ::std::ptr::NonNull;
-use ::ucx_sys::*;
+/// A new type to ease access to the underlying end point (which is provided as a combination of handle and user data).
+#[inline(always)]
+pub struct EndPointReadyToConsumeStreamingData(ucp_stream_poll_ep_t);
 
-
-include!("EndPointPeerFailureErrorHandler.rs");
-include!("ErrorCode.rs");
-include!("InvalidStatusError.rs");
-include!("NonBlockingRequest.rs");
-include!("Status.rs");
-include!("StatusOrNonBlockingRequest.rs");
-include!("ucs_status_tExt.rs");
-include!("ucs_status_ptr_tExt.rs");
+impl EndPointReadyToConsumeStreamingData
+{
+	/// Gets the end point.
+	#[inline(always)]
+	pub fn end_point<E: EndPointPeerFailureErrorHandler>(&self) -> Option<Rc<RefCell<EndPoint<E>>>>
+	{
+		EndPoint::end_point_from_user_data(self.0.user_data, self.0.ep)
+	}
+}

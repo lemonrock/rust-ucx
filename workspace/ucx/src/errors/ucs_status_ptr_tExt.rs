@@ -19,9 +19,9 @@ pub trait ucs_status_ptr_tExt
 impl ucs_status_ptr_tExt for ucs_status_ptr_t
 {
 	#[inline(always)]
-	fn parse(self) -> Result<StatusOrPointer, InvalidStatusError>
+	fn parse(self) -> Result<StatusOrNonBlockingRequest, InvalidStatusError>
 	{
-		StatusOrPointer::parse_ucs_status_ptr_t(self)
+		StatusOrNonBlockingRequest::parse_ucs_status_ptr_t(self)
 	}
 	
 	#[inline(always)]

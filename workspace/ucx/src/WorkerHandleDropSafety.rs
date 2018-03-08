@@ -5,7 +5,7 @@
 // We use this rather than force the public API to deal with `Rc<Worker>`.
 // This also has the benefit of eliminating a pointer dereference to get to `handle: ucp_worker_h`, as we do not need to got through `Rc::deref()`.
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
-struct WorkerHandleDropSafety(ucp_worker_h);
+struct WorkerHandleDropSafety(ucp_worker_h, Rc<ApplicationContextHandleDropSafety>);
 
 impl Drop for WorkerHandleDropSafety
 {

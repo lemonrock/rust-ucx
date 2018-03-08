@@ -2,20 +2,10 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::Worker;
-use self::ucs_status_t::*;
-use ::std::ffi::CStr;
-use ::std::mem::transmute;
-use ::std::mem::uninitialized;
-use ::std::ptr::NonNull;
-use ::ucx_sys::*;
-
-
-include!("EndPointPeerFailureErrorHandler.rs");
-include!("ErrorCode.rs");
-include!("InvalidStatusError.rs");
-include!("NonBlockingRequest.rs");
-include!("Status.rs");
-include!("StatusOrNonBlockingRequest.rs");
-include!("ucs_status_tExt.rs");
-include!("ucs_status_ptr_tExt.rs");
+/// Handle a remote peer failure.
+pub trait EndPointPeerFailureErrorHandler
+{
+	/// Remote peer failure.
+	#[inline(always)]
+	fn peer_failure(&mut self, error_code: ErrorCode);
+}

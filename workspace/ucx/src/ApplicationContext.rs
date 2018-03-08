@@ -110,8 +110,7 @@ impl<MemoryCustomization: NonBlockingRequestMemoryCustomization> ApplicationCont
 		Worker
 		{
 			handle,
-			worker_handle_drop_safety: Rc::new(WorkerHandleDropSafety(handle)),
-			_application_context_handle_drop_safety: self.application_context_handle_drop_safety.clone(),
+			worker_handle_drop_safety: Rc::new(WorkerHandleDropSafety(handle, self.application_context_handle_drop_safety.clone())),
 		}
 	}
 }

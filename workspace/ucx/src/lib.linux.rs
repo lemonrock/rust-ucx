@@ -5,6 +5,7 @@
 extern crate indexmap;
 extern crate libc;
 extern crate libc_extra;
+extern crate nix;
 #[macro_use] extern crate quick_error;
 extern crate ring;
 extern crate serde;
@@ -19,6 +20,7 @@ include!("panic_on_error_with_clean_up.rs");
 
 use self::attributes::*;
 use self::buffers::*;
+use self::client_server::*;
 use self::configuration::non_blocking_request_memory_customization::*;
 use self::configuration::values::*;
 use self::cpu_set::*;
@@ -26,17 +28,22 @@ use self::errors::*;
 use self::print_information::PrintInformation;
 use ::libc::c_void;
 use ::libc::FILE;
+use ::nix::sys::socket::SockAddr as NixSockAddr;
 use ::ring::aead::OpeningKey;
 use ::ring::aead::SealingKey;
+use ::std::cell::RefCell;
 use ::std::fmt;
 use ::std::fmt::Debug;
 use ::std::fmt::Formatter;
 use ::std::marker::PhantomData;
+use ::std::mem::forget;
+use ::std::mem::transmute;
 use ::std::mem::uninitialized;
 use ::std::os::unix::io::RawFd;
 use ::std::ptr::NonNull;
 use ::std::ptr::null_mut;
 use ::std::rc::Rc;
+use ::std::rc::Weak;
 use ::ucx_sys::*;
 
 
@@ -46,6 +53,10 @@ pub mod attributes;
 
 /// Traits to help with buffers.
 pub mod buffers;
+
+
+/// Client server model of working.
+pub mod client_server;
 
 
 /// Wrapper around CPU set.
@@ -66,8 +77,12 @@ pub mod print_information;
 
 include!("ApplicationContext.rs");
 include!("ApplicationContextHandleDropSafety.rs");
+include!("EndPoint.rs");
+include!("EndPointReadyToConsumeStreamingData.rs");
 include!("MemoryAddress.rs");
 include!("MemoryAdvice.rs");
+include!("TheirRemoteAddress.rs");
+include!("TheirRemotelyAccessibleWorkerAddress.rs");
 include!("OurRemotelyAccessibleMemory.rs");
 include!("OurRemotelyAccessibleMemoryHandleDropSafety.rs");
 include!("OurRemotelyAccessibleMemoryAddress.rs");

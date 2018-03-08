@@ -10,6 +10,10 @@ pub trait ucs_status_tExt
 	#[inline(always)]
 	fn parse(self) -> Result<Status, InvalidStatusError>;
 	
+	/// A function to parse a status, panicking if it is not an `ErrorCode`.
+	#[inline(always)]
+	fn error_code_or_panic(self) -> ErrorCode;
+	
 	/// A function equivalent to the ucs macro `UCS_IS_LINK_ERROR`.
 	#[allow(non_snake_case)]
 	#[inline(always)]
@@ -47,6 +51,21 @@ impl ucs_status_tExt for ucs_status_t
 	fn parse(self) -> Result<Status, InvalidStatusError>
 	{
 		Status::parse_ucs_status_t(self)
+	}
+	
+	#[inline(always)]
+	fn error_code_or_panic(self) -> ErrorCode
+	{
+		let status = self.parse().expect("Could not parse status");
+		
+		use self::Status::*;
+		
+		match status
+		{
+			Error(error_code) => error_code,
+			
+			_ => panic!("Status should not be '{:?}'", status),
+		}
 	}
 	
 	#[inline(always)]

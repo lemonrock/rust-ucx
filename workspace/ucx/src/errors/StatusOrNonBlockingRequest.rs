@@ -4,25 +4,25 @@
 
 /// A more sensible type than `ucs_status_ptr_t`.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum StatusOrPointer
+pub enum StatusOrNonBlockingRequest
 {
 	/// Status.
 	Status(Status),
 	
 	/// Pointer.
-	Pointer(*mut u8),
+	NonBlockingRequest(NonBlockingRequest),
 }
 
-impl Default for StatusOrPointer
+impl Default for StatusOrNonBlockingRequest
 {
 	#[inline(always)]
 	fn default() -> Self
 	{
-		StatusOrPointer::Status(Status::IsOk)
+		StatusOrNonBlockingRequest::Status(Status::IsOk)
 	}
 }
 
-impl StatusOrPointer
+impl StatusOrNonBlockingRequest
 {
 	/// Parses a status into something useful.
 	/// Returns an error if the status is invalid in some way.
@@ -32,8 +32,8 @@ impl StatusOrPointer
 		let as_isize = status_or_status_pointer as isize;
 		match as_isize
 		{
-			-100 ... 1 => Ok(StatusOrPointer::Status(Status::parse_ucs_status_t(unsafe { transmute(as_isize as i8) })?)),
-			_ => Ok(StatusOrPointer::Pointer(as_isize as *mut u8))
+			-100 ... 1 => Ok(StatusOrNonBlockingRequest::Status(Status::parse_ucs_status_t(unsafe { transmute(as_isize as i8) })?)),
+			_ => Ok(StatusOrNonBlockingRequest::NonBlockingRequest(NonBlockingRequest(unsafe { NonNull::new_unchecked(as_isize as *mut u8) })))
 		}
 	}
 }
