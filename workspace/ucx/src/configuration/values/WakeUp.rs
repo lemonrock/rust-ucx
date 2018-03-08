@@ -7,13 +7,20 @@
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WakeUp
 {
-	/// Wake up on receive, and if using a tag sender mask, on tag transmit.
+	/// Wake up on any transmit event (tags, RMA, or AMO32/AMO64).
 	pub wake_up_on_transmit: bool,
 	
-	/// Wake up on receive, and if using a tag sender mask, on tag receive.
+	/// If using a tag sender mask, wake up on tag transmit (send).
+	pub wake_up_on_tag_transmit: bool,
+	
+	/// Wake up on any receive event (tags, RMA, or AMO32/AMO64).
 	pub wake_up_on_receive: bool,
+	
+	/// If using a tag sender mask, wake up on tag receive.
+	pub wake_up_on_tag_receive: bool,
 
-	/// Edge polling?
+	/// Use edge-triggered wakeup.
+	/// The event file descriptor will be signaled only for new events, rather than existing ones.
 	pub edge: bool,
 }
 
@@ -25,7 +32,9 @@ impl Default for WakeUp
 		Self
 		{
 			wake_up_on_transmit: true,
+			wake_up_on_tag_transmit: true,
 			wake_up_on_receive: true,
+			wake_up_on_tag_receive: true,
 			edge: false,
 		}
 	}
@@ -39,19 +48,21 @@ impl WakeUp
 		if self.wake_up_on_transmit
 		{
 			flags |= ucp_wakeup_event_types::TX;
-			if tag_sender_mask.is_some()
-			{
-				flags |= ucp_wakeup_event_types::TAG_SEND
-			}
+		}
+		
+		if self.wake_up_on_tag_transmit && tag_sender_mask.is_some()
+		{
+			flags |= ucp_wakeup_event_types::TAG_SEND
 		}
 		
 		if self.wake_up_on_receive
 		{
 			flags |= ucp_wakeup_event_types::RX;
-			if tag_sender_mask.is_some()
-			{
-				flags |= ucp_wakeup_event_types::TAG_RECV
-			}
+		}
+		
+		if self.wake_up_on_tag_receive && tag_sender_mask.is_some()
+		{
+			flags |= ucp_wakeup_event_types::TAG_RECV
 		}
 		
 		if self.edge

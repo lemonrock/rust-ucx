@@ -26,3 +26,5 @@ ucp_dt_type_UCP_DATATYPE_ ucp_dt_type
 ucs_status_t_ ucs_status_t
 UCS_CALLBACKQ_FAST_ UcsCallbackQueue
 UCS_CALLBACKQ_ID_ UcsCallbackQueue
+UCM_MEM_TYPE_ ucm_mem_type
+UCP_STREAM_RECV_FLAG_ ucp_stream_recv_flags_t

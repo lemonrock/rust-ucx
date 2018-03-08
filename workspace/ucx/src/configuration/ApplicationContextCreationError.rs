@@ -18,7 +18,7 @@ quick_error!
 		}
 		
 		/// Could not configure UCX.
-		CouldNotConfigureUcx(cause: CouldNotConfigureUcxError)
+		CouldNotConfigureUcx(cause: CouldNotConfigureUcpError)
 		{
 			cause(cause)
 			description(cause.description())

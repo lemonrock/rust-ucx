@@ -8,7 +8,6 @@ include!("enums/ucp_ep_close_mode.rs");
 include!("enums/ucp_err_handling_mode_t.rs");
 include!("enums/ucp_mem_advice.rs");
 include!("enums/ucs_async_mode_t.rs");
-include!("enums/ucs_handle_error_t.rs");
 include!("enums/ucs_log_level_t.rs");
 include!("enums/ucs_stats_formats_t.rs");
 include!("enums/ucs_status_t.rs");

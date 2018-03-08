@@ -2,7 +2,21 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// A worker.
+/// A worker is an opaque object representing the communication context.
+///
+/// A worker represents an instance of a local communication resource and the progress engine associated with it.
+/// A progress engine is a construct that is responsible for asynchronous and independent progress of communication directives.
+/// A progress engine could be implement in hardware or software.
+///
+/// A worker abstracts network resources such as a host channel adapter port, network interface, or multiple resources such as
+/// multiple network interfaces or communication ports.
+/// It can also represent virtual communication resources that are defined across multiple devices.
+///
+/// Although the worker can represent multiple network resources, it is associated with a single `ApplicationContext`.
+///
+/// All communication functions require a context to perform the operation on the dedicated hardware resource(s) and an `EndPoint` to address the destination.
+///
+/// NOTE: Workers are parallel 'threading points' that an upper layer may use to optimize concurrent communications.
 pub struct Worker
 {
 	handle: ucp_worker_h,
@@ -51,6 +65,8 @@ impl Worker
 		- A cluster should have a name.
 		- A cluster runs on a fabric.
 		- We will be sharing the fabric with others, potentially.
+		
+		- Can we use tagged messages?
 		
 		- Idea:-
 			- What we want is effectively a LVQ or etcd like configuration

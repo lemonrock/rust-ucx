@@ -36,6 +36,15 @@ impl ConfigurationValueConverter for u32
 	}
 }
 
+impl ConfigurationValueConverter for usize
+{
+	#[inline(always)]
+	fn convert(&self) -> CString
+	{
+		CString::new(format!("{}", *self)).unwrap()
+	}
+}
+
 impl ConfigurationValueConverter for f64
 {
 	#[inline(always)]

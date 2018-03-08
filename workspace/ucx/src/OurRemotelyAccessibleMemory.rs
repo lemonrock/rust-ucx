@@ -3,7 +3,13 @@
 
 
 /// Remotely accessible memory is only needed for RMA and AMO32/AMO64 (atomic operations).
+///
 /// It is *not* needed for sending or receiving tagged messages.
+///
+/// The memory could be registered to one or multiple network resources that are supported by UCP, such as InfiniBand, Gemini, and others.
+///
+/// This is an opaque object representing a memory region allocated through UCP library, which is optimized for remote memory access operations (particularly, zero-copy operations).
+/// It abstracts the information required to access the memory region locally, while a `TheirRemotelyAccessibleMemory` is used to access it remotely.
 #[derive(Debug)]
 pub struct OurRemotelyAccessibleMemory
 {

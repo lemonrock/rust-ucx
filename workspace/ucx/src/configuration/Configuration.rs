@@ -11,7 +11,7 @@ pub struct Configuration
 	pub secret_key_bytes: SecretKeyBytes,
 	
 	/// UCX settings.
-	#[serde(default)] pub ucx_settings: UcxSettings,
+	#[serde(default)] pub ucx_settings: UcpSettings,
 	
 	/// Application context configuration details.
 	#[serde(default)] pub application_context: ApplicationContextConfiguration,
@@ -26,8 +26,8 @@ impl Configuration
 		let sealing_key = self.secret_key_bytes.new_sealing_key();
 		let opening_key = self.secret_key_bytes.new_opening_key();
 		
-		let ucx_configuration_wrapper = self.ucx_settings.ucx_configuration_wrapper()?;
+		let ucp_configuration_wrapper = self.ucx_settings.ucp_configuration_wrapper()?;
 		
-		self.application_context.new(sealing_key, opening_key, ucx_configuration_wrapper)
+		self.application_context.new(sealing_key, opening_key, ucp_configuration_wrapper)
 	}
 }

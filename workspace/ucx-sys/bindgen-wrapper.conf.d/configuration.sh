@@ -103,6 +103,7 @@ final_chance_to_tweak()
 	_fix_bitfield UCT_MD_FLAG_ _bindgen_ty_1
 	_fix_bitfield UCP_MEM_MAP_ _bindgen_ty_2
 	_fix_bitfield UCT_MD_MEM_FLAG_ uct_md_mem_flags
+	_fix_bitfield UCS_HANDLE_ERROR_ ucs_handle_error_t
 
 
 	_fix_duplicate_enum_constant()
@@ -141,11 +142,10 @@ final_chance_to_tweak()
 
 	_fix_last_in_enum ucp_atomic_fetch_op_t
 	_fix_last_in_enum ucs_async_mode_t
-	_fix_last_in_enum ucs_handle_error_t
-	_fix_last_in_enum ucs_log_level_t
 	_fix_last_in_enum ucs_stats_formats_t
 	_fix_last_in_enum ucs_ternary_value
-	_fix_last_in_enum ucs_thread_mode_t
 	_fix_last_in_enum uct_am_trace_type
 	_fix_last_in_enum uct_device_type_t
+	_fix_last_in_enum ucs_log_level_t
+	_fix_last_in_enum ucs_thread_mode_t
 }

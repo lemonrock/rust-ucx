@@ -271,7 +271,6 @@ compile_configure()
 		# --disable-numa
 		# --disable-openmp
 		# --enable-tuning
-		# --enable-mt
 		# --with-verbs=/path/to/sysroot
 		# --with-rc
 		# --with-ud
@@ -279,15 +278,12 @@ compile_configure()
 		# --with-mpi[=MPIHOME] (testing only)
 		# --with-ugni(=SYSROOT)
 		# --with-rte(=SYSROOT)
-		CFLAGS='-D_GNU_SOURCE' ./configure --prefix=/usr --host="$configureHost" --disable-shared --enable-static --disable-dependency-tracking --disable-silent-rules --enable-fast-install \
-			--enable-optimizations \
+		CFLAGS='-D_GNU_SOURCE' ./contrib/configure-release-mt --prefix=/usr --host="$configureHost" --disable-shared --enable-static --disable-dependency-tracking --disable-silent-rules --enable-fast-install \
 			--disable-backtrace-detail \
-			--disable-assertions \
 			--disable-symbol-override \
 			--disable-cma \
 			--disable-frame-pointer \
 			--disable-fault-injection \
-			--disable-params-check \
 			--disable-debug-data \
 			--disable-doxygen-doc \
 			--with-avx \

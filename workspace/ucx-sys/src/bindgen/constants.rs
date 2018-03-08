@@ -14,3 +14,5 @@ include!("constants/UctPrivilegeLengths.rs");
 include!("constants/UctTransportLayer.rs");
 include!("constants/UctVersioning.rs");
 include!("constants/miscellany.rs");
+include!("constants/ucm_mem_type.rs");
+include!("constants/ucp_stream_recv_flags_t.rs");

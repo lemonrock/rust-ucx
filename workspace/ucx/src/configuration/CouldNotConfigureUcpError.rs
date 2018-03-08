@@ -4,9 +4,9 @@
 
 quick_error!
 {
-	/// Errors when creating UCX configuration.
+	/// Errors when creating UCP configuration wrapper.
 	#[derive(Debug, Clone, PartialEq, Eq)]
-	pub enum CouldNotConfigureUcxError
+	pub enum CouldNotConfigureUcpError
 	{
 		/// Parse error.
 		Parse(cause: ConfigurationParseError)

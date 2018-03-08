@@ -33,6 +33,7 @@ include!("functions/UcpWorkerRequest.rs");
 include!("functions/UcpWorkerTag.rs");
 include!("functions/UcsAsynchronous.rs");
 include!("functions/UcsCallbackQueue.rs");
+include!("functions/UcsGlobalOpts.rs");
 include!("functions/UcsMemoryAllocator.rs");
 include!("functions/UcsStats.rs");
 include!("functions/UcsStatus.rs");

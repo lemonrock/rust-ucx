@@ -140,6 +140,12 @@ build_under_cargo_outputCargoKeyValuePairs()
 
 	cd - 1>/dev/null 2>/dev/null
 
+	printf 'cargo:rerun-if-changed=%s\n' 'tools/build-under-cargo'
+	printf 'cargo:rerun-if-changed=%s\n' 'tools/compile'
+	printf 'cargo:rerun-if-changed=%s\n' 'tools/bindgen-wrapper'
+	printf 'cargo:rerun-if-changed=%s\n' 'tools/bindgen-wrapper/bindgen-wrapper'
+	printf 'cargo:rerun-if-changed=%s\n' 'tools/bindgen-wrapper/rustfmt.toml'
+
 
 	printf 'cargo:rustc-link-lib=static-nobundle=ucm\n'
 	printf 'cargo:rustc-link-lib=static-nobundle=ucs\n'

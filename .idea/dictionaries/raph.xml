@@ -12,6 +12,7 @@
       <w>chunksize</w>
       <w>condvar</w>
       <w>crummey</w>
+      <w>cuda</w>
       <w>dedup</w>
       <w>dequeued</w>
       <w>dequeuer</w>
@@ -65,6 +66,7 @@
       <w>memmove</w>
       <w>memset</w>
       <w>memstream</w>
+      <w>memtrack</w>
       <w>mlogpool</w>
       <w>mmap</w>
       <w>mmutex</w>
@@ -98,10 +100,12 @@
       <w>rdrnd</w>
       <w>rdseed</w>
       <w>recurses</w>
+      <w>reloc</w>
       <w>repr</w>
       <w>rerelease</w>
       <w>rndv</w>
       <w>rpmem</w>
+      <w>rustfmt</w>
       <w>rwlock</w>
       <w>sched</w>
       <w>setjmp</w>

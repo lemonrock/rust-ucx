@@ -2,11 +2,28 @@
 // Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-#[repr(u32)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum ucs_handle_error_t
+#[repr(C)]
+pub struct ucs_global_opts_t__bindgen_ty_1
 {
-	UCS_HANDLE_ERROR_BACKTRACE = 0,
-	UCS_HANDLE_ERROR_FREEZE = 1,
-	UCS_HANDLE_ERROR_DEBUG = 2,
+	pub signals: *mut c_int,
+	pub count: c_uint,
+	pub pad: c_uint,
+}
+
+impl Default for ucs_global_opts_t__bindgen_ty_1
+{
+	#[inline(always)]
+	fn default() -> Self
+	{
+		unsafe { zeroed() }
+	}
+}
+
+impl Debug for ucs_global_opts_t__bindgen_ty_1
+{
+	#[inline(always)]
+	fn fmt(&self, f: &mut Formatter) -> Result
+	{
+		write!(f, "ucs_global_opts_t__bindgen_ty_1 {{ signals: {:?} }}", self.signals)
+	}
 }

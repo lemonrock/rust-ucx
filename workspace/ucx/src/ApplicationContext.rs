@@ -2,7 +2,14 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// An application context.
+/// An application context holds an UCP communication instance's global information.
+/// It represents a single UCP communication instance.
+/// The communication instance could be an OS process (an application) that uses UCP library.
+/// This global information includes communication resources, endpoints, memory, temporary file storage, and other communication information directly associated with a specific UCP instance.
+/// The context also acts as an isolation mechanism, allowing resources associated with the context to manage multiple concurrent communication instances.
+/// For example, users using both MPI and OpenSHMEM sessions simultaneously can isolate their communication by allocating and using separate contexts for each of them.
+/// Alternatively, users can share the communication resources (memory, network resource context, etc) between them by using the same application context.
+/// A message sent or a RMA operation performed in one application context cannot be received in any other application context.
 pub struct ApplicationContext<MemoryCustomization = NoNonBlockingRequestMemoryCustomization>
 {
 	handle: ucp_context_h,

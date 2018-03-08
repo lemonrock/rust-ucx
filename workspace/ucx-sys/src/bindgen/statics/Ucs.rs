@@ -5,5 +5,6 @@
 extern "C"
 {
 	#[link_name = "\u{1}_ucs_async_mode_names"] pub static mut ucs_async_mode_names: [*const c_char; 0usize];
+	#[link_name = "\u{1}_ucs_global_opts"] pub static mut ucs_global_opts: ucs_global_opts_t;
 	#[link_name = "\u{1}_ucs_stats_formats_names"] pub static mut ucs_stats_formats_names: [*const c_char; 0usize];
 }

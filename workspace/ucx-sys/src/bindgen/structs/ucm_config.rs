@@ -2,3 +2,32 @@
 // Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+#[repr(C)]
+pub struct ucm_config
+{
+	pub log_level: ucs_log_level_t,
+	pub enable_events: c_int,
+	pub enable_mmap_reloc: c_int,
+	pub enable_malloc_hooks: c_int,
+	pub enable_malloc_reloc: c_int,
+	pub enable_dynamic_mmap_thresh: c_int,
+	pub alloc_alignment: usize,
+}
+
+impl Default for ucm_config
+{
+	#[inline(always)]
+	fn default() -> Self
+	{
+		unsafe { zeroed() }
+	}
+}
+
+impl Debug for ucm_config
+{
+	#[inline(always)]
+	fn fmt(&self, f: &mut Formatter) -> Result
+	{
+		write!(f, "ucm_config {{ log_level: {:?} }}", self.log_level)
+	}
+}

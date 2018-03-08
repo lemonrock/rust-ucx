@@ -2,14 +2,15 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// A wrapper around UCX configuration.
+/// A wrapper around UCP configuration for an `ApplicationContext`.
+/// The configuration is initially populated from environment variables.
 #[derive(Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct UcxConfigurationWrapper
+pub struct UcpConfigurationWrapper
 {
-	handle: *mut ucp_config_t,
+	pub(crate) handle: *mut ucp_config_t,
 }
 
-impl Drop for UcxConfigurationWrapper
+impl Drop for UcpConfigurationWrapper
 {
 	#[inline(always)]
 	fn drop(&mut self)
@@ -18,7 +19,7 @@ impl Drop for UcxConfigurationWrapper
 	}
 }
 
-impl Debug for UcxConfigurationWrapper
+impl Debug for UcpConfigurationWrapper
 {
 	#[inline(always)]
 	fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error>
@@ -27,9 +28,9 @@ impl Debug for UcxConfigurationWrapper
 	}
 }
 
-impl PrintInformation for UcxConfigurationWrapper
+impl PrintInformation for UcpConfigurationWrapper
 {
-	const DebugName: &'static str = "UcxConfigurationWrapper";
+	const DebugName: &'static str = "UcpConfigurationWrapper";
 	
 	#[inline(always)]
 	fn print_information_to_stream(&self, stream: *mut FILE)
@@ -41,7 +42,16 @@ impl PrintInformation for UcxConfigurationWrapper
 	}
 }
 
-impl UcxConfigurationWrapper
+impl ConfigurationWrapper for UcpConfigurationWrapper
+{
+	#[inline(always)]
+	unsafe fn ucx_config_modify(&self, name: *const c_char, value: *const c_char) -> ucs_status_t
+	{
+		ucp_config_modify(self.handle, name, value)
+	}
+}
+
+impl UcpConfigurationWrapper
 {
 	/// Parses a new configuration from environment variables.
 	/// The prefix defaults to `UCX_` if not specified.
@@ -89,38 +99,16 @@ impl UcxConfigurationWrapper
 			UnknownErrorCode(_) | OperationInProgress => panic!("Status should not be possible for 'ucp_config_read'"),
 		}
 	}
-	
+}
+
+impl UcpConfigurationWrapper
+{
 	/// Modify configuration.
 	#[inline(always)]
-	pub fn modify<Setting: ConfigurationSetting>(&self, configuration_setting: &Setting) -> Result<(), ConfigurationModifyError>
+	pub fn modify<Setting: UcpConfigurationSetting>(&self, configuration_setting: &Setting) -> Result<(), ConfigurationModifyError>
 	{
-		let (name, value) = configuration_setting.name_and_value();
-		
-		let status = unsafe { ucp_config_modify(self.handle, name.as_ptr(), value.as_ptr()) };
-		
-		use self::Status::*;
-		use self::ErrorCode::*;
-		use self::ConfigurationModifyError::*;
-		
-		match status.parse()?
-		{
-			IsOk => Ok(()),
-			
-			Error(error_code) => match error_code
-			{
-				NoSuchElement =>
-				{
-					Err(NoSuchNamedKey(name.to_string_lossy().into_owned(), value))
-				},
-				
-				InvalidParameter => Err(InvalidParameterNameOrValue(name.to_string_lossy().into_owned(), value)),
-				
-				OutOfMemory => panic!("Out of memory"),
-				
-				_ => panic!("Unexpected error for 'ucp_config_modify' of '{}'", error_code),
-			},
-			
-			UnknownErrorCode(_) | OperationInProgress => panic!("Status should not be possible for 'ucp_config_modify'"),
-		}
+		self.modify_(configuration_setting)
 	}
+	
+	// Get a value: there is no API?
 }

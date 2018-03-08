@@ -2,34 +2,28 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use self::ucx::*;
 use self::non_blocking_request_memory_customization::*;
+use self::configuration_settings::*;
 use self::values::*;
+use self::wrappers::*;
 use super::*;
-use super::print_information::PrintInformation;
-use ::libc::FILE;
-use ::std::ffi::CString;
-use ::std::fmt;
-use ::std::fmt::Debug;
-use ::std::fmt::Formatter;
-use ::std::mem::uninitialized;
-use ::std::ptr::null;
 
 /// Domain.
 pub mod values;
 
 
 /// Configuration settings.
-pub mod ucx;
+pub mod configuration_settings;
 
 
 /// Non-blocking request memory customization.
 pub mod non_blocking_request_memory_customization;
 
 
+/// Configuration wrappers.
+pub mod wrappers;
+
+
 include!("ApplicationContextCreationError.rs");
-include!("ConfigurationModifyError.rs");
-include!("ConfigurationParseError.rs");
-include!("CouldNotConfigureUcxError.rs");
+include!("CouldNotConfigureUcpError.rs");
 include!("Configuration.rs");
-include!("UcxConfigurationWrapper.rs");

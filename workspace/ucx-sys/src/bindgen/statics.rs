@@ -2,5 +2,6 @@
 // Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+include!("statics/Ucm.rs");
 include!("statics/Ucs.rs");
 include!("statics/Uct.rs");

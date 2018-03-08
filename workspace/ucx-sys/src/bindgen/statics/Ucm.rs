@@ -2,3 +2,7 @@
 // Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+extern "C"
+{
+	#[link_name = "\u{1}_ucm_global_config"] pub static mut ucm_global_config: ucm_config_t;
+}

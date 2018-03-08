@@ -2,6 +2,7 @@
 // Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+include!("types/ucm_config_t.rs");
 include!("types/ucm_event_callback_t.rs");
 include!("types/ucm_event_t.rs");
 include!("types/ucm_mem_type.rs");
@@ -92,7 +93,6 @@ include!("types/uct_recv_desc_t.rs");
 include!("types/uct_rkey_bundle_t.rs");
 include!("types/uct_rkey_ctx_h.rs");
 include!("types/uct_rkey_t.rs");
-include!("types/uct_sockaddr_accessibility_t.rs");
 include!("types/uct_sockaddr_conn_request_callback_t.rs");
 include!("types/uct_tag_context_t.rs");
 include!("types/uct_tag_t.rs");

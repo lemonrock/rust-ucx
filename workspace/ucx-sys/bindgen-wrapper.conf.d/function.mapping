@@ -49,3 +49,4 @@ ucp_put UcpEndpointPut
 ucp_get UcpEndpointGet
 ucp_listener_ UcpListener
 ucp_stream_ UcpStream
+ucs_global_opts_ UcsGlobalOpts
