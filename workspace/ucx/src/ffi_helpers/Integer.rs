@@ -2,7 +2,7 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-trait Integer: Copy + Eq + Debug
+pub(crate) trait Integer: Copy + Eq + Debug
 {
 	const Zero: Self;
 	

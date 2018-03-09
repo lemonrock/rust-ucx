@@ -12,7 +12,6 @@ use ::libc::FILE;
 use ::std::fmt;
 use ::std::fmt::Debug;
 use ::std::fmt::Formatter;
-use ::std::ffi::CStr;
 use ::std::ffi::CString;
 use ::std::mem::transmute;
 use ::std::mem::uninitialized;

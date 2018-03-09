@@ -9,7 +9,7 @@ pub struct EndPoint<E: EndPointPeerFailureErrorHandler>
 	handle: ucp_ep_h,
 	user_data_and_peer_failure_error_handler: E,
 	parent_worker: Worker,
-	their_remote_address: Arc<TheirRemoteAddress>, // We *MUST* hold a reference to this, otherwise the data in `end_point_parameters` contains raw pointers to socket address structures that may have been dropped.
+	_their_remote_address: Arc<TheirRemoteAddress>, // We *MUST* hold a reference to this, otherwise the data in `end_point_parameters` contains raw pointers to socket address structures that may have been dropped.
 	end_point_parameters: ucp_ep_params_t,
 }
 
@@ -51,14 +51,14 @@ impl<E: EndPointPeerFailureErrorHandler> Drop for EndPoint<E>
 			};
 			let change_user_data_status_pointer = unsafe { ucp_ep_modify_nb(self.handle, &self.end_point_parameters) };
 			// We discard any errors; there's nothing we can do with them.
-			self.parent_worker.block_until_non_blocking_operation_is_complete(change_user_data_status_pointer);
+			self.parent_worker.block_until_non_blocking_operation_is_complete(change_user_data_status_pointer.parse().expect("Invalid"));
 			
 			// Drop the weak reference in user data.
 			drop_user_data::<E>(user_data_original);
 			
 			let close_status_pointer = unsafe { ucp_ep_close_nb(self.handle, ucp_ep_close_mode::UCP_EP_CLOSE_MODE_FLUSH as u32) };
 			// We discard any errors; there's nothing we can do with them.
-			self.parent_worker.block_until_non_blocking_operation_is_complete(close_status_pointer);
+			self.parent_worker.block_until_non_blocking_operation_is_complete(close_status_pointer.parse().expect("Invalid"));
 			
 			self.handle = null_mut();
 		}
@@ -87,14 +87,14 @@ impl<E: EndPointPeerFailureErrorHandler> PrintInformation for EndPoint<E>
 
 impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 {
-	
-	// ucp_tag_recv_nb()
-	
-	// ucp_tag_*()
-	
-	// ucp_ep_flush_nb
-	
-	// ucp_stream_data_release
+	/*
+
+	#[link_name = "\u{1}_ucp_ep_flush"] pub fn ucp_ep_flush(ep: ucp_ep_h) -> ucs_status_t;
+	#[link_name = "\u{1}_ucp_ep_flush_nb"] pub fn ucp_ep_flush_nb(ep: ucp_ep_h, flags: c_uint, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
+	#[link_name = "\u{1}_ucp_ep_modify_nb"] pub fn ucp_ep_modify_nb(ep: ucp_ep_h, params: *const ucp_ep_params_t) -> ucs_status_ptr_t;
+	#[link_name = "\u{1}_ucp_ep_print_info"] pub fn ucp_ep_print_info(ep: ucp_ep_h, stream: *mut FILE);
+	#[link_name = "\u{1}_ucp_ep_rkey_unpack"] pub fn ucp_ep_rkey_unpack(ep: ucp_ep_h, rkey_buffer: *const c_void, rkey_p: *mut ucp_rkey_h) -> ucs_status_t;
+	*/
 	
 	/*
 	
@@ -105,12 +105,52 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 	
 	*/
 	
+	// Look at ucp_mt_lock_t   and   &ep->worker->mt_lock
 	
+	/// Returns `Ok(None)` if initiated and is already complete.
+	/// Returns `Ok(Some)` if initiated but not complete.
+	/// Returns `Err` if no resources are available; it may be possible to try again.
+	///
+	/// NOTE: Despite the signature of `ucp_ep_flush_nb`, the callback is *NOT* optional.
+	#[inline(always)]
+	pub fn non_blocking_flush(&self, callback: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<Option<NonBlockingRequest>, ()>
+	{
+		debug_assert!(!self.handle.is_null(), "handle is null");
+		
+		let status_pointer = unsafe { ucp_ep_flush_nb(self.handle, ReservedForFutureUseFlags, Some(callback)) };
+		
+		use self::ErrorCode::*;
+		use self::Status::*;
+		use self::StatusOrNonBlockingRequest::*;
+		
+		match status_pointer.parse().expect("Invalid status pointer")
+		{
+			Status(IsOk) => Ok(None),
+			
+			Status(Error(NoResourcesAreAvailableToInitiateTheOperation)) => Err(()),
+			
+			NonBlockingRequest(non_blocking_request) => Ok(Some(non_blocking_request)),
+			
+			unexpected @ _ => panic!("Unexpected status '{:?}'", unexpected)
+		}
+	}
 	
+//	#[inline(always)]
+//	pub fn blocking_flush(&self) -> Result<Option<NonBlockingRequest>, ()>
+//	{
+//		debug_assert!(!self.handle.is_null(), "handle is null");
+//
+//		let status_pointer = unsafe { ucp_ep_flush_nb(self.handle) };
+//
+//		if let Some(non_blocking_request) = self.non_blocking_flush()?
+//		{
+//			self.parent_worker.block_until_non_blocking_operation_is_complete()
+//		}
+//	}
 	
 	
 	#[inline(always)]
-	pub(crate) fn new_end_point(peer_failure_error_handler: E, their_remote_address: &Arc<TheirRemoteAddress>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool, parent_worker: &Worker) -> Rc<RefCell<Self>>
+	pub(crate) fn new_end_point(peer_failure_error_handler: E, their_remote_address: &Arc<TheirRemoteAddress>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool, parent_worker: &Worker) -> Result<Rc<RefCell<Self>>, ErrorCode>
 	{
 		#[inline(always)]
 		fn populated_by_their_remote_address<T>() -> T
@@ -119,8 +159,6 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 		}
 		
 		use self::ucp_err_handling_mode_t::*;
-		
-		// their_remote_address can be moved, which isn't good.
 		
 		let end_point = Rc::new
 		(
@@ -131,7 +169,7 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 					handle: null_mut(),
 					user_data_and_peer_failure_error_handler: peer_failure_error_handler,
 					parent_worker: parent_worker.clone(),
-					their_remote_address: their_remote_address.clone(),
+					_their_remote_address: their_remote_address.clone(),
 					end_point_parameters: their_remote_address.populate_end_point_parameters
 					(
 						ucp_ep_params_t
@@ -151,7 +189,7 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 							
 							err_handler: ucp_err_handler
 							{
-								cb: Some(EndPoint::peer_failure_error_callback),
+								cb: Some(Self::peer_failure_error_callback),
 								arg: null_mut(), // Is overridden by `ucp_ep_params_t.user_data`.
 							},
 							
@@ -167,9 +205,32 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 		);
 		Self::assign_user_data_to_self(&end_point);
 		
-		end_point.connectOrReconnect();
+		(*end_point).borrow_mut().connect()?;
 		
-		end_point
+		Ok(end_point)
+	}
+	
+	#[inline(always)]
+	fn connect(&mut self) -> Result<(), ErrorCode>
+	{
+		let mut handle = unsafe { uninitialized() };
+		let result = unsafe { ucp_ep_create(self.parent_worker.handle, &self.end_point_parameters, &mut handle) };
+		let status = result.parse().expect("Invalid status");
+		
+		use self::Status::*;
+		
+		match status
+		{
+			IsOk =>
+			{
+				self.handle = handle;
+				Ok(())
+			}
+			
+			Error(error_code) => Err(error_code),
+			
+			unexpected @ _ => panic!("Unexpected status '{:?}'", unexpected)
+		}
 	}
 	
 	// Yes, this is horrible, but how else does one pack a Weak<EndPoint<E>> into a C FFI `user_data` field of type void*?
@@ -177,7 +238,7 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 	#[inline(always)]
 	pub(crate) fn assign_user_data_to_self(this: &Rc<RefCell<Self>>)
 	{
-		let end_point = this.borrow_mut();
+		let mut end_point = this.borrow_mut();
 		(*end_point).end_point_parameters.user_data = unsafe { transmute(Rc::downgrade(this)) };
 	}
 	

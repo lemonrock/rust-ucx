@@ -64,9 +64,25 @@ impl HasAttributes for Worker
 
 impl Worker
 {
+	/// Maximum number of end points for stack-optimized functions; nothing to do with UCX.
 	pub const MaximumEndPoints: usize = 64;
 	
 	/// Creates an end point to connected to a their_remote_address worker.
+	///
+	/// Errors are not differentiated.
+	/// The following may indicate that the application should not terminated:-
+	/// * `NoResourcesAreAvailableToInitiateTheOperation`
+	///
+	/// These might indicate 'try again immediately', although it's not clear if they are ever returned from UCX for this logic:-
+	/// * `DeviceIsBusy`
+	/// * `NoResourcesAreAvailableToInitiateTheOperation`
+	///
+	/// These might indicate trying again with a different destination:-
+	/// * `DestinationIsUnreachable`
+	/// * `InputOutputError`
+	///
+	/// Other:-
+	/// * `InvalidAddress` (the destination address format is invalid).
 	///
 	/// `peer_failure_error_handler` is moved into the `EndPoint`.
 	///
@@ -80,7 +96,7 @@ impl Worker
 	/// * it may affect performance
 	/// * it may increase memory footprint
 	#[inline(always)]
-	pub fn new_end_point<E: EndPointPeerFailureErrorHandler>(&self, peer_failure_error_handler: E, their_remote_address: &Arc<TheirRemoteAddress>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool) -> Rc<RefCell<EndPoint<E>>>
+	pub fn new_end_point<E: EndPointPeerFailureErrorHandler>(&self, peer_failure_error_handler: E, their_remote_address: &Arc<TheirRemoteAddress>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool) -> Result<Rc<RefCell<EndPoint<E>>>, ErrorCode>
 	{
 		debug_assert!(!self.handle.is_null(), "handle is null");
 		
@@ -164,11 +180,11 @@ impl Worker
 	
 	/// Blocks until a non-blocking operation is complete.
 	#[inline(always)]
-	pub fn block_until_non_blocking_operation_is_complete(&self, status_pointer: ucs_status_ptr_t) -> Result<(), ErrorCode>
+	pub fn block_until_non_blocking_operation_is_complete(&self, status_or_non_blocking_request: StatusOrNonBlockingRequest) -> Result<(), ErrorCode>
 	{
 		debug_assert!(!self.handle.is_null(), "handle is null");
 		
-		NonBlockingRequest::block_until_non_blocking_operation_is_complete(self, status_pointer)
+		NonBlockingRequest::block_until_non_blocking_operation_is_complete(self, status_or_non_blocking_request)
 	}
 	
 	/// Flushes all outstanding remote memory access ('RMA') and non-blocking atomic memory operations ('AMO') on all end points.

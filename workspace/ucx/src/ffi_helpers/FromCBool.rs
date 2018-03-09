@@ -29,11 +29,17 @@ impl<I: Integer> FromCBool for I
 	#[inline(always)]
 	fn from_c_bool_strict(self) -> bool
 	{
-		match self
+		if self.is_zero()
 		{
-			Self::Zero => false,
-			Self::One => true,
-			_ => panic!("Value is not a C boolean of 0 or 1, but '{:?}'", self),
+			false
+		}
+		else if self.is_one()
+		{
+			true
+		}
+		else
+		{
+			panic!("Value is not a C boolean of 0 or 1, but '{:?}'", self)
 		}
 	}
 }

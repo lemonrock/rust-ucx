@@ -7,11 +7,13 @@
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum TheirRemoteAddress
 {
+	/// Their remote worker.
 	RemoteWorker(TheirRemotelyAccessibleWorkerAddress),
 	
 	// Whilst libc has a sockaddr, it isn't copy or clone, so we use the higher-level functionality in nix.
 	// This pulls in quite a large (and somewhat brittle) dependency.
-	ClientServer(NixSockAddr),
+	/// Their server address.
+	Server(NixSockAddr),
 }
 
 impl TheirRemoteAddress
@@ -30,9 +32,9 @@ impl TheirRemoteAddress
 				end_pointer_parameters.address = remote_worker_address.0.as_ptr();
 			},
 			
-			ClientServer(socket_address) =>
+			Server(socket_address) =>
 			{
-				let (socket_address, length) = socket_address.as_ffi_pair();
+				let (socket_address, length) = unsafe { socket_address.as_ffi_pair() };
 				
 				end_pointer_parameters.field_mask |= ucp_ep_params_field::FLAGS.0 as u64;
 				end_pointer_parameters.field_mask |= ucp_ep_params_field::SOCK_ADDR.0 as u64;

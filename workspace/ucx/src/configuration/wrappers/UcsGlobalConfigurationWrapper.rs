@@ -322,24 +322,6 @@ impl UcsGlobalConfigurationWrapper
 //	pub stats_format: ucs_stats_formats_t,
 	
 	#[inline(always)]
-	fn null_or_empty_c_string(raw: *mut c_char) -> Option<CString>
-	{
-		if raw.is_null()
-		{
-			return None;
-		}
-		let c_str = unsafe { CStr::from_ptr(raw) };
-		if c_str.to_bytes().is_empty()
-		{
-			None
-		}
-		else
-		{
-			Some(c_str.to_owned())
-		}
-	}
-	
-	#[inline(always)]
 	fn values(&self) -> &'static ucs_global_opts_t
 	{
 		unsafe { &ucs_global_opts }

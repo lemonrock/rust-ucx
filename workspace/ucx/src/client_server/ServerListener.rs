@@ -40,7 +40,7 @@ impl<L: ServerListenerAcceptHandler> ServerListener<L>
 			}
 		);
 		
-		let (socket_address, length) = our_listening_socket.as_ffi_pair();
+		let (socket_address, length) = unsafe { our_listening_socket.as_ffi_pair() };
 		
 		let parameters = ucp_listener_params_t
 		{
@@ -82,7 +82,7 @@ impl<L: ServerListenerAcceptHandler> ServerListener<L>
 	{
 		debug_assert!(!accept_handler_arg.is_null(), "accept_handler_arg is null");
 		
-		let this_non_null = unsafe { NonNull::new_unchecked(accept_handler_arg as *mut L) };
+		let this_non_null = NonNull::new_unchecked(accept_handler_arg as *mut L);
 		this_non_null.as_ref().accept(end_point_handle)
 	}
 }

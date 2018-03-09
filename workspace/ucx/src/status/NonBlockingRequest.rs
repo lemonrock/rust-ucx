@@ -23,12 +23,12 @@ impl NonBlockingRequest
 	///
 	/// For example, closing an End Point.
 	#[inline(always)]
-	pub fn block_until_non_blocking_operation_is_complete(parent_worker: &Worker, status_pointer: ucs_status_ptr_t) -> Result<(), ErrorCode>
+	pub fn block_until_non_blocking_operation_is_complete(parent_worker: &Worker, status_or_non_blocking_request: StatusOrNonBlockingRequest) -> Result<(), ErrorCode>
 	{
 		use self::StatusOrNonBlockingRequest::*;
 		use self::Status::*;
 		
-		match status_pointer.parse().expect("Invalid status_pointer")
+		match status_or_non_blocking_request
 		{
 			Status(IsOk) => Ok(()),
 			

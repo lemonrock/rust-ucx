@@ -102,7 +102,8 @@ quick_error!
 		DeviceIsBusy
 		{
 		}
-
+		
+		/// Passed to a send or receive callback as a result of cancelling a non-blocking request.
 		RequestCancelled
 		{
 		}
