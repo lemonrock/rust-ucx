@@ -20,37 +20,19 @@ impl NonBlockingRequest
 	/// Block until a non-blocking operation is complete.
 	///
 	/// Useful when the UCX API exposes non-blocking operations, but an application needs to wait for them to finish.
-	///
-	/// For example, closing an End Point.
 	#[inline(always)]
-	pub fn block_until_non_blocking_operation_is_complete(parent_worker: &Worker, status_or_non_blocking_request: StatusOrNonBlockingRequest) -> Result<(), ErrorCode>
+	pub fn subsequently_block_until_non_blocking_request_is_complete(self, parent_worker: &Worker) -> Result<(), ErrorCode>
 	{
-		use self::StatusOrNonBlockingRequest::*;
-		use self::Status::*;
-		
-		match status_or_non_blocking_request
+		while
 		{
-			Status(IsOk) => Ok(()),
+			parent_worker.progress();
 			
-			NonBlockingRequest(non_blocking_request) =>
-			{
-				while
-				{
-					parent_worker.progress();
-					
-					non_blocking_request.is_still_in_progress()?
-				}
-				{
-				}
-				
-				drop(non_blocking_request);
-				Ok(())
-			},
-			
-			Status(Error(error_code)) => Err(error_code),
-			
-			unexpected @ _ => panic!("Unexpected status_pointer: {:?}", unexpected),
+			self.is_still_in_progress()?
 		}
+		{
+		}
+		
+		Ok(())
 	}
 	
 	/// Check if the request is still in progress.

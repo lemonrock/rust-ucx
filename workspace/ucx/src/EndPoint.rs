@@ -38,7 +38,7 @@ impl<E: EndPointPeerFailureErrorHandler> Drop for EndPoint<E>
 		// Initialized and in-use.
 		else
 		{
-			// We need to modify the end-point, and remove the user data (ie set it to null)
+			// We need to modify the end-point, and remove the user data (ie set it to null).
 			// So any callbacks from UCX now fail.
 			
 			// Modify the end point to release the user_data and error_handler so we can free them.
@@ -54,7 +54,7 @@ impl<E: EndPointPeerFailureErrorHandler> Drop for EndPoint<E>
 			// We discard any errors; there's nothing we can do with them.
 			#[allow(unused_must_use)]
 			{
-				self.parent_worker.block_until_non_blocking_operation_is_complete(change_user_data_status_pointer.parse());
+				self.parent_worker.block_until_non_blocking_request_is_complete(change_user_data_status_pointer);
 			}
 			
 			// Drop the weak reference in user data.
@@ -65,7 +65,7 @@ impl<E: EndPointPeerFailureErrorHandler> Drop for EndPoint<E>
 			// We discard any errors; there's nothing we can do with them.
 			#[allow(unused_must_use)]
 			{
-				self.parent_worker.block_until_non_blocking_operation_is_complete(close_status_pointer.parse());
+				self.parent_worker.block_until_non_blocking_request_is_complete(close_status_pointer);
 			}
 			
 			self.handle = null_mut();
@@ -115,47 +115,47 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 	
 	// Look at ucp_mt_lock_t   and   &ep->worker->mt_lock
 	
+	/// A non-blocking flush.
+	///
+	/// Potentially quite expensive.
+	///
+	/// `request` should not be freed inside the callback.
+	/// `request` points to memory that was previously initialized using the `NonBlockingRequestMemoryCustomization` trait, which is a type parameter of `MemoryCustomization` on the `ApplicationContext`.
+	///
+	/// For a callback that does nothing, use `EndPoint::callback_is_ignored`.
+	///
 	/// Returns `Ok(None)` if initiated and is already complete.
 	/// Returns `Ok(Some)` if initiated but not complete.
-	/// Returns `Err` if no resources are available; it may be possible to try again.
+	/// Returns `Err(NoResourcesAreAvailableToInitiateTheOperation`) if no resources are available; it may be possible to try again.
+	/// Returns `Err` for other failures, the cause of which isn't clear.
 	///
-	/// NOTE: Despite the signature of `ucp_ep_flush_nb`, the callback is *NOT* optional.
 	#[inline(always)]
-	pub fn non_blocking_flush(&self, callback: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<Option<NonBlockingRequest>, ()>
+	pub fn non_blocking_flush<'worker>(&'worker self, callback: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<Option<WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
 	{
 		debug_assert!(!self.handle.is_null(), "handle is null");
 		
+		// NOTE: Despite the signature of `ucp_ep_flush_nb`, the callback is *NOT* optional.
 		let status_pointer = unsafe { ucp_ep_flush_nb(self.handle, ReservedForFutureUseFlags, Some(callback)) };
 		
-		use self::ErrorCode::*;
-		use self::Status::*;
-		use self::StatusOrNonBlockingRequest::*;
-		
-		match status_pointer.parse()
-		{
-			Status(IsOk) => Ok(None),
-			
-			Status(Error(NoResourcesAreAvailableToInitiateTheOperation)) => Err(()),
-			
-			NonBlockingRequest(non_blocking_request) => Ok(Some(non_blocking_request)),
-			
-			unexpected @ _ => panic!("Unexpected status '{:?}'", unexpected)
-		}
+		self.parent_worker.parse_status_pointer(status_pointer)
 	}
 	
-//	#[inline(always)]
-//	pub fn blocking_flush(&self) -> Result<Option<NonBlockingRequest>, ()>
-//	{
-//		debug_assert!(!self.handle.is_null(), "handle is null");
-//
-//		let status_pointer = unsafe { ucp_ep_flush_nb(self.handle) };
-//
-//		if let Some(non_blocking_request) = self.non_blocking_flush()?
-//		{
-//			self.parent_worker.block_until_non_blocking_operation_is_complete()
-//		}
-//	}
+	/// A blocking flush.
+	///
+	/// Potentially very expensive.
+	#[inline(always)]
+	pub fn blocking_flush(&self) -> Result<(), ErrorCode>
+	{
+		debug_assert!(!self.handle.is_null(), "handle is null");
+		
+		self.parent_worker.block_until_non_blocking_request_is_complete(unsafe { ucp_ep_flush_nb(self.handle, ReservedForFutureUseFlags, Some(Self::callback_is_ignored)) })
+	}
 	
+	/// This function is provided to pass to non-blocking calls where the caller doesn't care about being notified of completion of the non-blocking call.
+	#[inline(always)]
+	pub unsafe extern "C" fn callback_is_ignored(_request: *mut c_void, _status: ucs_status_t)
+	{
+	}
 	
 	#[inline(always)]
 	pub(crate) fn new_end_point(peer_failure_error_handler: E, their_remote_address: &Arc<TheirRemoteAddress>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool, parent_worker: &Worker) -> Result<Rc<RefCell<Self>>, ErrorCode>

@@ -178,13 +178,37 @@ impl Worker
 		}
 	}
 	
-	/// Blocks until a non-blocking operation is complete.
 	#[inline(always)]
-	pub fn block_until_non_blocking_operation_is_complete(&self, status_or_non_blocking_request: StatusOrNonBlockingRequest) -> Result<(), ErrorCode>
+	pub(crate) fn parse_status_pointer<'worker>(&'worker self, status_pointer: ucs_status_ptr_t) -> Result<Option<WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
 	{
 		debug_assert!(!self.handle.is_null(), "handle is null");
 		
-		NonBlockingRequest::block_until_non_blocking_operation_is_complete(self, status_or_non_blocking_request)
+		use self::Status::*;
+		use self::StatusOrNonBlockingRequest::*;
+		
+		match status_pointer.parse()
+		{
+			Status(IsOk) => Ok(None),
+			
+			Status(Error(error_code)) => Err(error_code),
+			
+			NonBlockingRequest(non_blocking_request) => Ok(Some(WorkerWithNonBlockingRequest::new(self, non_blocking_request))),
+			
+			unexpected @ _ => panic!("Unexpected status '{:?}'", unexpected)
+		}
+	}
+	
+	#[inline(always)]
+	pub(crate) fn block_until_non_blocking_request_is_complete<'worker>(&'worker self, status_pointer: ucs_status_ptr_t) -> Result<(), ErrorCode>
+	{
+		match self.parse_status_pointer(status_pointer)
+		{
+			Ok(Some(worker_with_non_blocking_request)) => worker_with_non_blocking_request.block_until_non_blocking_request_is_complete(),
+			
+			Ok(None) => Ok(()),
+			
+			Err(error_code) => Err(error_code),
+		}
 	}
 	
 	/// Flushes all outstanding remote memory access ('RMA') and non-blocking atomic memory operations ('AMO') on all end points.

@@ -8,6 +8,7 @@ use ::libc::c_void;
 use ::std::ffi::CStr;
 use ::std::mem::transmute;
 use ::std::mem::uninitialized;
+use ::std::ops::Deref;
 use ::std::ptr::NonNull;
 use ::ucx_sys::*;
 
@@ -20,3 +21,4 @@ include!("Status.rs");
 include!("StatusOrNonBlockingRequest.rs");
 include!("ucs_status_tExt.rs");
 include!("ucs_status_ptr_tExt.rs");
+include!("WorkerWithNonBlockingRequest.rs");
