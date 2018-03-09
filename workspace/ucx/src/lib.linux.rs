@@ -13,9 +13,7 @@ extern crate serde;
 extern crate ucx_sys;
 
 
-include!("c_str.rs");
-include!("panic_on_error.rs");
-include!("panic_on_error_with_clean_up.rs");
+include!("macros/mod.rs");
 
 
 use self::attributes::*;
