@@ -111,6 +111,7 @@
       <w>setjmp</w>
       <w>smsg</w>
       <w>spinlock</w>
+      <w>spmc</w>
       <w>strdup</w>
       <w>structs</w>
       <w>sundell</w>

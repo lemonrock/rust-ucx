@@ -93,27 +93,6 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	}
 }
 
-
-//
-//use ::std::collections::HashMap;
-//
-//struct TheirRemotelyAccessible
-//{
-//	epoch: u64,
-//	remotely_accessible_device: HashMap<String, TheirRemotelyAccessibleDevice>
-//}
-//
-//struct TheirRemotelyAccessibleDevice
-//{
-//	remotely_accessible_workers: HashMap<String, TheirRemotelyAccessibleWorkerAddress>,
-//	remotely_accessible_memory: HashMap<String, TheirRemotelyAccessibleMemoryAddress>,
-//	remotely_accessible_servers: HashMap<String, TheirRemotelyAccessibleServerAddress>, // Needs a better definition for address
-//}
-
-
-
-
-
 impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> EndPoint<E, A>
 {
 	/// Can be called more than once per end point.

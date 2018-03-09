@@ -10,6 +10,7 @@ extern crate nix;
 extern crate ring;
 extern crate serde;
 #[macro_use] extern crate serde_derive;
+extern crate spin_locks;
 extern crate ucx_sys;
 
 
@@ -77,6 +78,9 @@ mod ffi_helpers;
 
 
 mod handle_drop_safeties;
+
+
+mod remotely_accessible;
 
 
 /// Print information helpers.

@@ -11,7 +11,7 @@ impl ZeroBasedHyperThreadIndex
 {
 	/// Efficient if VDSO is enabled (which is should be on all modern 4.x series Linux kernels), but, still, should be cached (or put in a thread local) if used repeatedly in tight loops.
 	#[inline(always)]
-	pub fn for_current_hyper_thread(self) -> Self
+	pub fn for_current_hyper_thread() -> Self
 	{
 		let result = unsafe { sched_getcpu() };
 		debug_assert!(result >= 0, "sched_getcpu was negative");
