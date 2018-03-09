@@ -226,14 +226,19 @@ impl Worker
 	///
 	/// Non-blocking.
 	///
+	/// Returns `Ok(None)` if complete.
+	/// Returns `Ok(Some(non_blocking_request))` if incomplete.
+	/// Returns `Err(error_code)` if complete with an error.
+	///
 	/// The `callback_when_finished_or_cancelled` will receive an ErrorCode(Cancelled) if the non-blocking request is cancelled.
 	#[inline(always)]
-	pub fn non_blocking_flush_all_end_points(&self, callback_when_finished_or_cancelled: ucp_send_callback_t) -> StatusOrNonBlockingRequest
+	pub fn non_blocking_flush_all_end_points<'worker>(&'worker self, callback_when_finished_or_cancelled: ucp_send_callback_t) -> Result<Option<WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
 	{
 		debug_assert!(!self.handle.is_null(), "handle is null");
 		
 		let status_pointer = unsafe { ucp_worker_flush_nb(self.handle, ReservedForFutureUseFlags, callback_when_finished_or_cancelled) };
-		status_pointer.parse()
+		
+		self.parse_status_pointer(status_pointer)
 	}
 	
 	/// Assures ordering between non-blocking operations.

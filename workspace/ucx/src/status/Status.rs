@@ -4,7 +4,7 @@
 
 /// A more useful representation of `ucs_status_t`.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub enum Status
+pub(crate) enum Status
 {
 	/// Status is OK.
 	IsOk,
@@ -31,9 +31,9 @@ impl Default for Status
 impl Status
 {
 	/// Parses a status into something useful.
-	/// Returns an error if the status is invalid in some way.
+	/// Returns the i8 value if the status is invalid.
 	#[inline(always)]
-	pub fn parse_ucs_status_t(status: ucs_status_t) -> Result<Self, InvalidStatusError>
+	pub fn parse_ucs_status_t(status: ucs_status_t) -> Result<Self, i8>
 	{
 		let status_code = status as i8;
 		match status_code
@@ -67,7 +67,7 @@ impl Status
 			-79 ... -60 => Ok(Status::Error(ErrorCode::EndPointFailure((-status_code) as u8 - 60))),
 			-80 => Ok(Status::Error(ErrorCode::EndPointTimeOut)),
 			-100 ... -81 => Ok(Status::UnknownErrorCode(status_code)),
-			_ => Err(InvalidStatusError::InvalidStatus(status_code)),
+			_ => Err(status_code),
 		}
 	}
 }

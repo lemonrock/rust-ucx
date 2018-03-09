@@ -4,7 +4,7 @@
 
 /// An extension trait for `ucs_status_ptr_t`, which can represent OK (`NULL`), a valid pointer, or an error code `ERR_*`.
 #[allow(non_camel_case_types)]
-pub trait ucs_status_ptr_tExt
+pub(crate) trait ucs_status_ptr_tExt
 {
 	/// A function safer than the ucs macros `UCS_PTR_STATUS`, `UCS_PTR_IS_ERR` and `UCS_PTR_IS_PTR`.
 	#[allow(non_snake_case)]

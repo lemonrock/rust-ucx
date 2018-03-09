@@ -15,7 +15,6 @@ use ::ucx_sys::*;
 
 include!("EndPointPeerFailureErrorHandler.rs");
 include!("ErrorCode.rs");
-include!("InvalidStatusError.rs");
 include!("NonBlockingRequest.rs");
 include!("Status.rs");
 include!("StatusOrNonBlockingRequest.rs");

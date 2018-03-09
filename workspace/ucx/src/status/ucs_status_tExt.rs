@@ -4,7 +4,7 @@
 
 /// An extension trait for `ucs_status_t`.
 #[allow(non_camel_case_types)]
-pub trait ucs_status_tExt
+pub(crate) trait ucs_status_tExt
 {
 	/// A function to convert this enum into something more useful.
 	#[inline(always)]

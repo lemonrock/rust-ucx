@@ -4,12 +4,12 @@
 
 /// A more sensible type than `ucs_status_ptr_t`.
 #[derive(Debug, PartialEq, Eq, Hash)]
-pub enum StatusOrNonBlockingRequest
+pub(crate) enum StatusOrNonBlockingRequest
 {
 	/// Status.
 	Status(Status),
 	
-	/// Pointer.
+	/// Non blocking request.
 	NonBlockingRequest(NonBlockingRequest),
 }
 
@@ -25,9 +25,9 @@ impl Default for StatusOrNonBlockingRequest
 impl StatusOrNonBlockingRequest
 {
 	/// Parses a status into something useful.
-	/// Returns an error if the status is invalid in some way.
+	/// Returns the invalid i8 value if the status is invalid in some way.
 	#[inline(always)]
-	pub fn parse_ucs_status_ptr_t(status_or_status_pointer: ucs_status_ptr_t) -> Result<Self, InvalidStatusError>
+	pub fn parse_ucs_status_ptr_t(status_or_status_pointer: ucs_status_ptr_t) -> Result<Self, i8>
 	{
 		let as_isize = status_or_status_pointer as isize;
 		match as_isize
