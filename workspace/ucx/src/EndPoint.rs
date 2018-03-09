@@ -50,15 +50,23 @@ impl<E: EndPointPeerFailureErrorHandler> Drop for EndPoint<E>
 				arg: null_mut(),
 			};
 			let change_user_data_status_pointer = unsafe { ucp_ep_modify_nb(self.handle, &self.end_point_parameters) };
+			
 			// We discard any errors; there's nothing we can do with them.
-			self.parent_worker.block_until_non_blocking_operation_is_complete(change_user_data_status_pointer.parse());
+			#[allow(unused_must_use)]
+			{
+				self.parent_worker.block_until_non_blocking_operation_is_complete(change_user_data_status_pointer.parse());
+			}
 			
 			// Drop the weak reference in user data.
 			drop_user_data::<E>(user_data_original);
 			
 			let close_status_pointer = unsafe { ucp_ep_close_nb(self.handle, ucp_ep_close_mode::UCP_EP_CLOSE_MODE_FLUSH as u32) };
+			
 			// We discard any errors; there's nothing we can do with them.
-			self.parent_worker.block_until_non_blocking_operation_is_complete(close_status_pointer.parse());
+			#[allow(unused_must_use)]
+			{
+				self.parent_worker.block_until_non_blocking_operation_is_complete(close_status_pointer.parse());
+			}
 			
 			self.handle = null_mut();
 		}
