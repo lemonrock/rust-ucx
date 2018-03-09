@@ -96,7 +96,7 @@ impl Worker
 	/// * it may affect performance
 	/// * it may increase memory footprint
 	#[inline(always)]
-	pub fn new_end_point<E: EndPointPeerFailureErrorHandler>(&self, peer_failure_error_handler: E, their_remote_address: &Arc<TheirRemoteAddress>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool) -> Result<Rc<RefCell<EndPoint<E>>>, ErrorCode>
+	pub fn new_end_point<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>(&self, peer_failure_error_handler: E, their_remote_address: &Arc<A>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool) -> Result<Rc<RefCell<EndPoint<E, A>>>, ErrorCode>
 	{
 		debug_assert!(!self.handle.is_null(), "handle is null");
 		

@@ -4,25 +4,25 @@
 
 /// An end point.
 /// *MUST* be used inside a `Rc`.
-pub struct EndPoint<E: EndPointPeerFailureErrorHandler>
+pub struct EndPoint<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>
 {
 	handle: ucp_ep_h,
 	user_data_and_peer_failure_error_handler: E,
 	parent_worker: Worker,
-	_their_remote_address: Arc<TheirRemoteAddress>, // We *MUST* hold a reference to this, otherwise the data in `end_point_parameters` contains raw pointers to socket address structures that may have been dropped.
+	_their_remote_address: Arc<A>, // We *MUST* hold a reference to this, otherwise the data in `end_point_parameters` contains raw pointers to socket address structures that may have been dropped.
 	end_point_parameters: ucp_ep_params_t,
 }
 
-impl<E: EndPointPeerFailureErrorHandler> Drop for EndPoint<E>
+impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> Drop for EndPoint<E, A>
 {
 	// Dropping because there are no more Rc strong references.
 	#[inline(always)]
 	fn drop(&mut self)
 	{
 		#[inline(always)]
-		fn drop_user_data<E: EndPointPeerFailureErrorHandler>(user_data: *mut c_void)
+		fn drop_user_data<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>(user_data: *mut c_void)
 		{
-			let weak: Weak<EndPoint<E>> = unsafe { transmute(user_data) };
+			let weak: Weak<EndPoint<E, A>> = unsafe { transmute(user_data) };
 			drop(weak);
 		}
 		
@@ -32,7 +32,7 @@ impl<E: EndPointPeerFailureErrorHandler> Drop for EndPoint<E>
 			let user_data = self.end_point_parameters.user_data;
 			if !user_data.is_null()
 			{
-				drop_user_data::<E>(user_data)
+				drop_user_data::<E, A>(user_data)
 			}
 		}
 		// Initialized and in-use.
@@ -58,7 +58,7 @@ impl<E: EndPointPeerFailureErrorHandler> Drop for EndPoint<E>
 			}
 			
 			// Drop the weak reference in user data.
-			drop_user_data::<E>(user_data_original);
+			drop_user_data::<E, A>(user_data_original);
 			
 			let close_status_pointer = unsafe { ucp_ep_close_nb(self.handle, ucp_ep_close_mode::UCP_EP_CLOSE_MODE_FLUSH as u32) };
 			
@@ -73,7 +73,7 @@ impl<E: EndPointPeerFailureErrorHandler> Drop for EndPoint<E>
 	}
 }
 
-impl<E: EndPointPeerFailureErrorHandler> Debug for EndPoint<E>
+impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> Debug for EndPoint<E, A>
 {
 	#[inline(always)]
 	fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error>
@@ -82,7 +82,7 @@ impl<E: EndPointPeerFailureErrorHandler> Debug for EndPoint<E>
 	}
 }
 
-impl<E: EndPointPeerFailureErrorHandler> PrintInformation for EndPoint<E>
+impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> PrintInformation for EndPoint<E, A>
 {
 	const DebugName: &'static str = "EndPoint";
 	
@@ -93,13 +93,34 @@ impl<E: EndPointPeerFailureErrorHandler> PrintInformation for EndPoint<E>
 	}
 }
 
-impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
+
+//
+//use ::std::collections::HashMap;
+//
+//struct TheirRemotelyAccessible
+//{
+//	epoch: u64,
+//	remotely_accessible_device: HashMap<String, TheirRemotelyAccessibleDevice>
+//}
+//
+//struct TheirRemotelyAccessibleDevice
+//{
+//	remotely_accessible_workers: HashMap<String, TheirRemotelyAccessibleWorkerAddress>,
+//	remotely_accessible_memory: HashMap<String, TheirRemotelyAccessibleMemoryAddress>,
+//	remotely_accessible_servers: HashMap<String, TheirRemotelyAccessibleServerAddress>, // Needs a better definition for address
+//}
+
+
+
+
+
+impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> EndPoint<E, A>
 {
 	/// Can be called more than once per end point.
 	/// Think of the world as multiple threads (worker), each of which is connected to a remote peer (end point), each of which is connected to zero or more remote memory regions.
 	/// Remote memory regions are not needed for tagged messages and streams.
 	#[inline(always)]
-	pub fn use_remote_memory_region(this: &Rc<RefCell<EndPoint<E>>>, their_remotely_accessible_memory_address: TheirRemotelyAccessibleMemoryAddress) -> Result<TheirRemotelyAccessibleMemory<E>, ErrorCode>
+	pub fn use_remote_memory_region(this: &Rc<RefCell<Self>>, their_remotely_accessible_memory_address: TheirRemotelyAccessibleMemoryAddress) -> Result<TheirRemotelyAccessibleMemory<E, A>, ErrorCode>
 	{
 		let mut handle = unsafe { uninitialized() };
 		let status = unsafe { ucp_ep_rkey_unpack(this.borrow().handle, their_remotely_accessible_memory_address.0.as_ptr() as *mut _, &mut handle) };
@@ -183,7 +204,7 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 	}
 	
 	#[inline(always)]
-	pub(crate) fn new_end_point(peer_failure_error_handler: E, their_remote_address: &Arc<TheirRemoteAddress>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool, parent_worker: &Worker) -> Result<Rc<RefCell<Self>>, ErrorCode>
+	pub(crate) fn new_end_point(peer_failure_error_handler: E, their_remote_address: &Arc<A>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool, parent_worker: &Worker) -> Result<Rc<RefCell<Self>>, ErrorCode>
 	{
 		#[inline(always)]
 		fn populated_by_their_remote_address<T>() -> T

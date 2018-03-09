@@ -2,16 +2,11 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// A new type to ease access to the underlying end point (which is provided as a combination of handle and user data).
-#[derive(Debug)]
-pub struct EndPointReadyToConsumeStreamingData(ucp_stream_poll_ep_t);
-
-impl EndPointReadyToConsumeStreamingData
+/// A remote address of a destination.
+pub trait TheirRemotelyAccessibleEndPointAddress
 {
-	/// Gets the end point.
+	// NOTE: It is important that this instance of `TheirRemotelyAccessibleAddress` is not dropped until after these parameters have been used to create an end point.
+	#[doc(hidden)]
 	#[inline(always)]
-	pub fn end_point<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>(&self) -> Option<Rc<RefCell<EndPoint<E, A>>>>
-	{
-		EndPoint::end_point_from_user_data(self.0.user_data, self.0.ep)
-	}
+	fn populate_end_point_parameters(&self, end_pointer_parameters: ucp_ep_params_t) -> ucp_ep_params_t;
 }
