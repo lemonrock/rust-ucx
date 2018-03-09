@@ -2,16 +2,20 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::WorkerHandleDropSafety;
-use super::status::*;
-use ::libc::c_void;
-use ::nix::sys::socket::SockAddr as NixSockAddr;
-use ::std::mem::uninitialized;
-use ::std::ptr::NonNull;
-use ::std::ptr::null_mut;
-use ::std::rc::Rc;
-use ::ucx_sys::*;
-
-
-include!("ServerListener.rs");
-include!("ServerListenerAcceptHandler.rs");
+#[inline(always)]
+pub(crate) fn null_or_empty_c_string(raw: *mut c_char) -> Option<CString>
+{
+	if raw.is_null()
+	{
+		return None;
+	}
+	let c_str = unsafe { CStr::from_ptr(raw) };
+	if c_str.to_bytes().is_empty()
+	{
+		None
+	}
+	else
+	{
+		Some(c_str.to_owned())
+	}
+}

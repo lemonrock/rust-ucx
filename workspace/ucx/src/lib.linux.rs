@@ -24,7 +24,8 @@ use self::client_server::*;
 use self::configuration::non_blocking_request_memory_customization::*;
 use self::configuration::values::*;
 use self::cpu_set::*;
-use self::errors::*;
+use self::ffi_helpers::*;
+use self::status::*;
 use self::print_information::PrintInformation;
 use ::libc::c_void;
 use ::libc::FILE;
@@ -39,6 +40,7 @@ use ::std::marker::PhantomData;
 use ::std::mem::forget;
 use ::std::mem::transmute;
 use ::std::mem::uninitialized;
+use ::std::mem::zeroed;
 use ::std::os::unix::io::RawFd;
 use ::std::ptr::NonNull;
 use ::std::ptr::null_mut;
@@ -59,16 +61,19 @@ pub mod buffers;
 pub mod client_server;
 
 
-/// Wrapper around CPU set.
-pub mod cpu_set;
-
-
 /// Configuration.
 pub mod configuration;
 
 
-/// Error helpers.
-pub mod errors;
+/// Wrapper around CPU set.
+pub mod cpu_set;
+
+
+/// Status, error and non-blocking request support.
+pub mod status;
+
+
+mod ffi_helpers;
 
 
 /// Print information helpers.

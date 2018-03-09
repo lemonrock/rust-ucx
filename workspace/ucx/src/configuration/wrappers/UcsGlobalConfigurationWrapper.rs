@@ -69,7 +69,7 @@ impl UcsGlobalConfigurationWrapper
 	#[inline(always)]
 	pub fn get_log_file_path_template(&self) -> Option<CString>
 	{
-		Self::unsafe_string_value(self.values().log_file)
+		null_or_empty_c_string(self.values().log_file)
 	}
 	
 	/// Get log buffer size in bytes for a single log message.
@@ -107,7 +107,7 @@ impl UcsGlobalConfigurationWrapper
 	#[inline(always)]
 	pub fn get_is_log_printing_enabled(&self) -> bool
 	{
-		self.values().log_print_enable != 0
+		self.values().log_print_enable.from_c_bool()
 	}
 	
 	/// Set is log printing enabled?
@@ -115,21 +115,14 @@ impl UcsGlobalConfigurationWrapper
 	#[inline(always)]
 	pub fn set_log_printing_enabled(&self, log_printing_enabled: bool)
 	{
-		self.values_mut().log_print_enable = if log_printing_enabled
-		{
-			1
-		}
-		else
-		{
-			0
-		}
+		self.values_mut().log_print_enable = log_printing_enabled.to_c_bool()
 	}
 	
 	/// Only available if configured, and only for debugging should the memory pool (mpool) be a FIFO.
 	#[inline(always)]
 	pub fn get_is_memory_pool_a_fifo_not_a_lifo(&self) -> bool
 	{
-		self.values().mpool_fifo != 0
+		self.values().mpool_fifo.from_c_bool()
 	}
 	
 	/// Default is just backtrace.
@@ -164,21 +157,21 @@ impl UcsGlobalConfigurationWrapper
 	#[inline(always)]
 	pub fn get_error_mail_to(&self) -> Option<CString>
 	{
-		Self::unsafe_string_value(self.values().error_mail_to)
+		null_or_empty_c_string(self.values().error_mail_to)
 	}
 	
 	/// Not thread safe; another thread can cause a de-allocation of the underlying global value.
 	#[inline(always)]
 	pub fn get_error_mail_footer(&self) -> Option<CString>
 	{
-		Self::unsafe_string_value(self.values().error_mail_footer)
+		null_or_empty_c_string(self.values().error_mail_footer)
 	}
 	
 	/// Not thread safe; another thread can cause a de-allocation of the underlying global value.
 	#[inline(always)]
 	pub fn get_gdb_command(&self) -> Option<CString>
 	{
-		Self::unsafe_string_value(self.values().gdb_command)
+		null_or_empty_c_string(self.values().gdb_command)
 	}
 	
 	/// Get debug signal.
@@ -235,7 +228,7 @@ impl UcsGlobalConfigurationWrapper
 //	#[inline(always)]
 //	pub fn get_statistics_destination(&self) -> Option<CString>
 //	{
-//		Self::unsafe_string_value(self.values().stats_dest)
+//		null_or_empty_c_string(self.values().stats_dest)
 //	}
 //
 //	/// Only valid if ucx was compiled with statistics.
@@ -243,14 +236,14 @@ impl UcsGlobalConfigurationWrapper
 //	#[inline(always)]
 //	pub fn get_statistics_trigger(&self) -> Option<CString>
 //	{
-//		Self::unsafe_string_value(self.values().stats_trigger)
+//		null_or_empty_c_string(self.values().stats_trigger)
 //	}
 	
 	/// Not thread safe; another thread can cause a de-allocation of the underlying global value.
 	#[inline(always)]
 	pub fn get_tuning_file_path(&self) -> Option<CString>
 	{
-		Self::unsafe_string_value(self.values().tuning_path)
+		null_or_empty_c_string(self.values().tuning_path)
 	}
 	
 	/// Get number of performance stall loops to perform.
@@ -290,7 +283,7 @@ impl UcsGlobalConfigurationWrapper
 //	#[inline(always)]
 //	pub fn get_memtrack_destination_file_path_template(&self) -> Option<CString>
 //	{
-//		Self::unsafe_string_value(self.values().memtrack_dest)
+//		null_or_empty_c_string(self.values().memtrack_dest)
 //	}
 	
 	/// Profile collection modes.
@@ -308,7 +301,7 @@ impl UcsGlobalConfigurationWrapper
 	#[inline(always)]
 	pub fn get_profile_file_path_template(&self) -> Option<CString>
 	{
-		Self::unsafe_string_value(self.values().profile_file)
+		null_or_empty_c_string(self.values().profile_file)
 	}
 	
 	/// Get maximal size of profiling log.
@@ -329,7 +322,7 @@ impl UcsGlobalConfigurationWrapper
 //	pub stats_format: ucs_stats_formats_t,
 	
 	#[inline(always)]
-	fn unsafe_string_value(raw: *mut c_char) -> Option<CString>
+	fn null_or_empty_c_string(raw: *mut c_char) -> Option<CString>
 	{
 		if raw.is_null()
 		{
@@ -357,6 +350,4 @@ impl UcsGlobalConfigurationWrapper
 	{
 		unsafe { &mut ucs_global_opts }
 	}
-	
-	// Get a value: ucs_global_opts_get_value
 }

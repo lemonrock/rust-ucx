@@ -17,12 +17,18 @@ impl Drop for NonBlockingRequest
 
 impl NonBlockingRequest
 {
+	/// Block until a non-blocking operation is complete.
+	///
+	/// Useful when the UCX API exposes non-blocking operations, but an application needs to wait for them to finish.
+	///
+	/// For example, closing an End Point.
 	#[inline(always)]
-	fn block_until_non_blocking_operation_is_complete(parent_worker: &Worker, status_pointer: ucs_status_ptr_t) -> Result<(), ErrorCode>
+	pub fn block_until_non_blocking_operation_is_complete(parent_worker: &Worker, status_pointer: ucs_status_ptr_t) -> Result<(), ErrorCode>
 	{
 		use self::StatusOrNonBlockingRequest::*;
+		use self::Status::*;
 		
-		match status_pointer.parse().unwrap("Invalid status_pointer")
+		match status_pointer.parse().expect("Invalid status_pointer")
 		{
 			Status(IsOk) => Ok(()),
 			
@@ -41,7 +47,7 @@ impl NonBlockingRequest
 				Ok(())
 			},
 			
-			Status(ErrorCode(error_code)) => Err(error_code),
+			Status(Error(error_code)) => Err(error_code),
 			
 			unexpected @ _ => panic!("Unexpected status_pointer: {:?}", unexpected),
 		}
@@ -55,7 +61,7 @@ impl NonBlockingRequest
 	#[inline(always)]
 	pub fn is_still_in_progress(&self) -> Result<bool, ErrorCode>
 	{
-		let status = unsafe { ucp_request_check(self.pointer()) };
+		let status = unsafe { ucp_request_check_status(self.pointer()) };
 		
 		use self::Status::*;
 		
@@ -80,9 +86,11 @@ impl NonBlockingRequest
 	#[inline(always)]
 	pub fn is_still_in_progress_for_tag_receive(&self) -> Result<(bool, ucp_tag_recv_info_t), ErrorCode>
 	{
-		let mut tag_receive_information = unsafe { unintialized() };
+		let mut tag_receive_information = unsafe { uninitialized() };
 		
 		let status = unsafe { ucp_tag_recv_request_test(self.pointer(), &mut tag_receive_information) };
+		
+		use self::Status::*;
 		
 		match status.parse().expect("Invalid status")
 		{
@@ -105,13 +113,15 @@ impl NonBlockingRequest
 	#[inline(always)]
 	pub fn is_still_in_progress_for_stream(&self) -> Result<Option<usize>, ErrorCode>
 	{
-		let mut length = unsafe { unintialized() };
+		let mut length = unsafe { uninitialized() };
 		
-		let status = unsafe { ucp_tag_recv_request_test(self.pointer(), &mut length) };
+		let status = unsafe { ucp_stream_recv_request_test(self.pointer(), &mut length) };
+		
+		use self::Status::*;
 		
 		match status.parse().expect("Invalid status")
 		{
-			IsOk => Ok(length),
+			IsOk => Ok(Some(length)),
 			
 			OperationInProgress => Ok(None),
 			
@@ -129,7 +139,7 @@ impl NonBlockingRequest
 	#[inline(always)]
 	pub fn cancel(self, parent_worker: &Worker)
 	{
-		unsafe { ucp_request_cancel(parent_worker.handle) };
+		unsafe { ucp_request_cancel(parent_worker.handle, self.pointer()) };
 		drop(self)
 	}
 	

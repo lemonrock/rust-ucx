@@ -2,16 +2,27 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::WorkerHandleDropSafety;
-use super::status::*;
-use ::libc::c_void;
-use ::nix::sys::socket::SockAddr as NixSockAddr;
-use ::std::mem::uninitialized;
-use ::std::ptr::NonNull;
-use ::std::ptr::null_mut;
-use ::std::rc::Rc;
-use ::ucx_sys::*;
+/// Conversions to a C representation of a boolean value.
+pub(crate) trait ToCBool<I: Integer>
+{
+	/// Zero for false.
+	/// One for true.
+	#[inline(always)]
+	fn to_c_bool(self) -> I;
+}
 
-
-include!("ServerListener.rs");
-include!("ServerListenerAcceptHandler.rs");
+impl<I: Integer> ToCBool<I> for bool
+{
+	#[inline(always)]
+	fn to_c_bool(self) -> I
+	{
+		if self
+		{
+			I::One
+		}
+		else
+		{
+			I::Zero
+		}
+	}
+}

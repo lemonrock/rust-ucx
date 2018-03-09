@@ -18,7 +18,7 @@ quick_error!
 		}
 		
 		/// Invalid status (fatal).
-		InvalidStatus(cause: ::errors::InvalidStatusError)
+		InvalidStatus(cause: ::status::InvalidStatusError)
 		{
 			cause(cause)
 			description(cause.description())

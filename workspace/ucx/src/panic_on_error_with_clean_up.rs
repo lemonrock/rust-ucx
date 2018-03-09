@@ -12,7 +12,7 @@ macro_rules! panic_on_error_with_clean_up
 			{
 				$failureBlock
 				
-				let status = $crate::errors::Status::parse_ucs_status_t($status).expect("Invalid status");
+				let status = $crate::status::Status::parse_ucs_status_t($status).expect("Invalid status");
 				panic!("{} failed with status code '{:?}'", stringify!($function), status);
 			}
 		}

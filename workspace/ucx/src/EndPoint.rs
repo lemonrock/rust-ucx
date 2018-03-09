@@ -31,7 +31,7 @@ impl<E: EndPointPeerFailureErrorHandler> Drop for EndPoint<E>
 			let user_data = self.end_point_parameters.user_data;
 			if !user_data.is_null()
 			{
-				drop_user_data(user_data)
+				drop_user_data::<E>(user_data)
 			}
 		}
 		// Initialized and in-use.
@@ -40,21 +40,22 @@ impl<E: EndPointPeerFailureErrorHandler> Drop for EndPoint<E>
 			// We need to modify the end-point, and remove the user data (ie set it to null)
 			// So any callbacks from UCX now fail.
 			
-			use self::StatusOrNonBlockingRequest::*;
-			use self::Status::*;
-			
 			// Modify the end point to release the user_data and error_handler so we can free them.
 			let user_data_original = self.end_point_parameters.user_data;
 			self.end_point_parameters.user_data = null_mut();
-			self.end_point_parameters.err_handler = None;
+			self.end_point_parameters.err_handler = ucp_err_handler_t
+			{
+				cb: None,
+				arg: null_mut(),
+			};
 			let change_user_data_status_pointer = unsafe { ucp_ep_modify_nb(self.handle, &self.end_point_parameters) };
 			// We discard any errors; there's nothing we can do with them.
 			self.parent_worker.block_until_non_blocking_operation_is_complete(change_user_data_status_pointer);
 			
 			// Drop the weak reference in user data.
-			drop_user_data(user_data_original);
+			drop_user_data::<E>(user_data_original);
 			
-			let close_status_pointer = unsafe { ucp_ep_close_nb(self.handle, ucp_ep_close_mode::UCP_EP_CLOSE_MODE_FLUSH) };
+			let close_status_pointer = unsafe { ucp_ep_close_nb(self.handle, ucp_ep_close_mode::UCP_EP_CLOSE_MODE_FLUSH as u32) };
 			// We discard any errors; there's nothing we can do with them.
 			self.parent_worker.block_until_non_blocking_operation_is_complete(close_status_pointer);
 			
@@ -94,6 +95,15 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 	
 	// ucp_stream_data_release
 	
+	/*
+	
+#[link_name = "\u{1}_ucp_stream_data_release"] pub fn ucp_stream_data_release(ep: ucp_ep_h, data: *mut c_void);
+#[link_name = "\u{1}_ucp_stream_recv_data_nb"] pub fn ucp_stream_recv_data_nb(ep: ucp_ep_h, length: *mut usize) -> ucs_status_ptr_t;
+#[link_name = "\u{1}_ucp_stream_recv_nb"] pub fn ucp_stream_recv_nb(ep: ucp_ep_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, cb: ucp_stream_recv_callback_t, length: *mut usize, flags: c_uint) -> ucs_status_ptr_t;
+#[link_name = "\u{1}_ucp_stream_send_nb"] pub fn ucp_stream_send_nb(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, cb: ucp_send_callback_t, flags: c_uint) -> ucs_status_ptr_t;
+	
+	*/
+	
 	
 	
 	
@@ -122,7 +132,7 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 					(
 						ucp_ep_params_t
 						{
-							field_mask: ucp_ep_params_field::ERR_HANDLING_MODE | ucp_ep_params_field::ERR_HANDLER | ucp_ep_params_field::USER_DATA,
+							field_mask: (ucp_ep_params_field::ERR_HANDLING_MODE | ucp_ep_params_field::ERR_HANDLER | ucp_ep_params_field::USER_DATA).0 as u64,
 							address: populated_by_their_remote_address(),
 							err_mode: if guarantee_that_send_requests_are_always_completed_successfully_or_error
 							{
@@ -148,7 +158,7 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 		);
 		Self::assign_user_data_to_self(&end_point);
 		
-		end_point.connectOrReconnect(destinationAddress);
+		end_point.connectOrReconnect();
 		
 		end_point
 	}
@@ -158,8 +168,8 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 	#[inline(always)]
 	pub(crate) fn assign_user_data_to_self(this: &Rc<RefCell<Self>>)
 	{
-		let borrow = this.borrow_mut();
-		end_point.end_pointer_parameters.user_data = unsafe { transmute(Rc::downgrade(this)) };
+		let end_point = this.borrow_mut();
+		(*end_point).end_point_parameters.user_data = unsafe { transmute(Rc::downgrade(this)) };
 	}
 	
 	// Yes, this is also horrible.
@@ -173,7 +183,7 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 			return None;
 		}
 		
-		let weak: Weak<Self> = unsafe { transmute(user_data) };
+		let weak: Weak<RefCell<Self>> = unsafe { transmute(user_data) };
 		let possibly_strong = weak.upgrade();
 		forget(weak);
 		

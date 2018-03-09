@@ -67,70 +67,70 @@ impl UcmConfigurationWrapper
 	#[inline(always)]
 	pub fn are_events_enabled(&self) -> bool
 	{
-		Self::from_c_bool(self.values().enable_events)
+		self.values().enable_events.from_c_bool()
 	}
 	
 	/// Set if events are enabled.
 	#[inline(always)]
 	pub fn set_events_are_enabled(&self, enabled: bool)
 	{
-		self.values_mut().enable_events = Self::to_c_bool(enabled)
+		self.values_mut().enable_events = enabled.to_c_bool()
 	}
 	
 	/// Get if mmap relocation is enabled.
 	#[inline(always)]
 	pub fn are_mmap_relocation_enabled(&self) -> bool
 	{
-		Self::from_c_bool(self.values().enable_mmap_reloc)
+		self.values().enable_mmap_reloc.from_c_bool()
 	}
 	
 	/// Set if mmap relocation is enabled.
 	#[inline(always)]
 	pub fn set_mmap_relocation_is_enabled(&self, enabled: bool)
 	{
-		self.values_mut().enable_mmap_reloc = Self::to_c_bool(enabled)
+		self.values_mut().enable_mmap_reloc = enabled.to_c_bool()
 	}
 	
 	/// Get if malloc hooks are enabled.
 	#[inline(always)]
 	pub fn are_malloc_hooks_enabled(&self) -> bool
 	{
-		Self::from_c_bool(self.values().enable_malloc_hooks)
+		self.values().enable_malloc_hooks.from_c_bool()
 	}
 	
 	/// Set if malloc hooks are enabled.
 	#[inline(always)]
 	pub fn set_malloc_hooks_are_enabled(&self, enabled: bool)
 	{
-		self.values_mut().enable_malloc_hooks = Self::to_c_bool(enabled)
+		self.values_mut().enable_malloc_hooks = enabled.to_c_bool()
 	}
 	
 	/// Get if malloc relocation is enabled.
 	#[inline(always)]
 	pub fn is_malloc_reallocation_enabled(&self) -> bool
 	{
-		Self::from_c_bool(self.values().enable_malloc_reloc)
+		self.values().enable_malloc_reloc.from_c_bool()
 	}
 	
 	/// Set if malloc relocation is enabled.
 	#[inline(always)]
 	pub fn set_malloc_relocation_is_enabled(&self, enabled: bool)
 	{
-		self.values_mut().enable_malloc_reloc = Self::to_c_bool(enabled)
+		self.values_mut().enable_malloc_reloc = enabled.to_c_bool()
 	}
 	
 	/// Get if the dynamic mmap threshold is enabled.
 	#[inline(always)]
 	pub fn is_dynamic_mmap_threshold_enabled(&self) -> bool
 	{
-		Self::from_c_bool(self.values().enable_dynamic_mmap_thresh)
+		self.values().enable_dynamic_mmap_thresh.from_c_bool()
 	}
 	
 	/// Set if the dynamic mmap threshold is enabled.
 	#[inline(always)]
 	pub fn set_dynamic_mmap_threshold_is_enabled(&self, enabled: bool)
 	{
-		self.values_mut().enable_dynamic_mmap_thresh = Self::to_c_bool(enabled)
+		self.values_mut().enable_dynamic_mmap_thresh = enabled.to_c_bool()
 	}
 	
 //	/// Get if CUDA hooks are enabled.
@@ -138,7 +138,7 @@ impl UcmConfigurationWrapper
 //	#[inline(always)]
 //	pub fn are_cuda_hooks_enabled(&self) -> bool
 //	{
-//		self::from_c_bool(self.values().enable_cuda_hooks)
+//		self::self.values().enable_cuda_hooks.from_c_bool()
 //	}
 //
 //	/// Set if CUDA hooks are enabled.
@@ -146,7 +146,7 @@ impl UcmConfigurationWrapper
 //	#[inline(always)]
 //	pub fn set_cuda_hooks_are_enabled(&self, enabled: bool)
 //	{
-//		self.values_mut().enable_cuda_hooks = self::to_c_bool(enabled)
+//		self.values_mut().enable_cuda_hooks = self::enabled.to_c_bool()
 //	}
 	
 	/// Get allocation alignment.
@@ -178,44 +178,4 @@ impl UcmConfigurationWrapper
 	{
 		unsafe { &mut ucm_global_config }
 	}
-	
-	#[inline(always)]
-	fn from_c_bool(value: i32) -> bool
-	{
-		value != 0
-	}
-	
-	#[inline(always)]
-	fn to_c_bool(value: bool) -> i32
-	{
-		if value
-		{
-			1
-		}
-		else
-		{
-			0
-		}
-	}
-	
-	// No API to get a value
 }
-
-/*
-
-typedef struct ucm_config {
-    ucs_log_level_t log_level;
-    int             enable_events;
-    int             enable_mmap_reloc;
-    int             enable_malloc_hooks;
-    int             enable_malloc_reloc;
-    int             enable_dynamic_mmap_thresh;
-#if HAVE_CUDA
-    int             enable_cuda_hooks;
-#endif
-    size_t          alloc_alignment;
-} ucm_config_t;
-
-
-extern ucm_config_t ucm_global_config;
-*/

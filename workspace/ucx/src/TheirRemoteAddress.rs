@@ -4,7 +4,7 @@
 
 /// A remote address of a destination.
 /// Can be either a `RemoteWorker` (commonest) or a `ClientServer`.
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum TheirRemoteAddress
 {
 	RemoteWorker(TheirRemotelyAccessibleWorkerAddress),
@@ -25,14 +25,14 @@ impl TheirRemoteAddress
 		{
 			RemoteWorker(remote_worker_address) =>
 			{
-				end_pointer_parameters.field_mask |= (ucp_ep_params_field::REMOTE_ADDRESS.0 as u64);
+				end_pointer_parameters.field_mask |= ucp_ep_params_field::REMOTE_ADDRESS.0 as u64;
 				end_pointer_parameters.address = remote_worker_address.0.as_ptr();
 			},
 			
 			ClientServer(socket_address) =>
 			{
-				end_pointer_parameters.field_mask |= (ucp_ep_params_field::FLAGS.0 as u64);
-				end_pointer_parameters.field_mask |= (ucp_ep_params_field::SOCK_ADDR.0 as u64);
+				end_pointer_parameters.field_mask |= ucp_ep_params_field::FLAGS.0 as u64;
+				end_pointer_parameters.field_mask |= ucp_ep_params_field::SOCK_ADDR.0 as u64;
 				end_pointer_parameters.sockaddr = socket_address.as_ffi_pair().0.clone();
 				end_pointer_parameters.flags |= UCP_EP_PARAMS_FLAGS_CLIENT_SERVER;
 			},

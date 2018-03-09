@@ -9,7 +9,7 @@ quick_error!
 	pub enum ConfigurationModifyError
 	{
 		/// Invalid status.
-		InvalidStatus(cause: ::errors::InvalidStatusError)
+		InvalidStatus(cause: ::status::InvalidStatusError)
 		{
 			cause(cause)
 			description(cause.description())

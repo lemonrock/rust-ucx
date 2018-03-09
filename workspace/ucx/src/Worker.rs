@@ -40,7 +40,7 @@ impl PrintInformation for Worker
 	#[inline(always)]
 	fn print_information_to_stream(&self, stream: *mut FILE)
 	{
-		if handle.is_null()
+		if self.handle.is_null()
 		{
 			return;
 		}
@@ -64,6 +64,8 @@ impl HasAttributes for Worker
 
 impl Worker
 {
+	pub const MaximumEndPoints: usize = 64;
+	
 	/// Creates an end point to connected to a their_remote_address worker.
 	///
 	/// `peer_failure_error_handler` is moved into the `EndPoint`.
@@ -78,119 +80,11 @@ impl Worker
 	/// * it may affect performance
 	/// * it may increase memory footprint
 	#[inline(always)]
-	pub fn new_end_point<E: EndPointPeerFailureErrorHandler>(&self, peer_failure_error_handler: E, their_remote_address: TheirRemoteAddress, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool)
+	pub fn new_end_point<E: EndPointPeerFailureErrorHandler>(&self, peer_failure_error_handler: E, their_remote_address: TheirRemoteAddress, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool) -> Rc<RefCell<EndPoint<E>>>
 	{
 		debug_assert!(!self.handle.is_null(), "handle is null");
 		
 		EndPoint::new_end_point(peer_failure_error_handler, their_remote_address, guarantee_that_send_requests_are_always_completed_successfully_or_error, self)
-	}
-	
-	const ReservedForFutureUseFlags: u32 = 0;
-	
-	/// This non-blocking routine returns endpoints on a worker which are ready to consume streaming data.
-	/// The ready end points are put into `end_points`.
-	/// On success, the `end_points` will have been overwritten with ready end points.
-	///
-	/// NOTE: The value of `end_points.len()` is ignored on entry.
-	#[inline(always)]
-	pub fn which_end_points_are_ready_to_consume_streaming_data(&self, end_points: &mut Vec<EndPointReadToConsumeStreamingData>) -> Result<(), ErrorCode>
-	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
-		
-		let maximum_end_points = end_points.capacity();
-		
-		let result = unsafe { ucp_stream_worker_poll(self.handle, end_points.as_mut_ptr() as *mut _, maximum_end_points, Self::ReservedForFutureUseFlags) };
-		if result >= 0
-		{
-			let count = result as usize;
-			debug_assert!(count <= maximum_end_points);
-			unsafe { end_points.set_len(count) }
-			
-			Ok(())
-		}
-		else
-		{
-			let status = result as ucs_status_t;
-			Err(status.error_code_or_panic())
-		}
-	}
-	
-	pub const MaximumEndPoints: usize = 64;
-	
-	/// Identical to `which_end_points_are_ready_to_consume_streaming_data` but uses a fixed size, stack-friendly array.
-	///
-	/// Number of end points is returned in the result.
-	#[inline(always)]
-	pub fn which_end_points_are_ready_to_consume_streaming_data_optimized(&self, end_points: &mut [EndPointReadToConsumeStreamingData; Self::MaximumEndPoints]) -> Result<usize, ErrorCode>
-	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
-		
-		let result = unsafe { ucp_stream_worker_poll(self.handle, end_points.as_mut_ptr() as *mut _, Self::MaximumEndPoints, Self::ReservedForFutureUseFlags) };
-		if result >= 0
-		{
-			let count = result as usize;
-			debug_assert!(count <= Self::MaximumEndPoints);
-			Ok(count)
-		}
-		else
-		{
-			let status = result as ucs_status_t;
-			Err(status.error_code_or_panic())
-		}
-	}
-	
-	/// A server listener listens for incoming client connections on a particular address.
-	/// It then creates ?end points? to handle them.
-	#[inline(always)]
-	pub fn create_server_listener<L: ServerListenerAcceptHandler>(&self, our_listening_socket: NixSockAddr, server_listener_accept_handler: L) -> Result<ServerListener<L>, ErrorCode>
-	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
-		
-		let mut server_listener = Box::new
-		(
-			ServerListener
-			{
-				handle: null_mut(),
-				worker_handle_drop_safety: self.worker_handle_drop_safety.clone(),
-				server_listener_accept_handler,
-			}
-		);
-		
-		let (socket_address, length) = our_listening_socket.as_ffi_pair();
-		
-		let parameters = ucp_listener_params_t
-		{
-			field_mask: u64,
-			sockaddr: ucs_sock_addr_t
-			{
-				addr: socket_address,
-				addrlen: length,
-			},
-			accept_handler: ucp_listener_accept_handler_t
-			{
-				cb: Some(ServerListener::<L>::accept_callback),
-				arg: (&server_listener.listener_accept_handler) as *const _ as *mut _,
-			},
-		};
-		
-		let mut handle = unsafe { uninitialized() };
-		
-		let status = unsafe { ucp_listener_create(self.handle, &parameters, &mut handle) };
-		
-		use self::Status::*;
-		
-		match status.parse().expect("Invalid status")
-		{
-			IsOk =>
-			{
-				server_listener.handle = handle;
-				Ok(server_listener)
-			}
-			
-			Error(error_code) => Err(error_code),
-			
-			unexpected @ _ => panic!("Unexpected status '{:?}'", unexpected)
-		}
 	}
 	
 	/// This routine returns the address of the worker object.
@@ -213,6 +107,66 @@ impl Worker
 			length,
 			worker_handle: self.handle,
 			worker_handle_drop_safety: self.worker_handle_drop_safety.clone(),
+		}
+	}
+	
+	/// A server listener listens for incoming client connections on a particular address.
+	/// It then creates ?end points? to handle them.
+	#[inline(always)]
+	pub fn create_server_listener<L: ServerListenerAcceptHandler>(&self, our_listening_socket: NixSockAddr, server_listener_accept_handler: L) -> Result<Box<ServerListener<L>>, ErrorCode>
+	{
+		debug_assert!(!self.handle.is_null(), "handle is null");
+		
+		ServerListener::create_server_listener(our_listening_socket, server_listener_accept_handler, &self.worker_handle_drop_safety, self.handle)
+	}
+	
+	/// This non-blocking routine returns endpoints on a worker which are ready to consume streaming data.
+	/// The ready end points are put into `end_points`.
+	/// On success, the `end_points` will have been overwritten with ready end points.
+	///
+	/// NOTE: The value of `end_points.len()` is ignored on entry.
+	#[inline(always)]
+	pub fn which_end_points_are_ready_to_consume_streaming_data(&self, end_points: &mut Vec<EndPointReadyToConsumeStreamingData>) -> Result<(), ErrorCode>
+	{
+		debug_assert!(!self.handle.is_null(), "handle is null");
+		
+		let maximum_end_points = end_points.capacity();
+		
+		let result = unsafe { ucp_stream_worker_poll(self.handle, end_points.as_mut_ptr() as *mut _, maximum_end_points, ReservedForFutureUseFlags) };
+		if result >= 0
+		{
+			let count = result as usize;
+			debug_assert!(count <= maximum_end_points);
+			unsafe { end_points.set_len(count) }
+			
+			Ok(())
+		}
+		else
+		{
+			let status = result as ucs_status_t;
+			Err(status.error_code_or_panic())
+		}
+	}
+	
+	/// Identical to `which_end_points_are_ready_to_consume_streaming_data` but uses a fixed size, stack-friendly array.
+	///
+	/// Number of end points is returned in the result.
+	#[inline(always)]
+	pub fn which_end_points_are_ready_to_consume_streaming_data_optimized(&self, end_points: &mut [EndPointReadyToConsumeStreamingData; Self::MaximumEndPoints]) -> Result<usize, ErrorCode>
+	{
+		debug_assert!(!self.handle.is_null(), "handle is null");
+		
+		let result = unsafe { ucp_stream_worker_poll(self.handle, end_points.as_mut_ptr() as *mut _, Self::MaximumEndPoints, ReservedForFutureUseFlags) };
+		if result >= 0
+		{
+			let count = result as usize;
+			debug_assert!(count <= Self::MaximumEndPoints);
+			Ok(count)
+		}
+		else
+		{
+			let status = result as ucs_status_t;
+			Err(status.error_code_or_panic())
 		}
 	}
 	
@@ -246,10 +200,8 @@ impl Worker
 	{
 		debug_assert!(!self.handle.is_null(), "handle is null");
 		
-		const ReservedForFutureUseFlags: u32 = 0;
-		
 		let status_pointer = unsafe { ucp_worker_flush_nb(self.handle, ReservedForFutureUseFlags, callback_when_finished_or_cancelled) };
-		status_pointer.parse().unwrap("Invalid status_pointer")
+		status_pointer.parse().expect("Invalid status_pointer")
 	}
 	
 	/// Assures ordering between non-blocking operations.
@@ -281,8 +233,7 @@ impl Worker
 	{
 		debug_assert!(!self.handle.is_null(), "handle is null");
 		
-		let result = panic_on_error!(ucp_worker_progress, self.handle);
-		result != 0
+		unsafe { ucp_worker_progress(self.handle) }.from_c_bool()
 	}
 	
 	/// Returns an Err if internal logical returns `UCS_ERR_IO_ERROR`.

@@ -3,7 +3,7 @@
 
 
 /// A more sensible type than `ucs_status_ptr_t`.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum StatusOrNonBlockingRequest
 {
 	/// Status.

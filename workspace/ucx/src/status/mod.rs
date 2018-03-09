@@ -4,6 +4,7 @@
 
 use super::Worker;
 use self::ucs_status_t::*;
+use ::libc::c_void;
 use ::std::ffi::CStr;
 use ::std::mem::transmute;
 use ::std::mem::uninitialized;
