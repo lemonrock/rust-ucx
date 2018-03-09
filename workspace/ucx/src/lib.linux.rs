@@ -46,6 +46,7 @@ use ::std::ptr::NonNull;
 use ::std::ptr::null_mut;
 use ::std::rc::Rc;
 use ::std::rc::Weak;
+use ::std::sync::Arc;
 use ::ucx_sys::*;
 
 

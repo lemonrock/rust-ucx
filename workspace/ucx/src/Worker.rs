@@ -80,7 +80,7 @@ impl Worker
 	/// * it may affect performance
 	/// * it may increase memory footprint
 	#[inline(always)]
-	pub fn new_end_point<E: EndPointPeerFailureErrorHandler>(&self, peer_failure_error_handler: E, their_remote_address: TheirRemoteAddress, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool) -> Rc<RefCell<EndPoint<E>>>
+	pub fn new_end_point<E: EndPointPeerFailureErrorHandler>(&self, peer_failure_error_handler: E, their_remote_address: &Arc<TheirRemoteAddress>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool) -> Rc<RefCell<EndPoint<E>>>
 	{
 		debug_assert!(!self.handle.is_null(), "handle is null");
 		
@@ -128,24 +128,8 @@ impl Worker
 	#[inline(always)]
 	pub fn which_end_points_are_ready_to_consume_streaming_data(&self, end_points: &mut Vec<EndPointReadyToConsumeStreamingData>) -> Result<(), ErrorCode>
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
-		
 		let maximum_end_points = end_points.capacity();
-		
-		let result = unsafe { ucp_stream_worker_poll(self.handle, end_points.as_mut_ptr() as *mut _, maximum_end_points, ReservedForFutureUseFlags) };
-		if result >= 0
-		{
-			let count = result as usize;
-			debug_assert!(count <= maximum_end_points);
-			unsafe { end_points.set_len(count) }
-			
-			Ok(())
-		}
-		else
-		{
-			let status = result as ucs_status_t;
-			Err(status.error_code_or_panic())
-		}
+		self.ucp_stream_worker_poll(end_points.as_mut_ptr(), maximum_end_points).map(|number_of_end_points_ready| unsafe { end_points.set_len(number_of_end_points_ready) })
 	}
 	
 	/// Identical to `which_end_points_are_ready_to_consume_streaming_data` but uses a fixed size, stack-friendly array.
@@ -154,9 +138,16 @@ impl Worker
 	#[inline(always)]
 	pub fn which_end_points_are_ready_to_consume_streaming_data_optimized(&self, end_points: &mut [EndPointReadyToConsumeStreamingData; Self::MaximumEndPoints]) -> Result<usize, ErrorCode>
 	{
+		self.ucp_stream_worker_poll(end_points.as_mut_ptr(), Self::MaximumEndPoints)
+	}
+	
+	#[inline(always)]
+	fn ucp_stream_worker_poll(&self, end_points: *mut EndPointReadyToConsumeStreamingData, maximum_end_points: usize) -> Result<usize, ErrorCode>
+	{
 		debug_assert!(!self.handle.is_null(), "handle is null");
+		debug_assert!(!end_points.is_null(), "end_points is null");
 		
-		let result = unsafe { ucp_stream_worker_poll(self.handle, end_points.as_mut_ptr() as *mut _, Self::MaximumEndPoints, ReservedForFutureUseFlags) };
+		let result = unsafe { ucp_stream_worker_poll(self.handle, end_points as *mut _, maximum_end_points, ReservedForFutureUseFlags) };
 		if result >= 0
 		{
 			let count = result as usize;
@@ -165,7 +156,8 @@ impl Worker
 		}
 		else
 		{
-			let status = result as ucs_status_t;
+			debug_assert!(result >= (::std::i8::MIN as isize), "result is out-of-range");
+			let status: ucs_status_t = unsafe { transmute(result as i8) };
 			Err(status.error_code_or_panic())
 		}
 	}

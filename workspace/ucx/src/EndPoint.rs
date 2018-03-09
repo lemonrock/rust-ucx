@@ -9,6 +9,7 @@ pub struct EndPoint<E: EndPointPeerFailureErrorHandler>
 	handle: ucp_ep_h,
 	user_data_and_peer_failure_error_handler: E,
 	parent_worker: Worker,
+	their_remote_address: Arc<TheirRemoteAddress>, // We *MUST* hold a reference to this, otherwise the data in `end_point_parameters` contains raw pointers to socket address structures that may have been dropped.
 	end_point_parameters: ucp_ep_params_t,
 }
 
@@ -109,7 +110,7 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 	
 	
 	#[inline(always)]
-	pub(crate) fn new_end_point(peer_failure_error_handler: E, their_remote_address: TheirRemoteAddress, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool, parent_worker: &Worker) -> Rc<RefCell<Self>>
+	pub(crate) fn new_end_point(peer_failure_error_handler: E, their_remote_address: &Arc<TheirRemoteAddress>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool, parent_worker: &Worker) -> Rc<RefCell<Self>>
 	{
 		#[inline(always)]
 		fn populated_by_their_remote_address<T>() -> T
@@ -118,6 +119,8 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 		}
 		
 		use self::ucp_err_handling_mode_t::*;
+		
+		// their_remote_address can be moved, which isn't good.
 		
 		let end_point = Rc::new
 		(
@@ -128,12 +131,15 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 					handle: null_mut(),
 					user_data_and_peer_failure_error_handler: peer_failure_error_handler,
 					parent_worker: parent_worker.clone(),
+					their_remote_address: their_remote_address.clone(),
 					end_point_parameters: their_remote_address.populate_end_point_parameters
 					(
 						ucp_ep_params_t
 						{
 							field_mask: (ucp_ep_params_field::ERR_HANDLING_MODE | ucp_ep_params_field::ERR_HANDLER | ucp_ep_params_field::USER_DATA).0 as u64,
+							
 							address: populated_by_their_remote_address(),
+							
 							err_mode: if guarantee_that_send_requests_are_always_completed_successfully_or_error
 							{
 								UCP_ERR_HANDLING_MODE_PEER
@@ -142,14 +148,17 @@ impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 							{
 								UCP_ERR_HANDLING_MODE_NONE
 							},
+							
 							err_handler: ucp_err_handler
 							{
 								cb: Some(EndPoint::peer_failure_error_callback),
 								arg: null_mut(), // Is overridden by `ucp_ep_params_t.user_data`.
 							},
+							
 							user_data: null_mut(),
 							
 							flags: populated_by_their_remote_address(),
+							
 							sockaddr: populated_by_their_remote_address(),
 						}
 					),

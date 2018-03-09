@@ -16,6 +16,7 @@ pub enum TheirRemoteAddress
 
 impl TheirRemoteAddress
 {
+	// NOTE: It is important that this instance of `TheirRemoteAddress` is not dropped until after these parameters have been used to create an end point.
 	#[inline(always)]
 	pub(crate) fn populate_end_point_parameters(&self, mut end_pointer_parameters: ucp_ep_params_t) -> ucp_ep_params_t
 	{
@@ -31,9 +32,15 @@ impl TheirRemoteAddress
 			
 			ClientServer(socket_address) =>
 			{
+				let (socket_address, length) = socket_address.as_ffi_pair();
+				
 				end_pointer_parameters.field_mask |= ucp_ep_params_field::FLAGS.0 as u64;
 				end_pointer_parameters.field_mask |= ucp_ep_params_field::SOCK_ADDR.0 as u64;
-				end_pointer_parameters.sockaddr = socket_address.as_ffi_pair().0.clone();
+				end_pointer_parameters.sockaddr = ucs_sock_addr_t
+				{
+					addr: socket_address,
+					addrlen: length,
+				};
 				end_pointer_parameters.flags |= UCP_EP_PARAMS_FLAGS_CLIENT_SERVER;
 			},
 		}
