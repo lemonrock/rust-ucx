@@ -65,7 +65,7 @@ impl NonBlockingRequest
 		
 		use self::Status::*;
 		
-		match status.parse().expect("Invalid status")
+		match status.parse()
 		{
 			IsOk => Ok(false),
 			
@@ -92,7 +92,7 @@ impl NonBlockingRequest
 		
 		use self::Status::*;
 		
-		match status.parse().expect("Invalid status")
+		match status.parse()
 		{
 			IsOk => Ok((false, tag_receive_information)),
 			
@@ -119,7 +119,7 @@ impl NonBlockingRequest
 		
 		use self::Status::*;
 		
-		match status.parse().expect("Invalid status")
+		match status.parse()
 		{
 			IsOk => Ok(Some(length)),
 			

@@ -75,7 +75,7 @@ impl UcpConfigurationWrapper
 		use self::ErrorCode::*;
 		use self::ConfigurationParseError::*;
 		
-		match status.parse()?
+		match status.parse()
 		{
 			IsOk => Ok
 			(

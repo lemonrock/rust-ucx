@@ -8,15 +8,6 @@ quick_error!
 	#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 	pub enum ConfigurationModifyError
 	{
-		/// Invalid status.
-		InvalidStatus(cause: ::status::InvalidStatusError)
-		{
-			cause(cause)
-			description(cause.description())
-			display("Status was invalid: {}", cause)
-			from()
-		}
-		
 		/// No such configuration key exists.
 		NoSuchNamedKey(key_name: String, configuration_value: CString)
 		{

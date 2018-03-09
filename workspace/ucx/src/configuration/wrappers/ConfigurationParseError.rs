@@ -16,15 +16,6 @@ quick_error!
 			display("Environment variable prefix was not valid as a CString")
 			from()
 		}
-		
-		/// Invalid status (fatal).
-		InvalidStatus(cause: ::status::InvalidStatusError)
-		{
-			cause(cause)
-			description(cause.description())
-			display("Status was invalid: {}", cause)
-			from()
-		}
 	
 		/// No transport devices exist that are suitable.
 		NoTransportDevicesExistThatAreSuitable

@@ -9,7 +9,7 @@ pub trait ucs_status_ptr_tExt
 	/// A function safer than the ucs macros `UCS_PTR_STATUS`, `UCS_PTR_IS_ERR` and `UCS_PTR_IS_PTR`.
 	#[allow(non_snake_case)]
 	#[inline(always)]
-	fn parse(self) -> Result<StatusOrNonBlockingRequest, InvalidStatusError>;
+	fn parse(self) -> StatusOrNonBlockingRequest;
 	
 	/// Is this pointer actually an OK non-error?
 	#[inline(always)]
@@ -19,9 +19,9 @@ pub trait ucs_status_ptr_tExt
 impl ucs_status_ptr_tExt for ucs_status_ptr_t
 {
 	#[inline(always)]
-	fn parse(self) -> Result<StatusOrNonBlockingRequest, InvalidStatusError>
+	fn parse(self) -> StatusOrNonBlockingRequest
 	{
-		StatusOrNonBlockingRequest::parse_ucs_status_ptr_t(self)
+		StatusOrNonBlockingRequest::parse_ucs_status_ptr_t(self).expect("Invalid status pointer")
 	}
 	
 	#[inline(always)]

@@ -8,15 +8,6 @@ quick_error!
 	#[derive(Debug, Clone, PartialEq, Eq)]
 	pub enum ApplicationContextCreationError
 	{
-		/// Invalid status.
-		InvalidStatus(cause: ::status::InvalidStatusError)
-		{
-			cause(cause)
-			description(cause.description())
-			display("Status was invalid: {}", cause)
-			from()
-		}
-		
 		/// Could not configure UCX.
 		CouldNotConfigureUcx(cause: CouldNotConfigureUcpError)
 		{

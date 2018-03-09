@@ -63,7 +63,7 @@ impl<L: ServerListenerAcceptHandler> ServerListener<L>
 		
 		use self::Status::*;
 		
-		match status.parse().expect("Invalid status")
+		match status.parse()
 		{
 			IsOk =>
 			{

@@ -17,7 +17,7 @@ pub trait ConfigurationWrapper
 		use self::ErrorCode::*;
 		use self::ConfigurationModifyError::*;
 		
-		match status.parse()?
+		match status.parse()
 		{
 			IsOk => Ok(()),
 			

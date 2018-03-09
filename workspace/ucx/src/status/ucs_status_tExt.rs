@@ -8,7 +8,7 @@ pub trait ucs_status_tExt
 {
 	/// A function to convert this enum into something more useful.
 	#[inline(always)]
-	fn parse(self) -> Result<Status, InvalidStatusError>;
+	fn parse(self) -> Status;
 	
 	/// A function to parse a status, panicking if it is not an `ErrorCode`.
 	#[inline(always)]
@@ -48,15 +48,15 @@ pub trait ucs_status_tExt
 impl ucs_status_tExt for ucs_status_t
 {
 	#[inline(always)]
-	fn parse(self) -> Result<Status, InvalidStatusError>
+	fn parse(self) -> Status
 	{
-		Status::parse_ucs_status_t(self)
+		Status::parse_ucs_status_t(self).expect("Invalid status")
 	}
 	
 	#[inline(always)]
 	fn error_code_or_panic(self) -> ErrorCode
 	{
-		let status = self.parse().expect("Could not parse status");
+		let status = self.parse();
 		
 		use self::Status::*;
 		

@@ -45,7 +45,7 @@ impl ApplicationContextConfiguration
 		let mut handle = unsafe { uninitialized() };
 		let status = unsafe { ucp_init_version(UCP_API_MAJOR, UCP_API_MINOR, &parameters, ucp_configuration_wrapper.handle, &mut handle) };
 
-		match status.parse()?
+		match status.parse()
 		{
 			IsOk => Ok
 			(

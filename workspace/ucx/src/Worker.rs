@@ -209,7 +209,7 @@ impl Worker
 		debug_assert!(!self.handle.is_null(), "handle is null");
 		
 		let status_pointer = unsafe { ucp_worker_flush_nb(self.handle, ReservedForFutureUseFlags, callback_when_finished_or_cancelled) };
-		status_pointer.parse().expect("Invalid status_pointer")
+		status_pointer.parse()
 	}
 	
 	/// Assures ordering between non-blocking operations.
