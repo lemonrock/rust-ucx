@@ -5,7 +5,8 @@
 /// Memory Advice.
 ///
 /// Defaults to `Normal`.
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[serde(deny_unknown_fields)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum MemoryAdvice
 {
 	/// No special treatment.

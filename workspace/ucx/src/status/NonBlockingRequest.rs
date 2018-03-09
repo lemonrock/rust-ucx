@@ -4,7 +4,7 @@
 
 /// A wrapper around requests to make them easier to work with.
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct NonBlockingRequest(NonNull<u8>);
+pub(crate) struct NonBlockingRequest(NonNull<u8>);
 
 impl Drop for NonBlockingRequest
 {

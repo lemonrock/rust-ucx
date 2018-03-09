@@ -4,7 +4,7 @@
 
 /// An extension trait for `ucs_cpu_set_t`.
 #[allow(non_camel_case_types)]
-pub trait ucs_cpu_set_tExt
+pub(crate) trait ucs_cpu_set_tExt
 {
 	/// Creates a hyper thread (logical CPU) set which just contains the hyper thread.
 	#[inline(always)]

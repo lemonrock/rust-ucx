@@ -25,8 +25,9 @@ use self::configuration::non_blocking_request_memory_customization::*;
 use self::configuration::values::*;
 use self::cpu_set::*;
 use self::ffi_helpers::*;
-use self::status::*;
+use self::handle_drop_safeties::*;
 use self::print_information::PrintInformation;
+use self::status::*;
 use ::libc::c_void;
 use ::libc::FILE;
 use ::nix::sys::socket::SockAddr as NixSockAddr;
@@ -77,12 +78,14 @@ pub mod status;
 mod ffi_helpers;
 
 
+mod handle_drop_safeties;
+
+
 /// Print information helpers.
 pub mod print_information;
 
 
 include!("ApplicationContext.rs");
-include!("ApplicationContextHandleDropSafety.rs");
 include!("EndPoint.rs");
 include!("EndPointReadyToConsumeStreamingData.rs");
 include!("MemoryAddress.rs");
@@ -93,8 +96,6 @@ include!("TheirRemotelyAccessibleMemoryAddress.rs");
 include!("TheirRemotelyAccessibleServerAddress.rs");
 include!("TheirRemotelyAccessibleWorkerAddress.rs");
 include!("OurRemotelyAccessibleMemory.rs");
-include!("OurRemotelyAccessibleMemoryHandleDropSafety.rs");
 include!("OurRemotelyAccessibleMemoryAddress.rs");
 include!("OurRemotelyAccessibleWorkerAddress.rs");
 include!("Worker.rs");
-include!("WorkerHandleDropSafety.rs");

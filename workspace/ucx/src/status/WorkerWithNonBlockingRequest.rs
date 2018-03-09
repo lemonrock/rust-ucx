@@ -2,17 +2,16 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// ? Cow Worker ?
 /// A simple struct to make it easier to work with non-blocking requests.
 /// Dereferences to the parent worker, so one can call `progress()` on this instance.
 #[derive(Debug)]
 pub struct WorkerWithNonBlockingRequest<'worker>
 {
-	/// Parent worker
+	/// Parent worker.
 	pub parent_worker: &'worker Worker,
 	
-	/// Non-blocking request
-	pub non_blocking_request: NonBlockingRequest,
+	/// Non-blocking request.
+	pub(crate) non_blocking_request: NonBlockingRequest,
 }
 
 impl<'worker> Deref for WorkerWithNonBlockingRequest<'worker>

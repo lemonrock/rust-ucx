@@ -2,16 +2,10 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-// We use this rather than force the public API to deal with `Rc<ApplicationContext>`.
-// This also has the benefit of eliminating a pointer dereference to get to `handle: ucp_context_h`, as we do not need to got through `Rc::deref()`.
-#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
-struct ApplicationContextHandleDropSafety(pub(crate) ucp_context_h);
+use ::std::rc::Rc;
+use ::ucx_sys::*;
 
-impl Drop for ApplicationContextHandleDropSafety
-{
-	#[inline(always)]
-	fn drop(&mut self)
-	{
-		unsafe { ucp_cleanup(self.0) };
-	}
-}
+
+include!("ApplicationContextHandleDropSafety.rs");
+include!("OurRemotelyAccessibleMemoryHandleDropSafety.rs");
+include!("WorkerHandleDropSafety.rs");
