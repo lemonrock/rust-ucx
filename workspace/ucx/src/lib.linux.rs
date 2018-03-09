@@ -88,6 +88,8 @@ include!("EndPointReadyToConsumeStreamingData.rs");
 include!("MemoryAddress.rs");
 include!("MemoryAdvice.rs");
 include!("TheirRemoteAddress.rs");
+include!("TheirRemotelyAccessibleMemory.rs");
+include!("TheirRemotelyAccessibleMemoryAddress.rs");
 include!("TheirRemotelyAccessibleWorkerAddress.rs");
 include!("OurRemotelyAccessibleMemory.rs");
 include!("OurRemotelyAccessibleMemoryHandleDropSafety.rs");

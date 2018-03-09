@@ -95,21 +95,46 @@ impl<E: EndPointPeerFailureErrorHandler> PrintInformation for EndPoint<E>
 
 impl<E: EndPointPeerFailureErrorHandler> EndPoint<E>
 {
+	/// Can be called more than once per end point.
+	/// Think of the world as multiple threads (worker), each of which is connected to a remote peer (end point), each of which is connected to zero or more remote memory regions.
+	/// Remote memory regions are not needed for tagged messages and streams.
+	#[inline(always)]
+	pub fn use_remote_memory_region(this: &Rc<RefCell<EndPoint<E>>>, their_remotely_accessible_memory_address: TheirRemotelyAccessibleMemoryAddress) -> Result<TheirRemotelyAccessibleMemory<E>, ErrorCode>
+	{
+		let mut handle = unsafe { uninitialized() };
+		let status = unsafe { ucp_ep_rkey_unpack(this.borrow().handle, their_remotely_accessible_memory_address.0.as_ptr() as *mut _, &mut handle) };
+		
+		use self::Status::*;
+		
+		match status.parse()
+		{
+			IsOk => Ok
+			(
+				TheirRemotelyAccessibleMemory
+				{
+					handle,
+					parent_end_point: this.clone(),
+				}
+			),
+			
+			Error(error_code) => Err(error_code),
+			
+			_ => panic!("Unexpected status '{:?}'", status),
+		}
+	}
+	
 	/*
+	
+	Stream
+	#[link_name = "\u{1}_ucp_stream_data_release"] pub fn ucp_stream_data_release(ep: ucp_ep_h, data: *mut c_void);
+	#[link_name = "\u{1}_ucp_stream_recv_data_nb"] pub fn ucp_stream_recv_data_nb(ep: ucp_ep_h, length: *mut usize) -> ucs_status_ptr_t;
+	#[link_name = "\u{1}_ucp_stream_recv_nb"] pub fn ucp_stream_recv_nb(ep: ucp_ep_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, cb: ucp_stream_recv_callback_t, length: *mut usize, flags: c_uint) -> ucs_status_ptr_t;
+	#[link_name = "\u{1}_ucp_stream_send_nb"] pub fn ucp_stream_send_nb(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, cb: ucp_send_callback_t, flags: c_uint) -> ucs_status_ptr_t;
 
-	#[link_name = "\u{1}_ucp_ep_flush"] pub fn ucp_ep_flush(ep: ucp_ep_h) -> ucs_status_t;
-	#[link_name = "\u{1}_ucp_ep_flush_nb"] pub fn ucp_ep_flush_nb(ep: ucp_ep_h, flags: c_uint, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
-	#[link_name = "\u{1}_ucp_ep_modify_nb"] pub fn ucp_ep_modify_nb(ep: ucp_ep_h, params: *const ucp_ep_params_t) -> ucs_status_ptr_t;
-	#[link_name = "\u{1}_ucp_ep_print_info"] pub fn ucp_ep_print_info(ep: ucp_ep_h, stream: *mut FILE);
-	#[link_name = "\u{1}_ucp_ep_rkey_unpack"] pub fn ucp_ep_rkey_unpack(ep: ucp_ep_h, rkey_buffer: *const c_void, rkey_p: *mut ucp_rkey_h) -> ucs_status_t;
-	*/
-	
-	/*
-	
-#[link_name = "\u{1}_ucp_stream_data_release"] pub fn ucp_stream_data_release(ep: ucp_ep_h, data: *mut c_void);
-#[link_name = "\u{1}_ucp_stream_recv_data_nb"] pub fn ucp_stream_recv_data_nb(ep: ucp_ep_h, length: *mut usize) -> ucs_status_ptr_t;
-#[link_name = "\u{1}_ucp_stream_recv_nb"] pub fn ucp_stream_recv_nb(ep: ucp_ep_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, cb: ucp_stream_recv_callback_t, length: *mut usize, flags: c_uint) -> ucs_status_ptr_t;
-#[link_name = "\u{1}_ucp_stream_send_nb"] pub fn ucp_stream_send_nb(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, cb: ucp_send_callback_t, flags: c_uint) -> ucs_status_ptr_t;
+	Tag
+	#[link_name = "\u{1}_ucp_tag_send_nb"] pub fn ucp_tag_send_nb(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
+	#[link_name = "\u{1}_ucp_tag_send_nbr"] pub fn ucp_tag_send_nbr(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, req: *mut c_void) -> ucs_status_t;
+	#[link_name = "\u{1}_ucp_tag_send_sync_nb"] pub fn ucp_tag_send_sync_nb(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
 	
 	*/
 	
