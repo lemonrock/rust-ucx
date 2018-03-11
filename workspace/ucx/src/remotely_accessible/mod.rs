@@ -24,31 +24,23 @@ struct All
 impl All
 {
 	#[inline(always)]
-	fn master_their_remotely_accessible_clone(&self) -> TheirRemotelyAccessible
-	{
-		self.master.their_remotely_accessible_clone()
-	}
-	
-	#[inline(always)]
-	fn mutable_thread_entry(&mut self, index: usize) -> *mut TheirRemotelyAccessibleThreadLocalEntry
-	{
-		debug_assert!(index < MaximumNumberOfHyperThreads, "index '{}' equals or exceeds MaximumNumberOfHyperThreads '{}'", index, MaximumNumberOfHyperThreads);
-		
-		unsafe { self.per_thread_entries.get_unchecked_mut(index) }
-	}
-	
-	#[inline(always)]
 	pub fn update<F: FnOnce(&mut TheirRemotelyAccessible) -> Result<(), R>, R>(&mut self, update_operation: F) -> Result<(), R>
 	{
 		debug_assert!(ZeroBasedHyperThreadIndex::for_current_hyper_thread() == self.writer_hyper_thread, "Writer is a single producer and must be locked to a thread");
 		
 		self.master.update(update_operation)?;
 		
-		let mut were_locked_retry: [*mut TheirRemotelyAccessibleThreadLocalEntry; MaximumNumberOfHyperThreads] = unsafe { uninitialized() };
+		self.loop_over_per_thread_copies_of_master_and_update_only_taking_spin_lock_if_it_is_free();
 		
+		Ok(())
+	}
+	
+	#[inline(always)]
+	fn loop_over_per_thread_copies_of_master_and_update_only_taking_spin_lock_if_it_is_free(&mut self)
+	{
 		macro_rules! try_to_update
 		{
-			($self: expr, $were_locked_and_remain_to_update: expr, $per_thread_entry: expr) =>
+			($self: expr, $were_locked_retry: expr, $were_locked_and_remain_to_update: expr, $per_thread_entry: expr) =>
 			{
 				{
 					let were_locked_and_remain_to_update = $were_locked_and_remain_to_update;
@@ -66,7 +58,7 @@ impl All
 						}
 						else
 						{
-							*(unsafe { were_locked_retry.get_unchecked_mut(were_locked_retry_index) }) = per_thread_entry;
+							*(unsafe { $were_locked_retry.get_unchecked_mut(were_locked_retry_index) }) = per_thread_entry;
 							were_locked_retry_index += 1;
 						}
 						
@@ -78,15 +70,29 @@ impl All
 			}
 		}
 		
-		let mut were_locked_retry_index = try_to_update!(self, MaximumNumberOfHyperThreads, |index| self.mutable_thread_entry(index));
+		let mut were_locked_retry: [*mut TheirRemotelyAccessibleThreadLocalEntry; MaximumNumberOfHyperThreads] = unsafe { uninitialized() };
+		
+		let mut were_locked_retry_index = try_to_update!(self, were_locked_retry, MaximumNumberOfHyperThreads, |index| self.mutable_thread_entry(index));
 		
 		// Repeatedly loop until none remain to update.
 		while were_locked_retry_index != 0
 		{
-			were_locked_retry_index = try_to_update!(self, were_locked_retry_index, |index| * unsafe { were_locked_retry.get_unchecked(index) });
+			were_locked_retry_index = try_to_update!(self, were_locked_retry, were_locked_retry_index, |index| * unsafe { were_locked_retry.get_unchecked(index) });
 		}
+	}
+	
+	#[inline(always)]
+	fn master_their_remotely_accessible_clone(&self) -> TheirRemotelyAccessible
+	{
+		self.master.their_remotely_accessible_clone()
+	}
+	
+	#[inline(always)]
+	fn mutable_thread_entry(&mut self, index: usize) -> *mut TheirRemotelyAccessibleThreadLocalEntry
+	{
+		debug_assert!(index < MaximumNumberOfHyperThreads, "index '{}' equals or exceeds MaximumNumberOfHyperThreads '{}'", index, MaximumNumberOfHyperThreads);
 		
-		Ok(())
+		unsafe { self.per_thread_entries.get_unchecked_mut(index) }
 	}
 }
 
