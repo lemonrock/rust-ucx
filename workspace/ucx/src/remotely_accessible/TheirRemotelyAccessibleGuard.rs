@@ -2,16 +2,25 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::sockets::SocketAddress;
-use super::handle_drop_safeties::WorkerHandleDropSafety;
-use super::status::*;
-use ::libc::c_void;
-use ::std::mem::uninitialized;
-use ::std::ptr::NonNull;
-use ::std::ptr::null_mut;
-use ::std::rc::Rc;
-use ::ucx_sys::*;
+#[derive(Debug)]
+pub(crate) struct TheirRemotelyAccessibleGuard<'guard>(&'guard TheirRemotelyAccessibleThreadLocalEntry);
 
+impl<'guard> Drop for TheirRemotelyAccessibleGuard<'guard>
+{
+	#[inline(always)]
+	fn drop(&mut self)
+	{
+		self.0.unlock_spin_lock()
+	}
+}
 
-include!("ServerListener.rs");
-include!("ServerListenerAcceptHandler.rs");
+impl<'guard> Deref for TheirRemotelyAccessibleGuard<'guard>
+{
+	type Target = TheirRemotelyAccessible;
+	
+	#[inline(always)]
+	fn deref(&self) -> &Self::Target
+	{
+		self.0.master_reference()
+	}
+}

@@ -2,16 +2,30 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::sockets::SocketAddress;
-use super::handle_drop_safeties::WorkerHandleDropSafety;
-use super::status::*;
-use ::libc::c_void;
-use ::std::mem::uninitialized;
-use ::std::ptr::NonNull;
-use ::std::ptr::null_mut;
-use ::std::rc::Rc;
-use ::ucx_sys::*;
+/// Constants are prefixed with `RDMA_PS_` in C-land.
+#[repr(u16)]
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub enum RdmaPortSpace
+{
+	/// IP over InfiniBand.
+	/// Very similar to `UDP` below.
+	IPOIB = 0x0002,
+	
+	/// TCP-alike over InfiniBand.
+	TCP = 0x0106,
+	
+	/// UDP-alike over InfiniBand.
+	UDP = 0x0111,
+	
+	/// Just InfiniBand.
+	IB = 0x013F,
+}
 
-
-include!("ServerListener.rs");
-include!("ServerListenerAcceptHandler.rs");
+impl RdmaPortSpace
+{
+	#[inline(always)]
+	fn shifted_to_big_endian(self) -> BigEndian<u64>
+	{
+		BigEndian::from_native_endian_value(((self as u64) << 16) as u64)
+	}
+}

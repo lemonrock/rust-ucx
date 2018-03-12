@@ -56,6 +56,7 @@ impl ApplicationContextConfiguration
 					application_context_configuration: self,
 					sealing_key,
 					opening_key,
+					master_their_remotely_accessible: Default::default(),
 					phantom_data: PhantomData,
 				}
 			),

@@ -8,6 +8,7 @@ pub struct ServerListener<L: ServerListenerAcceptHandler>
 {
 	handle: ucp_listener_h,
 	worker_handle_drop_safety: Rc<WorkerHandleDropSafety>,
+	our_listening_socket: Rc<SocketAddress>, // We *MUST* hold a reference to this, otherwise the `params` data used to construct a Server contains raw pointers to socket address structures that may have been dropped.
 	server_listener_accept_handler: L,
 }
 
@@ -28,7 +29,7 @@ impl<L: ServerListenerAcceptHandler> ServerListener<L>
 	/// A server listener listens for incoming client connections on a particular address.
 	/// It then creates ?end points? to handle them.
 	#[inline(always)]
-	pub(crate) fn create_server_listener(our_listening_socket: NixSockAddr, server_listener_accept_handler: L, worker_handle_drop_safety: &Rc<WorkerHandleDropSafety>, worker_handle: ucp_worker_h) -> Result<Box<Self>, ErrorCode>
+	pub(crate) fn create_server_listener(our_listening_socket: &Rc<SocketAddress>, server_listener_accept_handler: L, worker_handle_drop_safety: &Rc<WorkerHandleDropSafety>, worker_handle: ucp_worker_h) -> Result<Box<Self>, ErrorCode>
 	{
 		let mut server_listener = Box::new
 		(
@@ -36,11 +37,12 @@ impl<L: ServerListenerAcceptHandler> ServerListener<L>
 			{
 				handle: null_mut(),
 				worker_handle_drop_safety: worker_handle_drop_safety.clone(),
+				our_listening_socket: our_listening_socket.clone(),
 				server_listener_accept_handler,
 			}
 		);
 		
-		let (socket_address, length) = unsafe { our_listening_socket.as_ffi_pair() };
+		let (socket_address, length) = our_listening_socket.suitable_for_ffi();
 		
 		let parameters = ucp_listener_params_t
 		{

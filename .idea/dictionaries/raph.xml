@@ -77,6 +77,7 @@
       <w>msync</w>
       <w>musl</w>
       <w>nbyte</w>
+      <w>netlink</w>
       <w>nonces</w>
       <w>nonoverlapping</w>
       <w>nprocs</w>

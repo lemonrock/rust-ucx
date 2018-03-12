@@ -2,10 +2,10 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+#[macro_use] extern crate bitflags;
 extern crate indexmap;
 extern crate libc;
 extern crate libc_extra;
-extern crate nix;
 #[macro_use] extern crate quick_error;
 extern crate ring;
 extern crate serde;
@@ -26,10 +26,11 @@ use self::cpu_set::*;
 use self::ffi_helpers::*;
 use self::handle_drop_safeties::*;
 use self::print_information::PrintInformation;
+use self::remotely_accessible::*;
+use self::sockets::SocketAddress;
 use self::status::*;
 use ::libc::c_void;
 use ::libc::FILE;
-use ::nix::sys::socket::SockAddr as NixSockAddr;
 use ::ring::aead::OpeningKey;
 use ::ring::aead::SealingKey;
 use ::std::cell::RefCell;
@@ -46,7 +47,6 @@ use ::std::ptr::NonNull;
 use ::std::ptr::null_mut;
 use ::std::rc::Rc;
 use ::std::rc::Weak;
-use ::std::sync::Arc;
 use ::ucx_sys::*;
 
 
@@ -80,7 +80,12 @@ mod ffi_helpers;
 mod handle_drop_safeties;
 
 
-mod remotely_accessible;
+/// Remotely accessible information.
+pub mod remotely_accessible;
+
+
+/// Supportfor InfiniBand sockets and related structures.
+pub mod sockets;
 
 
 /// Print information helpers.

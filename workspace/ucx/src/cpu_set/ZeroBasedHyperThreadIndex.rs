@@ -9,13 +9,31 @@ pub struct ZeroBasedHyperThreadIndex(u16);
 
 impl ZeroBasedHyperThreadIndex
 {
-	/// Efficient if VDSO is enabled (which is should be on all modern 4.x series Linux kernels), but, still, should be cached (or put in a thread local) if used repeatedly in tight loops.
+	/// The maximum number of hyper threads.
+	pub const MaximumNumberOfHyperThreads: usize = 256;
+	
+	/// Efficient, thread-local cached, current hyper thread; only works when threads are bound to CPUs.
 	#[inline(always)]
 	pub fn for_current_hyper_thread() -> Self
 	{
-		let result = unsafe { sched_getcpu() };
-		debug_assert!(result >= 0, "sched_getcpu was negative");
-		ZeroBasedHyperThreadIndex(result as u16)
+		const UnsetSentinel: ZeroBasedHyperThreadIndex = ZeroBasedHyperThreadIndex(::std::u16::MAX);
+		
+		#[thread_local] static mut CachedCurrentHyperThreadIndex: ZeroBasedHyperThreadIndex = UnsetSentinel;
+		
+		let current = unsafe { CachedCurrentHyperThreadIndex };
+		if current == UnsetSentinel
+		{
+			// Efficient if VDSO is enabled (which is should be on all modern 4.x series Linux kernels), but, still, should be cached (or put in a thread local) if used repeatedly in tight loops.
+			let result = unsafe { sched_getcpu() };
+			debug_assert!(result >= 0, "sched_getcpu was negative");
+			let current = ZeroBasedHyperThreadIndex(result as u16);
+			unsafe { CachedCurrentHyperThreadIndex = current };
+			current
+		}
+		else
+		{
+			current
+		}
 	}
 	
 	/// As an u16.
@@ -44,5 +62,27 @@ impl ZeroBasedHyperThreadIndex
 	pub fn as_usize(self) -> usize
 	{
 		self.0 as usize
+	}
+	
+	/// Find a per-hyper thread value reference from an array for all hyper threads.
+	#[inline(always)]
+	pub fn per_hyper_thread_value<T>(self, per_hyper_thread_values: &[T; Self::MaximumNumberOfHyperThreads]) -> &T
+	{
+		let index = self.as_usize();
+		
+		debug_assert!(index < Self::MaximumNumberOfHyperThreads, "self '{:?}' equals or exceeds MaximumNumberOfHyperThreads '{}'", index, Self::MaximumNumberOfHyperThreads);
+		
+		unsafe { per_hyper_thread_values.get_unchecked(index) }
+	}
+	
+	/// Find a per-hyper thread value mutable reference from an array for all hyper threads.
+	#[inline(always)]
+	pub fn per_hyper_thread_value_mut<T>(self, per_hyper_thread_values: &mut [T; Self::MaximumNumberOfHyperThreads]) -> &T
+	{
+		let index = self.as_usize();
+		
+		debug_assert!(index < Self::MaximumNumberOfHyperThreads, "self '{:?}' equals or exceeds MaximumNumberOfHyperThreads '{}'", self, Self::MaximumNumberOfHyperThreads);
+		
+		unsafe { per_hyper_thread_values.get_unchecked_mut(index) }
 	}
 }

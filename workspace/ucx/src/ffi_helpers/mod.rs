@@ -3,13 +3,23 @@
 
 
 use ::libc::c_char;
+use ::serde::de::Deserializer;
+use ::serde::de::Deserialize;
+use ::serde::de::Error as DeserializeError;
+use ::serde::de::Visitor;
 use ::std::ffi::CStr;
 use ::std::ffi::CString;
+use ::std::fmt;
 use ::std::fmt::Debug;
+use ::std::fmt::Formatter;
+use ::std::marker::PhantomData;
+use ::std::ops::BitOr;
 
 
+include!("BigEndian.rs");
 include!("FromCBool.rs");
 include!("Integer.rs");
 include!("null_or_empty_c_string.rs");
 include!("ReservedForFutureUseFlags.rs");
 include!("ToCBool.rs");
+include!("UnsignedInteger.rs");

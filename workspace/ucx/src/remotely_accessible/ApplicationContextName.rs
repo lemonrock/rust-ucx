@@ -2,16 +2,7 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::sockets::SocketAddress;
-use super::handle_drop_safeties::WorkerHandleDropSafety;
-use super::status::*;
-use ::libc::c_void;
-use ::std::mem::uninitialized;
-use ::std::ptr::NonNull;
-use ::std::ptr::null_mut;
-use ::std::rc::Rc;
-use ::ucx_sys::*;
 
-
-include!("ServerListener.rs");
-include!("ServerListenerAcceptHandler.rs");
+/// Application context name (typically a host name).
+#[derive(Deserialize, Serialize, Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct ApplicationContextName(pub String);

@@ -4,6 +4,7 @@
 
 #![allow(non_upper_case_globals)]
 #![deny(missing_docs)]
+#![feature(thread_local)]
 #![recursion_limit = "256"]
 
 

@@ -9,7 +9,7 @@ pub struct EndPoint<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessib
 	handle: ucp_ep_h,
 	user_data_and_peer_failure_error_handler: E,
 	parent_worker: Worker,
-	_their_remote_address: Arc<A>, // We *MUST* hold a reference to this, otherwise the data in `end_point_parameters` contains raw pointers to socket address structures that may have been dropped.
+	_their_remote_address: Rc<A>, // We *MUST* hold a reference to this, otherwise the data in `end_point_parameters` contains raw pointers to socket address structures that may have been dropped.
 	end_point_parameters: ucp_ep_params_t,
 }
 
@@ -95,6 +95,67 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 
 impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> EndPoint<E, A>
 {
+	#[inline(always)]
+	pub(crate) fn new_end_point(peer_failure_error_handler: E, their_remote_address: &Rc<A>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool, parent_worker: &Worker) -> Result<Rc<RefCell<Self>>, ErrorCode>
+	{
+		#[inline(always)]
+		fn populated_by_their_remote_address<T>() -> T
+		{
+			unsafe { zeroed() }
+		}
+		
+		use self::ucp_err_handling_mode_t::*;
+		
+		let end_point = Rc::new
+		(
+			RefCell::new
+			(
+				Self
+				{
+					handle: null_mut(),
+					user_data_and_peer_failure_error_handler: peer_failure_error_handler,
+					parent_worker: parent_worker.clone(),
+					_their_remote_address: their_remote_address.clone(),
+					end_point_parameters: their_remote_address.populate_end_point_parameters
+					(
+						ucp_ep_params_t
+						{
+							field_mask: (ucp_ep_params_field::ERR_HANDLING_MODE | ucp_ep_params_field::ERR_HANDLER | ucp_ep_params_field::USER_DATA).0 as u64,
+							
+							address: populated_by_their_remote_address(),
+							
+							err_mode: if guarantee_that_send_requests_are_always_completed_successfully_or_error
+							{
+								UCP_ERR_HANDLING_MODE_PEER
+							}
+							else
+							{
+								UCP_ERR_HANDLING_MODE_NONE
+							},
+							
+							err_handler: ucp_err_handler
+							{
+								cb: Some(Self::peer_failure_error_callback),
+								arg: null_mut(), // Is overridden by `ucp_ep_params_t.user_data`.
+							},
+							
+							user_data: null_mut(),
+							
+							flags: populated_by_their_remote_address(),
+							
+							sockaddr: populated_by_their_remote_address(),
+						}
+					),
+				}
+			)
+		);
+		Self::assign_user_data_to_self(&end_point);
+		
+		(*end_point).borrow_mut().connect()?;
+		
+		Ok(end_point)
+	}
+	
 	/// Can be called more than once per end point.
 	/// Think of the world as multiple threads (worker), each of which is connected to a remote peer (end point), each of which is connected to zero or more remote memory regions.
 	/// Remote memory regions are not needed for tagged messages and streams.
@@ -180,67 +241,6 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	#[inline(always)]
 	pub unsafe extern "C" fn callback_is_ignored(_request: *mut c_void, _status: ucs_status_t)
 	{
-	}
-	
-	#[inline(always)]
-	pub(crate) fn new_end_point(peer_failure_error_handler: E, their_remote_address: &Arc<A>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool, parent_worker: &Worker) -> Result<Rc<RefCell<Self>>, ErrorCode>
-	{
-		#[inline(always)]
-		fn populated_by_their_remote_address<T>() -> T
-		{
-			unsafe { zeroed() }
-		}
-		
-		use self::ucp_err_handling_mode_t::*;
-		
-		let end_point = Rc::new
-		(
-			RefCell::new
-			(
-				Self
-				{
-					handle: null_mut(),
-					user_data_and_peer_failure_error_handler: peer_failure_error_handler,
-					parent_worker: parent_worker.clone(),
-					_their_remote_address: their_remote_address.clone(),
-					end_point_parameters: their_remote_address.populate_end_point_parameters
-					(
-						ucp_ep_params_t
-						{
-							field_mask: (ucp_ep_params_field::ERR_HANDLING_MODE | ucp_ep_params_field::ERR_HANDLER | ucp_ep_params_field::USER_DATA).0 as u64,
-							
-							address: populated_by_their_remote_address(),
-							
-							err_mode: if guarantee_that_send_requests_are_always_completed_successfully_or_error
-							{
-								UCP_ERR_HANDLING_MODE_PEER
-							}
-							else
-							{
-								UCP_ERR_HANDLING_MODE_NONE
-							},
-							
-							err_handler: ucp_err_handler
-							{
-								cb: Some(Self::peer_failure_error_callback),
-								arg: null_mut(), // Is overridden by `ucp_ep_params_t.user_data`.
-							},
-							
-							user_data: null_mut(),
-							
-							flags: populated_by_their_remote_address(),
-							
-							sockaddr: populated_by_their_remote_address(),
-						}
-					),
-				}
-			)
-		);
-		Self::assign_user_data_to_self(&end_point);
-		
-		(*end_point).borrow_mut().connect()?;
-		
-		Ok(end_point)
 	}
 	
 	#[inline(always)]

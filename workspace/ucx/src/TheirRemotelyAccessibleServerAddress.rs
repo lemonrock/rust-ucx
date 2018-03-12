@@ -3,8 +3,8 @@
 
 
 /// The address of a remotely accessible server.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub struct TheirRemotelyAccessibleServerAddress(NixSockAddr);
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct TheirRemotelyAccessibleServerAddress(SocketAddress);
 
 impl TheirRemotelyAccessibleEndPointAddress for TheirRemotelyAccessibleServerAddress
 {
@@ -12,7 +12,7 @@ impl TheirRemotelyAccessibleEndPointAddress for TheirRemotelyAccessibleServerAdd
 	#[inline(always)]
 	fn populate_end_point_parameters(&self, mut end_pointer_parameters: ucp_ep_params_t) -> ucp_ep_params_t
 	{
-		let (socket_address, length) = unsafe { self.0.as_ffi_pair() };
+		let (socket_address, length) = self.0.suitable_for_ffi();
 		
 		end_pointer_parameters.field_mask |= (ucp_ep_params_field::FLAGS | ucp_ep_params_field::SOCK_ADDR).0 as u64;
 		end_pointer_parameters.sockaddr = ucs_sock_addr_t

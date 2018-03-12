@@ -17,6 +17,7 @@ pub struct ApplicationContext<MemoryCustomization = NoNonBlockingRequestMemoryCu
 	application_context_configuration: ApplicationContextConfiguration,
 	sealing_key: SealingKey,
 	opening_key: OpeningKey,
+	master_their_remotely_accessible: MasterTheirRemotelyAccessible,
 	phantom_data: PhantomData<MemoryCustomization>,
 }
 
@@ -92,13 +93,13 @@ impl<MemoryCustomization: NonBlockingRequestMemoryCustomization> ApplicationCont
 	
 	/// Creates a new worker for a hyper thread.
 	#[inline(always)]
-	pub fn new_worker_for_hyper_thread(self, hyper_thread_index: ZeroBasedHyperThreadIndex) -> Worker
+	pub fn new_worker_for_hyper_thread(&self, our_hyper_thread_index: ZeroBasedHyperThreadIndex) -> Worker
 	{
 		let parameters = ucp_worker_params_t
 		{
 			field_mask: (ucp_worker_params_field::THREAD_MODE | ucp_worker_params_field::CPU_MASK | ucp_worker_params_field::EVENTS | ucp_worker_params_field::USER_DATA).0 as u64,
 			thread_mode: WorkerThreadMode::OnlyEverUsedFromThisThread.as_ucs_thread_mode_t(),
-			cpu_mask: ucs_cpu_set_t::create_for_hyper_thread(hyper_thread_index),
+			cpu_mask: ucs_cpu_set_t::create_for_hyper_thread(our_hyper_thread_index),
 			events: self.application_context_configuration.wake_up_events().0,
 			user_data: null_mut(),
 			event_fd: 0,
@@ -111,6 +112,82 @@ impl<MemoryCustomization: NonBlockingRequestMemoryCustomization> ApplicationCont
 		{
 			handle,
 			worker_handle_drop_safety: Rc::new(WorkerHandleDropSafety(handle, self.application_context_handle_drop_safety.clone())),
+		}
+	}
+	
+	/// Set remotely accessible worker address.
+	#[inline(always)]
+	pub fn set_remotely_accessible_worker_address(&self, application_context_name: ApplicationContextName, worker_name: WorkerName, worker_address: TheirRemotelyAccessibleWorkerAddress)
+	{
+		self.master_their_remotely_accessible.update::<(), _>(|master|
+		{
+			master.get_mut_or_create(application_context_name).set_remotely_accessible_worker_address(worker_name, worker_address);
+			Ok(())
+		}).expect("Was OK")
+	}
+	
+	/// Set remotely accessible memory address.
+	#[inline(always)]
+	pub fn set_remotely_accessible_memory_address(&self, application_context_name: ApplicationContextName, memory_name: MemoryName, memory_address: TheirRemotelyAccessibleMemoryAddress)
+	{
+		self.master_their_remotely_accessible.update::<(), _>(|master|
+		{
+			master.get_mut_or_create(application_context_name).set_remotely_accessible_memory_address(memory_name, memory_address);
+			Ok(())
+		}).expect("Was OK")
+	}
+	
+	/// Set remotely accessible server address.
+	#[inline(always)]
+	pub fn set_remotely_accessible_server_address(&self, application_context_name: ApplicationContextName, worker_and_server_name: (WorkerName, ServerName), server_address: TheirRemotelyAccessibleServerAddress)
+	{
+		self.master_their_remotely_accessible.update::<(), _>(|master|
+		{
+			master.get_mut_or_create(application_context_name).set_remotely_accessible_server_address(worker_and_server_name, server_address);
+			Ok(())
+		}).expect("Was OK")
+	}
+	
+	/// Get remotely accessible worker address.
+	/// Whilst there can be only multiple remote workers, we only need to get one to be able to access remote memory regions.
+	#[inline(always)]
+	pub fn get_remotely_accessible_worker_address(&self, application_context_name: &ApplicationContextName, worker_name: &WorkerName) -> Option<Rc<TheirRemotelyAccessibleWorkerAddress>>
+	{
+		if let Some(remote_application_context) = self.master_their_remotely_accessible.read().get(application_context_name)
+		{
+			remote_application_context.get_remotely_accessible_worker_address(worker_name).map(|reference| reference.clone())
+		}
+		else
+		{
+			None
+		}
+	}
+	
+	/// Get remotely accessible memory address.
+	#[inline(always)]
+	pub fn get_remotely_accessible_memory_address(&self, application_context_name: &ApplicationContextName, memory_name: &MemoryName) -> Option<Rc<TheirRemotelyAccessibleMemoryAddress>>
+	{
+		if let Some(remote_application_context) = self.master_their_remotely_accessible.read().get(application_context_name)
+		{
+			remote_application_context.get_remotely_accessible_memory_address(memory_name).map(|reference| reference.clone())
+		}
+		else
+		{
+			None
+		}
+	}
+	
+	/// Get remotely accessible server address.
+	#[inline(always)]
+	pub fn get_remotely_accessible_server_address(&self, application_context_name: &ApplicationContextName, worker_and_server_name: &(WorkerName, ServerName)) -> Option<Rc<TheirRemotelyAccessibleServerAddress>>
+	{
+		if let Some(remote_application_context) = self.master_their_remotely_accessible.read().get(application_context_name)
+		{
+			remote_application_context.get_remotely_accessible_server_address(worker_and_server_name).map(|reference| reference.clone())
+		}
+		else
+		{
+			None
 		}
 	}
 }

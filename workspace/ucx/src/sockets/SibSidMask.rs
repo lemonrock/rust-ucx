@@ -2,16 +2,24 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::sockets::SocketAddress;
-use super::handle_drop_safeties::WorkerHandleDropSafety;
-use super::status::*;
-use ::libc::c_void;
-use ::std::mem::uninitialized;
-use ::std::ptr::NonNull;
-use ::std::ptr::null_mut;
-use ::std::rc::Rc;
-use ::ucx_sys::*;
+bitflags!
+{
+	/// Bit flags for settings of `sib_sid` in a `sockaddr_ib`.
+	pub struct SibSidMask: u64
+	{
+		/// Also known as `RDMA_IB_IP_PS_MASK`.
+		const RdmaPortSpaceSet = 0xFFFFFFFFFFFF0000;
+		
+		/// Also known as `RDMA_IB_IP_PORT_MASK`.
+		const PortSet = 0x000000000000FFFF;
+	}
+}
 
-
-include!("ServerListener.rs");
-include!("ServerListenerAcceptHandler.rs");
+impl SibSidMask
+{
+	#[inline(always)]
+	fn to_big_endian_u64(self) -> BigEndian<u64>
+	{
+		BigEndian::from_native_endian_value(self.bits)
+	}
+}
