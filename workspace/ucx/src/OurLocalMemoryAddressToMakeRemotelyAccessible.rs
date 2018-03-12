@@ -4,7 +4,7 @@
 
 /// What kind of memory address are we allocating and / or registering?
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub enum MemoryAddress
+pub enum OurLocalMemoryAddressToMakeRemotelyAccessible
 {
 	/// Use this to get memory allocated and registered.
 	AllocateAndRegister,
@@ -32,23 +32,23 @@ pub enum MemoryAddress
 	}
 }
 
-impl Default for MemoryAddress
+impl Default for OurLocalMemoryAddressToMakeRemotelyAccessible
 {
 	#[inline(always)]
 	fn default() -> Self
 	{
-		MemoryAddress::AllocateAndRegister
+		OurLocalMemoryAddressToMakeRemotelyAccessible::AllocateAndRegister
 	}
 }
 
-impl MemoryAddress
+impl OurLocalMemoryAddressToMakeRemotelyAccessible
 {
 	const NoFlags: _bindgen_ty_2 = _bindgen_ty_2(0);
 	
 	#[inline(always)]
 	fn address_and_flags(&self) -> (*mut c_void, _bindgen_ty_2)
 	{
-		use self::MemoryAddress::*;
+		use self::OurLocalMemoryAddressToMakeRemotelyAccessible::*;
 		
 		match *self
 		{

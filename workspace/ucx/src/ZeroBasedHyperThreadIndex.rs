@@ -2,7 +2,7 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// Simple type to encapsulate a CPU index.
+/// Simple type to encapsulate a logical CPU index.
 #[serde(deny_unknown_fields)]
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Default)]
 pub struct ZeroBasedHyperThreadIndex(u16);

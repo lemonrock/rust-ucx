@@ -62,7 +62,7 @@ impl<MemoryCustomization: NonBlockingRequestMemoryCustomization> ApplicationCont
 	///
 	/// `length` must not be zero.
 	#[inline(always)]
-	pub fn register_memory_as_remotely_accessible(&self, memory_address: MemoryAddress, length: usize, non_blocking: bool) -> OurRemotelyAccessibleMemory
+	pub fn register_memory_as_remotely_accessible(&self, memory_address: OurLocalMemoryAddressToMakeRemotelyAccessible, length: usize, non_blocking: bool) -> OurRemotelyAccessibleMemory
 	{
 		assert_ne!(length, 0, "length is zero");
 		
