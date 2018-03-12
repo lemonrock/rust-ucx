@@ -50,7 +50,8 @@ impl Hash for ApplicationContextAttributes
 impl ApplicationContextAttributes
 {
 	/// Worker thread mode; closely related to the value in the `requested_features` of the application context configuration.
-	/// NOTE: SerializedOneThreadAtATime is NEVER returned by ucx currently.
+	///
+	/// **NOTE**: `SerializedOneThreadAtATime` is *never* returned by ucx currently.
 	#[inline(always)]
 	pub fn worker_thread_mode(&self) -> WorkerThreadMode
 	{
