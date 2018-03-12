@@ -2,12 +2,10 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::super::handle_drop_safeties::*;
 use super::super::status::Status::*;
 use super::super::status::ErrorCode::*;
 use super::super::ApplicationContext;
 use super::non_blocking_request_memory_customization::NonBlockingRequestMemoryCustomization;
-use super::configuration_settings::*;
 use super::*;
 use ::ring::aead::AES_128_GCM;
 use ::ring::aead::AES_256_GCM;

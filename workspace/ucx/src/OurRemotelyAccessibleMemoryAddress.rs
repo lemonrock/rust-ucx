@@ -2,7 +2,7 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// A `OurRemotelyAccessibleMemoryKey` is an opaque piece of data that needs to be sent to other machines so that they can uniquely connect to our remotely accessible memory.
+/// An opaque piece of data that needs to be sent to other machines so that they can uniquely connect to our remotely accessible memory.
 ///
 /// In Rust terms, it's a bit like a `Vec<u8>`.
 #[derive(Debug)]

@@ -2,7 +2,7 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// A worker is an opaque object representing the communication context.
+/// A worker is an opaque object, usually per hyper thread, representing a communication context.
 ///
 /// A worker represents an instance of a local communication resource and the progress engine associated with it.
 /// A progress engine is a construct that is responsible for asynchronous and independent progress of communication directives.

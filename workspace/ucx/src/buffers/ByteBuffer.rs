@@ -2,7 +2,7 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// This implements a buffer of bytes over raw memory.
+/// This wraps a buffer of bytes over raw memory.
 pub trait ByteBuffer
 {
 	/// Start address of this buffer.

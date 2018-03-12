@@ -3,7 +3,7 @@
 
 
 /// An end point.
-/// *MUST* be used inside a `Rc`.
+/// *MUST* be used inside as `Rc<RefCell<Endpoint<E, A>>`.
 pub struct EndPoint<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>
 {
 	handle: ucp_ep_h,

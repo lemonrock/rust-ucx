@@ -2,6 +2,6 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// Their remotely accessible memory address.
+/// The address of remotely accessible memory.
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct TheirRemotelyAccessibleMemoryAddress(Vec<u8>);

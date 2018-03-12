@@ -2,7 +2,7 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// A remote address of a destination.
+/// The address of a remote end point.
 pub trait TheirRemotelyAccessibleEndPointAddress
 {
 	// NOTE: It is important that this instance of `TheirRemotelyAccessibleAddress` is not dropped until after these parameters have been used to create an end point.
