@@ -205,7 +205,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	///
 	/// Returns Ok(true, message buffer)
 	#[inline(always)]
-	pub fn non_blocking_send_tagged_message_user_allocated<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type_descriptor: &DataTypeDescriptor, tag: ucp_tag_t, user_allocated_non_blocking_request: UserAllocatedNonBlockingRequest) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer, UserAllocatedNonBlockingRequest>>, ErrorCodeWithMessageBuffer<MessageBuffer>>
+	pub fn non_blocking_send_tagged_message_user_allocated<'worker, D: DataTypeDescriptor, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type_descriptor: &D, tag: ucp_tag_t, user_allocated_non_blocking_request: UserAllocatedNonBlockingRequest) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer, UserAllocatedNonBlockingRequest>>, ErrorCodeWithMessageBuffer<MessageBuffer>>
 	{
 		self.debug_assert_handle_is_valid();
 
@@ -237,7 +237,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	///
 	/// If a returned `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message_buffer` dropped.
 	#[inline(always)]
-	pub fn non_blocking_send_tagged_message_ucx_allocated<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type_descriptor: &DataTypeDescriptor, tag: ucp_tag_t, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>>, ErrorCodeWithMessageBuffer<MessageBuffer>>
+	pub fn non_blocking_send_tagged_message_ucx_allocated<'worker, D: DataTypeDescriptor, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type_descriptor: &D, tag: ucp_tag_t, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>>, ErrorCodeWithMessageBuffer<MessageBuffer>>
 	{
 		self.debug_assert_handle_is_valid();
 
@@ -267,7 +267,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	///
 	/// If a returned `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message_buffer` dropped.
 	#[inline(always)]
-	pub fn non_blocking_send_tagged_message_completing_only_when_recipient_has_matched_its_tag<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type_descriptor: &DataTypeDescriptor, tag: ucp_tag_t, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>, ErrorCodeWithMessageBuffer<MessageBuffer>>
+	pub fn non_blocking_send_tagged_message_completing_only_when_recipient_has_matched_its_tag<'worker, D: DataTypeDescriptor, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type_descriptor: &D, tag: ucp_tag_t, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>, ErrorCodeWithMessageBuffer<MessageBuffer>>
 	{
 		self.debug_assert_handle_is_valid();
 
