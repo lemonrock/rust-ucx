@@ -5,16 +5,16 @@
 /// A simple struct to make it easier to work with non-blocking requests.
 /// Dereferences to the parent worker, so one can call `progress()` on this instance.
 #[derive(Debug)]
-pub struct WorkerWithNonBlockingRequest<'worker>
+pub struct WorkerWithNonBlockingRequest<'worker, Request = UcxAllocatedNonBlockingRequest>
 {
 	/// Parent worker.
 	pub parent_worker: &'worker Worker,
 	
 	/// Non-blocking request.
-	pub(crate) non_blocking_request: NonBlockingRequest,
+	pub(crate) non_blocking_request: Request,
 }
 
-impl<'worker> Deref for WorkerWithNonBlockingRequest<'worker>
+impl<'worker, Request: NonBlockingRequest> Deref for WorkerWithNonBlockingRequest<'worker, Request>
 {
 	type Target = Worker;
 	
@@ -25,10 +25,10 @@ impl<'worker> Deref for WorkerWithNonBlockingRequest<'worker>
 	}
 }
 
-impl<'worker> WorkerWithNonBlockingRequest<'worker>
+impl<'worker, Request: NonBlockingRequest> WorkerWithNonBlockingRequest<'worker, Request>
 {
 	#[inline(always)]
-	pub(crate) fn new(parent_worker: &'worker Worker, non_blocking_request: NonBlockingRequest) -> Self
+	pub(crate) fn new(parent_worker: &'worker Worker, non_blocking_request: Request) -> Self
 	{
 		Self
 		{

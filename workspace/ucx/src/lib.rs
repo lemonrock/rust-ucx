@@ -41,6 +41,7 @@
 #[cfg(target_os = "linux")] use self::remotely_accessible::*;
 #[cfg(target_os = "linux")] use self::sockets::SocketAddress;
 #[cfg(target_os = "linux")] use self::status::*;
+#[cfg(target_os = "linux")] use self::status::non_blocking_requests::*;
 #[cfg(target_os = "linux")] use ::libc::c_void;
 #[cfg(target_os = "linux")] use ::libc::FILE;
 #[cfg(target_os = "linux")] use ::libc_extra::sched::sched_getcpu;

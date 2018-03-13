@@ -183,8 +183,43 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 			_ => panic!("Unexpected status '{:?}'", status),
 		}
 	}
+
+	
+	
+// Needs to return the `UserAllocatedRequest` for OperationInProgress
+
+
+//	/// Sends a tagged message, using a request that can have been stack-allocated.
+//	///
+//	/// Does not take a callback.
+//	///
+//	/// Returns Ok(true, message buffer)
+//	#[inline(always)]
+//	pub fn non_blocking_send_tagged_message_v2<MessageBuffer: ByteBuffer>(&self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, request: UserAllocatedRequest) -> Result<(bool, MessageBuffer), ErrorCodeWithMessageBuffer<MessageBuffer>>
+//	{
+//		self.debug_assert_handle_is_valid();
+//
+//		// ucs_status_t ucp_tag_send_nbr(ucp_ep_h ep, const void *buffer, size_t count,
+//		//ucp_datatype_t datatype, ucp_tag_t tag, void *req);
+//		let status = unsafe { ucp_tag_send_nbr(self.handle, message_buffer.address().as_ptr() as *const c_void, message_buffer.length(), data_type, tag, request.pointer()) };
+//
+//		use self::Status::*;
+//
+//		match status.parse()
+//		{
+//			IsOk => Ok((true, message_buffer)),
+//
+//			OperationInProgress => Ok((false, message_buffer)),
+//
+//			Error(error_code) => Err(ErrorCodeWithMessageBuffer::new(error_code, message_buffer)),
+//
+//			UnknownErrorCode(unknown_error_code) => panic!("UnknownErrorCode '{}'", unknown_error_code),
+//		}
+//	}
 	
 	/// Sends a tagged message.
+	///
+	/// It is preferable to use `non_blocking_send_tagged_message_v2` instead as it is more efficient and has an easier API to work with.
 	///
 	/// The provided buffer is not safe to re-use or write-to until this request has completed.
 	///
@@ -192,7 +227,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	///
 	/// If a returned `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message_buffer` dropped.
 	#[inline(always)]
-	pub fn non_blocking_send_tagged_message<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, callback: unsafe extern "C" fn(_request: *mut c_void, _status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>>, ErrorCodeWithMessageBuffer<MessageBuffer>>
+	pub fn non_blocking_send_tagged_message_v1<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, callback: unsafe extern "C" fn(_request: *mut c_void, _status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>>, ErrorCodeWithMessageBuffer<MessageBuffer>>
 	{
 		self.debug_assert_handle_is_valid();
 
@@ -244,7 +279,6 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	/*
 	Tag
 	#[link_name = "\u{1}_ucp_tag_send_nbr"] pub fn ucp_tag_send_nbr(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, req: *mut c_void) -> ucs_status_t;
-	#[link_name = "\u{1}_ucp_tag_send_sync_nb"] pub fn ucp_tag_send_sync_nb(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
 	
 	
 	Stream
@@ -265,7 +299,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	/// For a callback that does nothing, use `EndPoint::callback_is_ignored`.
 	///
 	/// Returns `Ok(())` if initiated and is already complete.
-	/// Returns `Ok(WorkerWithNonBlockingRequest<'worker>)` if initiated but not complete.
+	/// Returns `Ok(WorkerWithNonBlockingRequest)` if initiated but not complete.
 	/// Returns `Err(NoResourcesAreAvailableToInitiateTheOperation`) if no resources are available; it may be possible to try again.
 	/// Returns `Err` for other failures, the cause of which isn't clear.
 	///

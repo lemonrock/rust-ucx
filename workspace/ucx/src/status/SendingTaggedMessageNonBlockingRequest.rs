@@ -6,12 +6,13 @@
 ///
 /// If a `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message_buffer` dropped.
 #[derive(Debug)]
-pub struct SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer: ByteBuffer>
+pub struct SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer: ByteBuffer, Request = UcxAllocatedNonBlockingRequest>
+where Request: NonBlockingRequest
 {
-	drop_limitation_on_moving_out_work_around: Option<(WorkerWithNonBlockingRequest<'worker>, MessageBuffer)>,
+	drop_limitation_on_moving_out_work_around: Option<(WorkerWithNonBlockingRequest<'worker, Request>, MessageBuffer)>,
 }
 
-impl<'worker, MessageBuffer: ByteBuffer> Drop for SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>
+impl<'worker, MessageBuffer: ByteBuffer, Request: NonBlockingRequest> Drop for SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer, Request>
 {
 	#[inline(always)]
 	fn drop(&mut self)
@@ -24,7 +25,7 @@ impl<'worker, MessageBuffer: ByteBuffer> Drop for SendingTaggedMessageNonBlockin
 	}
 }
 
-impl<'worker, MessageBuffer: ByteBuffer> Deref for SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>
+impl<'worker, MessageBuffer: ByteBuffer, Request: NonBlockingRequest> Deref for SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer, Request>
 {
 	type Target = Worker;
 	
@@ -35,10 +36,10 @@ impl<'worker, MessageBuffer: ByteBuffer> Deref for SendingTaggedMessageNonBlocki
 	}
 }
 
-impl<'worker, MessageBuffer: ByteBuffer> SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>
+impl<'worker, MessageBuffer: ByteBuffer, Request: NonBlockingRequest> SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer, Request>
 {
 	#[inline(always)]
-	pub(crate) fn new(worker_with_non_blocking_request: WorkerWithNonBlockingRequest<'worker>, message_buffer: MessageBuffer) -> Self
+	pub(crate) fn new(worker_with_non_blocking_request: WorkerWithNonBlockingRequest<'worker, Request>, message_buffer: MessageBuffer) -> Self
 	{
 		Self
 		{

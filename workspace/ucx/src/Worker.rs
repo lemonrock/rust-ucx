@@ -299,7 +299,7 @@ impl Worker
 		self.debug_assert_handle_is_valid();
 		
 		use self::Status::*;
-		use self::StatusOrNonBlockingRequest::*;
+		use self::StatusOrUcxAllocatedNonBlockingRequest::*;
 		
 		match status_pointer.parse()
 		{

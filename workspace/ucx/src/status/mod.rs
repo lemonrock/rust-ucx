@@ -2,13 +2,13 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+use self::non_blocking_requests::*;
 pub use self::NonBlockingRequestCompletedOrInProgress::*;
 use super::EndPoint;
 use super::TheirRemotelyAccessibleEndPointAddress;
 use super::Worker;
 use super::buffers::ByteBuffer;
 use self::ucs_status_t::*;
-use ::libc::c_void;
 use ::std::cell::RefCell;
 use ::std::error::Error;
 use ::std::ffi::CStr;
@@ -16,22 +16,24 @@ use ::std::fmt;
 use ::std::fmt::Display;
 use ::std::fmt::Formatter;
 use ::std::mem::transmute;
-use ::std::mem::uninitialized;
 use ::std::ops::Deref;
 use ::std::ptr::NonNull;
 use ::std::rc::Rc;
 use ::ucx_sys::*;
 
 
+/// Models the slightly different kinds of non-blocking request used by UCX.
+pub mod non_blocking_requests;
+
+
 include!("EndPointPeerFailureErrorHandler.rs");
 include!("EndPointReadyToConsumeStreamingData.rs");
 include!("ErrorCode.rs");
 include!("ErrorCodeWithMessageBuffer.rs");
-include!("NonBlockingRequest.rs");
 include!("NonBlockingRequestCompletedOrInProgress.rs");
 include!("SendingTaggedMessageNonBlockingRequest.rs");
 include!("Status.rs");
-include!("StatusOrNonBlockingRequest.rs");
+include!("StatusOrUcxAllocatedNonBlockingRequest.rs");
 include!("ucs_status_tExt.rs");
 include!("ucs_status_ptr_tExt.rs");
 include!("WorkerWithNonBlockingRequest.rs");

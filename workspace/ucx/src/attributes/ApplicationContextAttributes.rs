@@ -58,12 +58,31 @@ impl ApplicationContextAttributes
 		WorkerThreadMode::from_ucs_thread_mode_t(self.thread_mode())
 	}
 	
-	/// Should be the same value as supplied by `NonBlockingRequestMemoryCustomization`.
+	/// Is the size required for memory by stack-allocated request points.
+	/// Will always be constant.
+	/// Is currently just `sizeof(ucp_request_t)`.
 	#[inline(always)]
 	pub fn reserved_space_in_non_blocking_requests(&self) -> usize
 	{
 		self.0.request_size
 	}
+	
+	/*
+		This C code as of version 1.3.0 produces `224`:-
+	
+		#include <stdio.h>
+		#include "config.h"
+		#include "ucp/core/ucp_request.h"
+		
+		
+		void main()
+		{
+			fprint("%ull\n", sizeof(ucp_request));
+		}
+		
+		Run on Alpine Linux using:  gcc -DHAVE_CONFIG -I. -I./src -o ./x find_size_of_ucp_request_t.c  (where `find_size_of_ucp_request_t.c` is in ucx-sys/temporary/root)
+	*/
+	pub(crate) const ReservedSpaceInNonBlockingRequestsRoundedUp: usize = 256;
 	
 	#[inline(always)]
 	pub(crate) fn query(handle: ucp_context_h) -> Self

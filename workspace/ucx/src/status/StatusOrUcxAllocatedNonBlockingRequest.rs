@@ -4,25 +4,25 @@
 
 /// A more sensible type than `ucs_status_ptr_t`.
 #[derive(Debug, PartialEq, Eq, Hash)]
-pub(crate) enum StatusOrNonBlockingRequest
+pub(crate) enum StatusOrUcxAllocatedNonBlockingRequest
 {
 	/// Status.
 	Status(Status),
 	
 	/// Non blocking request.
-	NonBlockingRequest(NonBlockingRequest),
+	NonBlockingRequest(UcxAllocatedNonBlockingRequest),
 }
 
-impl Default for StatusOrNonBlockingRequest
+impl Default for StatusOrUcxAllocatedNonBlockingRequest
 {
 	#[inline(always)]
 	fn default() -> Self
 	{
-		StatusOrNonBlockingRequest::Status(Status::IsOk)
+		StatusOrUcxAllocatedNonBlockingRequest::Status(Status::IsOk)
 	}
 }
 
-impl StatusOrNonBlockingRequest
+impl StatusOrUcxAllocatedNonBlockingRequest
 {
 	/// Parses a status into something useful.
 	/// Returns the invalid i8 value if the status is invalid in some way.
@@ -32,8 +32,8 @@ impl StatusOrNonBlockingRequest
 		let as_isize = status_or_status_pointer as isize;
 		match as_isize
 		{
-			-100 ... 1 => Ok(StatusOrNonBlockingRequest::Status(Status::parse_ucs_status_t(unsafe { transmute(as_isize as i8) })?)),
-			_ => Ok(StatusOrNonBlockingRequest::NonBlockingRequest(NonBlockingRequest(unsafe { NonNull::new_unchecked(as_isize as *mut u8) })))
+			-100 ... 1 => Ok(StatusOrUcxAllocatedNonBlockingRequest::Status(Status::parse_ucs_status_t(unsafe { transmute(as_isize as i8) })?)),
+			_ => Ok(StatusOrUcxAllocatedNonBlockingRequest::NonBlockingRequest(UcxAllocatedNonBlockingRequest::new(unsafe { NonNull::new_unchecked(as_isize as *mut u8) })))
 		}
 	}
 }
