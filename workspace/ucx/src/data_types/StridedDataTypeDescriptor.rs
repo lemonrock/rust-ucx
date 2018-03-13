@@ -2,19 +2,23 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::buffers::*;
-use super::status::*;
-use ::libc::c_void;
-use ::std::mem::forget;
-use ::std::mem::uninitialized;
-use ::ucx_sys::*;
+/// ?
+#[derive(Default, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct StridedDataTypeDescriptor;
 
-
-include!("ContiguousDataTypeDescriptor.rs");
-include!("DataTypeDescriptor.rs");
-include!("GenericDataTypeDescriptor.rs");
-include!("GenericDataTypeDescriptorOperations.rs");
-include!("GenericDataTypeDescriptorOperationsDeserializer.rs");
-include!("GenericDataTypeDescriptorOperationsSerializer.rs");
-include!("StridedDataTypeDescriptor.rs");
-include!("TagForLowestThreeBits.rs");
+impl DataTypeDescriptor for StridedDataTypeDescriptor
+{
+	#[doc(hidden)]
+	#[inline(always)]
+	fn to_ucp_dt_type(&self) -> ucp_dt_type
+	{
+		ucp_dt_type::UCP_DATATYPE_STRIDED
+	}
+	
+	#[doc(hidden)]
+	#[inline(always)]
+	fn to_ucp_datatype_t(&self) -> ucp_datatype_t
+	{
+		ucp_dt_type::UCP_DATATYPE_STRIDED as u64
+	}
+}

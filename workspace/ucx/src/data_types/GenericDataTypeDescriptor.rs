@@ -22,6 +22,21 @@ impl<Operations: GenericDataTypeDescriptorOperations> Drop for GenericDataTypeDe
 	}
 }
 
+impl<Operations: GenericDataTypeDescriptorOperations> DataTypeDescriptor for GenericDataTypeDescriptor<Operations>
+{
+	#[inline(always)]
+	fn to_ucp_dt_type(&self) -> ucp_dt_type
+	{
+		ucp_dt_type::UCP_DATATYPE_GENERIC
+	}
+	
+	#[inline(always)]
+	fn to_ucp_datatype_t(&self) -> ucp_datatype_t
+	{
+		self.handle.unwrap()
+	}
+}
+
 impl<Operations: GenericDataTypeDescriptorOperations> GenericDataTypeDescriptor<Operations>
 {
 	/// Creates new instance.
