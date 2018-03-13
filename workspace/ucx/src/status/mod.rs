@@ -2,20 +2,29 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+pub use self::NonBlockingRequestCompletedOrInProgress::*;
+use super::EndPoint;
+use super::TheirRemotelyAccessibleEndPointAddress;
 use super::Worker;
+use super::buffers::ByteBuffer;
 use self::ucs_status_t::*;
 use ::libc::c_void;
+use ::std::cell::RefCell;
 use ::std::ffi::CStr;
 use ::std::mem::transmute;
 use ::std::mem::uninitialized;
 use ::std::ops::Deref;
 use ::std::ptr::NonNull;
+use ::std::rc::Rc;
 use ::ucx_sys::*;
 
 
 include!("EndPointPeerFailureErrorHandler.rs");
+include!("EndPointReadyToConsumeStreamingData.rs");
 include!("ErrorCode.rs");
 include!("NonBlockingRequest.rs");
+include!("NonBlockingRequestCompletedOrInProgress.rs");
+include!("SendingTaggedMessageNonBlockingRequest.rs");
 include!("Status.rs");
 include!("StatusOrNonBlockingRequest.rs");
 include!("ucs_status_tExt.rs");

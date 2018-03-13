@@ -104,6 +104,7 @@
       <w>reloc</w>
       <w>repr</w>
       <w>rerelease</w>
+      <w>rewrapping</w>
       <w>rndv</w>
       <w>rpmem</w>
       <w>rustfmt</w>

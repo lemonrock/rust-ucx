@@ -56,7 +56,7 @@ impl HasAttributes for Worker
 	#[inline(always)]
 	fn attributes(&self) -> Self::Attributes
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
+		self.debug_assert_handle_is_valid();
 		
 		Self::Attributes::query(self.handle)
 	}
@@ -98,7 +98,7 @@ impl Worker
 	#[inline(always)]
 	pub fn new_end_point<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>(&self, peer_failure_error_handler: E, their_remote_address: &Rc<A>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool) -> Result<Rc<RefCell<EndPoint<E, A>>>, ErrorCode>
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
+		self.debug_assert_handle_is_valid();
 		
 		EndPoint::new_end_point(peer_failure_error_handler, their_remote_address, guarantee_that_send_requests_are_always_completed_successfully_or_error, self)
 	}
@@ -108,7 +108,7 @@ impl Worker
 	#[inline(always)]
 	pub fn our_remotely_accessible_worker_address(&self) -> OurRemotelyAccessibleWorkerAddress
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
+		self.debug_assert_handle_is_valid();
 		
 		let mut address = unsafe { uninitialized() };
 		let mut length = unsafe { uninitialized() };
@@ -127,11 +127,10 @@ impl Worker
 	}
 	
 	/// A server listener listens for incoming client connections on a particular address.
-	/// It then creates ?end points? to handle them.
 	#[inline(always)]
 	pub fn create_server_listener<L: ServerListenerAcceptHandler>(&self, our_listening_socket: &Rc<SocketAddress>, server_listener_accept_handler: L) -> Result<Box<ServerListener<L>>, ErrorCode>
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
+		self.debug_assert_handle_is_valid();
 		
 		ServerListener::create_server_listener(our_listening_socket, server_listener_accept_handler, &self.worker_handle_drop_safety, self.handle)
 	}
@@ -157,71 +156,6 @@ impl Worker
 		self.ucp_stream_worker_poll(end_points.as_mut_ptr(), Self::MaximumEndPoints)
 	}
 	
-	#[inline(always)]
-	fn ucp_stream_worker_poll(&self, end_points: *mut EndPointReadyToConsumeStreamingData, maximum_end_points: usize) -> Result<usize, ErrorCode>
-	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
-		debug_assert!(!end_points.is_null(), "end_points is null");
-		
-		let result = unsafe { ucp_stream_worker_poll(self.handle, end_points as *mut _, maximum_end_points, ReservedForFutureUseFlags) };
-		if result >= 0
-		{
-			let count = result as usize;
-			debug_assert!(count <= Self::MaximumEndPoints);
-			Ok(count)
-		}
-		else
-		{
-			debug_assert!(result >= (::std::i8::MIN as isize), "result is out-of-range");
-			let status: ucs_status_t = unsafe { transmute(result as i8) };
-			Err(status.error_code_or_panic())
-		}
-	}
-	
-	#[inline(always)]
-	pub(crate) fn parse_status_pointer<'worker>(&'worker self, status_pointer: ucs_status_ptr_t) -> Result<Option<WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
-	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
-		
-		use self::Status::*;
-		use self::StatusOrNonBlockingRequest::*;
-		
-		match status_pointer.parse()
-		{
-			Status(IsOk) => Ok(None),
-			
-			Status(Error(error_code)) => Err(error_code),
-			
-			NonBlockingRequest(non_blocking_request) => Ok(Some(WorkerWithNonBlockingRequest::new(self, non_blocking_request))),
-			
-			unexpected @ _ => panic!("Unexpected status '{:?}'", unexpected)
-		}
-	}
-	
-	#[inline(always)]
-	pub(crate) fn block_until_non_blocking_request_is_complete<'worker>(&'worker self, status_pointer: ucs_status_ptr_t) -> Result<(), ErrorCode>
-	{
-		match self.parse_status_pointer(status_pointer)
-		{
-			Ok(Some(worker_with_non_blocking_request)) => worker_with_non_blocking_request.block_until_non_blocking_request_is_complete(),
-			
-			Ok(None) => Ok(()),
-			
-			Err(error_code) => Err(error_code),
-		}
-	}
-	
-	/// Flushes all outstanding remote memory access ('RMA') and non-blocking atomic memory operations ('AMO') on all end points.
-	///
-	/// Blocking.
-	#[inline(always)]
-	pub fn blocking_flush_all_end_points(&self)
-	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
-		
-		panic_on_error!(ucp_worker_flush, self.handle);
-	}
-	
 	/// Flushes all outstanding remote memory access ('RMA') and non-blocking atomic memory operations ('AMO') on all end points.
 	///
 	/// Non-blocking.
@@ -232,13 +166,24 @@ impl Worker
 	///
 	/// The `callback_when_finished_or_cancelled` will receive an ErrorCode(Cancelled) if the non-blocking request is cancelled.
 	#[inline(always)]
-	pub fn non_blocking_flush_all_end_points<'worker>(&'worker self, callback_when_finished_or_cancelled: ucp_send_callback_t) -> Result<Option<WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
+	pub fn non_blocking_flush_all_end_points<'worker>(&'worker self, callback_when_finished_or_cancelled: ucp_send_callback_t) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
+		self.debug_assert_handle_is_valid();
 		
 		let status_pointer = unsafe { ucp_worker_flush_nb(self.handle, ReservedForFutureUseFlags, callback_when_finished_or_cancelled) };
 		
 		self.parse_status_pointer(status_pointer)
+	}
+	
+	/// Flushes all outstanding remote memory access ('RMA') and non-blocking atomic memory operations ('AMO') on all end points.
+	///
+	/// Blocking.
+	#[inline(always)]
+	pub fn blocking_flush_all_end_points(&self)
+	{
+		self.debug_assert_handle_is_valid();
+		
+		panic_on_error!(ucp_worker_flush, self.handle);
 	}
 	
 	/// Assures ordering between non-blocking operations.
@@ -251,7 +196,7 @@ impl Worker
 	#[inline(always)]
 	pub fn fence(&self)
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
+		self.debug_assert_handle_is_valid();
 		
 		panic_on_error!(ucp_worker_fence, self.handle);
 	}
@@ -268,7 +213,7 @@ impl Worker
 	#[inline(always)]
 	pub fn progress(&self) -> bool
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
+		self.debug_assert_handle_is_valid();
 		
 		unsafe { ucp_worker_progress(self.handle) }.from_c_bool()
 	}
@@ -279,7 +224,7 @@ impl Worker
 	#[inline(always)]
 	pub fn block_waiting_for_any_event(&self) -> Result<(), ()>
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
+		self.debug_assert_handle_is_valid();
 		
 		panic_on_error_with_clean_up!
 		(
@@ -302,7 +247,7 @@ impl Worker
 	#[inline(always)]
 	pub fn block_waiting_for_a_memory_event(&self, address: *mut u8)
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
+		self.debug_assert_handle_is_valid();
 		
 		unsafe { ucp_worker_wait_mem(self.handle, address as *mut _) }
 	}
@@ -311,7 +256,7 @@ impl Worker
 	#[inline(always)]
 	pub fn wake_up(&self)
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
+		self.debug_assert_handle_is_valid();
 		
 		panic_on_error!(ucp_worker_signal, self.handle);
 	}
@@ -320,7 +265,7 @@ impl Worker
 	#[inline(always)]
 	pub fn arm(&self) -> bool
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
+		self.debug_assert_handle_is_valid();
 		
 		panic_on_error_with_clean_up!
 		(
@@ -341,10 +286,70 @@ impl Worker
 	#[inline(always)]
 	pub fn get_file_descriptor_suitable_for_epoll(&self) -> RawFd
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
+		self.debug_assert_handle_is_valid();
 		
 		let mut file_descriptor = unsafe { uninitialized() };
 		panic_on_error!(ucp_worker_get_efd, self.handle, &mut file_descriptor);
 		file_descriptor
+	}
+	
+	#[inline(always)]
+	pub(crate) fn parse_status_pointer<'worker>(&'worker self, status_pointer: ucs_status_ptr_t) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
+	{
+		self.debug_assert_handle_is_valid();
+		
+		use self::Status::*;
+		use self::StatusOrNonBlockingRequest::*;
+		
+		match status_pointer.parse()
+		{
+			Status(IsOk) => Ok(Completed(())),
+			
+			Status(Error(error_code)) => Err(error_code),
+			
+			NonBlockingRequest(non_blocking_request) => Ok(InProgress(WorkerWithNonBlockingRequest::new(self, non_blocking_request))),
+			
+			unexpected @ _ => panic!("Unexpected status '{:?}'", unexpected)
+		}
+	}
+	
+	#[inline(always)]
+	pub(crate) fn block_until_non_blocking_request_is_complete<'worker>(&'worker self, status_pointer: ucs_status_ptr_t) -> Result<(), ErrorCode>
+	{
+		match self.parse_status_pointer(status_pointer)
+		{
+			Ok(Completed(())) => Ok(()),
+			
+			Ok(InProgress(worker_with_non_blocking_request)) => worker_with_non_blocking_request.block_until_non_blocking_request_is_complete(),
+			
+			Err(error_code) => Err(error_code),
+		}
+	}
+	
+	#[inline(always)]
+	fn ucp_stream_worker_poll(&self, end_points: *mut EndPointReadyToConsumeStreamingData, maximum_end_points: usize) -> Result<usize, ErrorCode>
+	{
+		self.debug_assert_handle_is_valid();
+		debug_assert!(!end_points.is_null(), "end_points is null");
+		
+		let result = unsafe { ucp_stream_worker_poll(self.handle, end_points as *mut _, maximum_end_points, ReservedForFutureUseFlags) };
+		if result >= 0
+		{
+			let count = result as usize;
+			debug_assert!(count <= Self::MaximumEndPoints);
+			Ok(count)
+		}
+		else
+		{
+			debug_assert!(result >= (::std::i8::MIN as isize), "result is out-of-range");
+			let status: ucs_status_t = unsafe { transmute(result as i8) };
+			Err(status.error_code_or_panic())
+		}
+	}
+	
+	#[inline(always)]
+	fn debug_assert_handle_is_valid(&self)
+	{
+		debug_assert!(!self.handle.is_null(), "handle is null");
 	}
 }

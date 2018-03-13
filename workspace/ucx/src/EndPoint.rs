@@ -184,7 +184,37 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 		}
 	}
 	
+	/// The provided buffer is not safe to re-use or write-to until this request has completed.
+	///
+	/// If the `callback` is not wanted, then pass `EndPoint::callback_is_ignored`.
+	///
+	/// If a returned `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message_buffer` dropped.
+	#[inline(always)]
+	pub fn non_blocking_send_tagged_message<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, callback: unsafe extern "C" fn(_request: *mut c_void, _status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>>, (ErrorCode, MessageBuffer)>
+	{
+		self.debug_assert_handle_is_valid();
+
+		let status_pointer = unsafe { ucp_tag_send_nb(self.handle, message_buffer.address().as_ptr() as *const c_void, message_buffer.length(), data_type, tag, Some(callback)) };
+		let parsed = self.parent_worker.parse_status_pointer(status_pointer);
+		match parsed
+		{
+			Ok(non_blocking_request_completed_or_in_progress) => match non_blocking_request_completed_or_in_progress
+			{
+				Completed(()) => Ok(Completed(message_buffer)),
+				
+				InProgress(non_blocking_request_in_progress) => Ok(InProgress(SendingTaggedMessageNonBlockingRequest::new(non_blocking_request_in_progress, message_buffer))),
+			},
+			
+			Err(error_code) => Err((error_code, message_buffer))
+		}
+	}
+	
+	
 	/*
+	Tag
+	#[link_name = "\u{1}_ucp_tag_send_nbr"] pub fn ucp_tag_send_nbr(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, req: *mut c_void) -> ucs_status_t;
+	#[link_name = "\u{1}_ucp_tag_send_sync_nb"] pub fn ucp_tag_send_sync_nb(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
+	
 	
 	Stream
 	#[link_name = "\u{1}_ucp_stream_data_release"] pub fn ucp_stream_data_release(ep: ucp_ep_h, data: *mut c_void);
@@ -192,14 +222,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	#[link_name = "\u{1}_ucp_stream_recv_nb"] pub fn ucp_stream_recv_nb(ep: ucp_ep_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, cb: ucp_stream_recv_callback_t, length: *mut usize, flags: c_uint) -> ucs_status_ptr_t;
 	#[link_name = "\u{1}_ucp_stream_send_nb"] pub fn ucp_stream_send_nb(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, cb: ucp_send_callback_t, flags: c_uint) -> ucs_status_ptr_t;
 
-	Tag
-	#[link_name = "\u{1}_ucp_tag_send_nb"] pub fn ucp_tag_send_nb(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
-	#[link_name = "\u{1}_ucp_tag_send_nbr"] pub fn ucp_tag_send_nbr(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, req: *mut c_void) -> ucs_status_t;
-	#[link_name = "\u{1}_ucp_tag_send_sync_nb"] pub fn ucp_tag_send_sync_nb(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
-	
 	*/
-	
-	// Look at ucp_mt_lock_t   and   &ep->worker->mt_lock
 	
 	/// A non-blocking flush.
 	///
@@ -210,15 +233,15 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	///
 	/// For a callback that does nothing, use `EndPoint::callback_is_ignored`.
 	///
-	/// Returns `Ok(None)` if initiated and is already complete.
-	/// Returns `Ok(Some)` if initiated but not complete.
+	/// Returns `Ok(())` if initiated and is already complete.
+	/// Returns `Ok(WorkerWithNonBlockingRequest<'worker>)` if initiated but not complete.
 	/// Returns `Err(NoResourcesAreAvailableToInitiateTheOperation`) if no resources are available; it may be possible to try again.
 	/// Returns `Err` for other failures, the cause of which isn't clear.
 	///
 	#[inline(always)]
-	pub fn non_blocking_flush<'worker>(&'worker self, callback: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<Option<WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
+	pub fn non_blocking_flush<'worker>(&'worker self, callback: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
+		self.debug_assert_handle_is_valid();
 		
 		// NOTE: Despite the signature of `ucp_ep_flush_nb`, the callback is *NOT* optional.
 		let status_pointer = unsafe { ucp_ep_flush_nb(self.handle, ReservedForFutureUseFlags, Some(callback)) };
@@ -232,7 +255,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	#[inline(always)]
 	pub fn blocking_flush(&self) -> Result<(), ErrorCode>
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
+		self.debug_assert_handle_is_valid();
 		
 		self.parent_worker.block_until_non_blocking_request_is_complete(unsafe { ucp_ep_flush_nb(self.handle, ReservedForFutureUseFlags, Some(Self::callback_is_ignored)) })
 	}
@@ -319,5 +342,11 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 		{
 			this.borrow_mut().user_data_and_peer_failure_error_handler.peer_failure(status.error_code_or_panic())
 		}
+	}
+	
+	#[inline(always)]
+	fn debug_assert_handle_is_valid(&self)
+	{
+		debug_assert!(!self.handle.is_null(), "handle is null");
 	}
 }

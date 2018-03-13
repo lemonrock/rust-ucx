@@ -106,7 +106,6 @@
 
 #[cfg(target_os = "linux")] include!("ApplicationContext.rs");
 #[cfg(target_os = "linux")] include!("EndPoint.rs");
-#[cfg(target_os = "linux")] include!("EndPointReadyToConsumeStreamingData.rs");
 #[cfg(target_os = "linux")] include!("MemoryAdvice.rs");
 #[cfg(target_os = "linux")] include!("OurLocalMemoryAddressToMakeRemotelyAccessible.rs");
 #[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleEndPointAddress.rs");
