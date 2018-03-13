@@ -8,6 +8,7 @@ use ::ring::aead::seal_in_place;
 use ::ring::aead::SealingKey;
 use ::ring::rand::SecureRandom;
 use ::ring::rand::SystemRandom;
+use ::std::fmt::Debug;
 use ::std::mem::uninitialized;
 use ::std::ptr::copy_nonoverlapping;
 use ::std::ptr::NonNull;

@@ -3,7 +3,7 @@
 
 
 /// This wraps a buffer of bytes over raw memory.
-pub trait ByteBuffer
+pub trait ByteBuffer: Debug
 {
 	/// Start address of this buffer.
 	#[inline(always)]

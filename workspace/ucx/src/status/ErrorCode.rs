@@ -4,8 +4,7 @@
 
 quick_error!
 {
-	//// Error codes; far more useful than `ucs_status_t`.
-	#[allow(missing_docs)]
+	/// Error codes; far more useful than `ucs_status_t`.
 	#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 	pub enum ErrorCode
 	{
@@ -23,11 +22,15 @@ quick_error!
 		NoResourcesAreAvailableToInitiateTheOperation
 		{
 		}
-
+		
+		/// Input or Output error.
+		///
+		/// May be a transient failure; used for a lot of scenarios in UCX.
 		InputOutputError
 		{
 		}
-
+		
+		/// Could not allocate (usually with `malloc`) memory.
 		///
 		/// Pretty much fatal.
 		OutOfMemory
@@ -59,11 +62,15 @@ quick_error!
 		InvalidAddress
 		{
 		}
-
+		
+		/// Function not implemented.
+		///
+		/// Pretty much fatal.
 		FunctionNotImplemented
 		{
 		}
-
+		
+		/// Message truncated?
 		MessageTruncated
 		{
 		}
@@ -98,7 +105,10 @@ quick_error!
 		NoSuchDevice
 		{
 		}
-
+		
+		/// Device is busy.
+		///
+		/// Should be possible to try the operation again.
 		DeviceIsBusy
 		{
 		}
@@ -108,6 +118,7 @@ quick_error!
 		{
 		}
 
+		/// ?
 		ShmemSegment
 		{
 		}
@@ -131,7 +142,8 @@ quick_error!
 		OperationTimedOut
 		{
 		}
-
+		
+		/// ?
 		UserDefinedLimitWasExceeded
 		{
 		}
@@ -142,12 +154,14 @@ quick_error!
 		UnsupportedOperation
 		{
 		}
-
+		
+		/// ?
 		LinkFailure(index: u8)
 		{
 			display("LinkFailure {}", index)
 		}
-
+		
+		/// ?
 		EndPointFailure(index: u8)
 		{
 			display("EndPointFailure {}", index)

@@ -48,7 +48,7 @@ impl<'worker, MessageBuffer: ByteBuffer> SendingTaggedMessageNonBlockingRequest<
 	
 	/// Blocks until a non-blocking request is complete.
 	#[inline(always)]
-	pub fn block_until_non_blocking_request_is_complete(mut self) -> Result<MessageBuffer, (ErrorCode, MessageBuffer)>
+	pub fn block_until_non_blocking_request_is_complete(mut self) -> Result<MessageBuffer, ErrorCodeWithMessageBuffer<MessageBuffer>>
 	{
 		let (worker_with_non_blocking_request, message_buffer) = self.drop_limitation_on_moving_out_work_around.take().unwrap();
 		
@@ -56,7 +56,7 @@ impl<'worker, MessageBuffer: ByteBuffer> SendingTaggedMessageNonBlockingRequest<
 		{
 			Ok(()) => Ok(message_buffer),
 			
-			Err(error_code) => Err((error_code, message_buffer))
+			Err(error_code) => Err(ErrorCodeWithMessageBuffer::new(error_code, message_buffer))
 		}
 	}
 	
@@ -80,7 +80,7 @@ impl<'worker, MessageBuffer: ByteBuffer> SendingTaggedMessageNonBlockingRequest<
 	///
 	/// An Err() means it completed with an error.
 	#[inline(always)]
-	pub fn is_still_in_progress(mut self) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, Self>, (ErrorCode, MessageBuffer)>
+	pub fn is_still_in_progress(mut self) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, Self>, ErrorCodeWithMessageBuffer<MessageBuffer>>
 	{
 		let (worker_with_non_blocking_request, message_buffer) = self.drop_limitation_on_moving_out_work_around.take().unwrap();
 		
@@ -90,7 +90,7 @@ impl<'worker, MessageBuffer: ByteBuffer> SendingTaggedMessageNonBlockingRequest<
 			
 			Ok(false) => Ok(InProgress(Self::new(worker_with_non_blocking_request, message_buffer))),
 			
-			Err(error_code) => Err((error_code, message_buffer)),
+			Err(error_code) => Err(ErrorCodeWithMessageBuffer::new(error_code, message_buffer)),
 		}
 	}
 }

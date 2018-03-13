@@ -184,13 +184,15 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 		}
 	}
 	
+	/// Sends a tagged message.
+	///
 	/// The provided buffer is not safe to re-use or write-to until this request has completed.
 	///
 	/// If the `callback` is not wanted, then pass `EndPoint::callback_is_ignored`.
 	///
 	/// If a returned `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message_buffer` dropped.
 	#[inline(always)]
-	pub fn non_blocking_send_tagged_message<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, callback: unsafe extern "C" fn(_request: *mut c_void, _status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>>, (ErrorCode, MessageBuffer)>
+	pub fn non_blocking_send_tagged_message<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, callback: unsafe extern "C" fn(_request: *mut c_void, _status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>>, ErrorCodeWithMessageBuffer<MessageBuffer>>
 	{
 		self.debug_assert_handle_is_valid();
 
@@ -205,7 +207,36 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 				InProgress(non_blocking_request_in_progress) => Ok(InProgress(SendingTaggedMessageNonBlockingRequest::new(non_blocking_request_in_progress, message_buffer))),
 			},
 			
-			Err(error_code) => Err((error_code, message_buffer))
+			Err(error_code) => Err(ErrorCodeWithMessageBuffer::new(error_code, message_buffer))
+		}
+	}
+	
+	/// Sends a tagged message and only completes when the recipient has matched its tag (but not necessarily received its contents).
+	///
+	/// Never completes immediately.
+	///
+	/// The provided buffer is not safe to re-use or write-to until this request has completed.
+	///
+	/// If the `callback` is not wanted, then pass `EndPoint::callback_is_ignored`.
+	///
+	/// If a returned `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message_buffer` dropped.
+	#[inline(always)]
+	pub fn non_blocking_send_tagged_message_completing_only_when_recipient_has_matched_its_tag<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, callback: unsafe extern "C" fn(_request: *mut c_void, _status: ucs_status_t)) -> Result<SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>, ErrorCodeWithMessageBuffer<MessageBuffer>>
+	{
+		self.debug_assert_handle_is_valid();
+
+		let status_pointer = unsafe { ucp_tag_send_sync_nb(self.handle, message_buffer.address().as_ptr() as *const c_void, message_buffer.length(), data_type, tag, Some(callback)) };
+		let parsed = self.parent_worker.parse_status_pointer(status_pointer);
+		match parsed
+		{
+			Ok(non_blocking_request_completed_or_in_progress) => match non_blocking_request_completed_or_in_progress
+			{
+				Completed(()) => panic!("API documentation notes that completion never happens initially"),
+				
+				InProgress(non_blocking_request_in_progress) => Ok(SendingTaggedMessageNonBlockingRequest::new(non_blocking_request_in_progress, message_buffer)),
+			},
+			
+			Err(error_code) => Err(ErrorCodeWithMessageBuffer::new(error_code, message_buffer))
 		}
 	}
 	
