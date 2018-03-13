@@ -183,12 +183,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 			_ => panic!("Unexpected status '{:?}'", status),
 		}
 	}
-
 	
-	
-// Needs to return the `UserAllocatedRequest` for OperationInProgress
-
-
 	/// Sends a tagged message, using a user_allocated_non_blocking_request that can have been stack-allocated.
 	///
 	/// Does not take a callback.
