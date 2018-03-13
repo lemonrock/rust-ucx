@@ -189,49 +189,49 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 // Needs to return the `UserAllocatedRequest` for OperationInProgress
 
 
-//	/// Sends a tagged message, using a request that can have been stack-allocated.
-//	///
-//	/// Does not take a callback.
-//	///
-//	/// Returns Ok(true, message buffer)
-//	#[inline(always)]
-//	pub fn non_blocking_send_tagged_message_v2<MessageBuffer: ByteBuffer>(&self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, request: UserAllocatedRequest) -> Result<(bool, MessageBuffer), ErrorCodeWithMessageBuffer<MessageBuffer>>
-//	{
-//		self.debug_assert_handle_is_valid();
-//
-//		// ucs_status_t ucp_tag_send_nbr(ucp_ep_h ep, const void *buffer, size_t count,
-//		//ucp_datatype_t datatype, ucp_tag_t tag, void *req);
-//		let status = unsafe { ucp_tag_send_nbr(self.handle, message_buffer.address().as_ptr() as *const c_void, message_buffer.length(), data_type, tag, request.pointer()) };
-//
-//		use self::Status::*;
-//
-//		match status.parse()
-//		{
-//			IsOk => Ok((true, message_buffer)),
-//
-//			OperationInProgress => Ok((false, message_buffer)),
-//
-//			Error(error_code) => Err(ErrorCodeWithMessageBuffer::new(error_code, message_buffer)),
-//
-//			UnknownErrorCode(unknown_error_code) => panic!("UnknownErrorCode '{}'", unknown_error_code),
-//		}
-//	}
-	
-	/// Sends a tagged message.
+	/// Sends a tagged message, using a user_allocated_non_blocking_request that can have been stack-allocated.
 	///
-	/// It is preferable to use `non_blocking_send_tagged_message_v2` instead as it is more efficient and has an easier API to work with.
+	/// Does not take a callback.
 	///
-	/// The provided buffer is not safe to re-use or write-to until this request has completed.
-	///
-	/// If the `callback` is not wanted, then pass `EndPoint::callback_is_ignored`.
-	///
-	/// If a returned `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message_buffer` dropped.
+	/// Returns Ok(true, message buffer)
 	#[inline(always)]
-	pub fn non_blocking_send_tagged_message_v1<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, callback: unsafe extern "C" fn(_request: *mut c_void, _status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>>, ErrorCodeWithMessageBuffer<MessageBuffer>>
+	pub fn non_blocking_send_tagged_message_user_allocated<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, user_allocated_non_blocking_request: UserAllocatedNonBlockingRequest) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer, UserAllocatedNonBlockingRequest>>, ErrorCodeWithMessageBuffer<MessageBuffer>>
 	{
 		self.debug_assert_handle_is_valid();
 
-		let status_pointer = unsafe { ucp_tag_send_nb(self.handle, message_buffer.address().as_ptr() as *const c_void, message_buffer.length(), data_type, tag, Some(callback)) };
+		let status = unsafe { ucp_tag_send_nbr(self.handle, message_buffer.address().as_ptr() as *const c_void, message_buffer.length(), data_type, tag, user_allocated_non_blocking_request.non_null_pointer().as_ptr() as *mut c_void) };
+
+		use self::Status::*;
+		use self::NonBlockingRequestCompletedOrInProgress::*;
+		
+		match status.parse()
+		{
+			IsOk => Ok(Completed(message_buffer)),
+
+			OperationInProgress => Ok(InProgress(SendingTaggedMessageNonBlockingRequest::new(WorkerWithNonBlockingRequest::new(&self.parent_worker, user_allocated_non_blocking_request), message_buffer))),
+
+			Error(error_code) => Err(ErrorCodeWithMessageBuffer::new(error_code, message_buffer)),
+
+			UnknownErrorCode(unknown_error_code) => panic!("UnknownErrorCode '{}'", unknown_error_code),
+		}
+	}
+	
+	/// Sends a tagged message.
+	///
+	/// It is preferable to use `non_blocking_send_tagged_message_user_allocated` instead as it is more efficient and has an easier API to work with.
+	///
+	/// The provided buffer is not safe to re-use or write-to until this request has completed.
+	///
+	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::callback_is_ignored`.
+	/// `request` should not be freed inside the `callback_when_finished_or_cancelled`.
+	///
+	/// If a returned `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message_buffer` dropped.
+	#[inline(always)]
+	pub fn non_blocking_send_tagged_message_ucx_allocated<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>>, ErrorCodeWithMessageBuffer<MessageBuffer>>
+	{
+		self.debug_assert_handle_is_valid();
+
+		let status_pointer = unsafe { ucp_tag_send_nb(self.handle, message_buffer.address().as_ptr() as *const c_void, message_buffer.length(), data_type, tag, Some(callback_when_finished_or_cancelled)) };
 		let parsed = self.parent_worker.parse_status_pointer(status_pointer);
 		match parsed
 		{
@@ -252,15 +252,16 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	///
 	/// The provided buffer is not safe to re-use or write-to until this request has completed.
 	///
-	/// If the `callback` is not wanted, then pass `EndPoint::callback_is_ignored`.
+	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::callback_is_ignored`.
+	/// `request` should not be freed inside the `callback_when_finished_or_cancelled`.
 	///
 	/// If a returned `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message_buffer` dropped.
 	#[inline(always)]
-	pub fn non_blocking_send_tagged_message_completing_only_when_recipient_has_matched_its_tag<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, callback: unsafe extern "C" fn(_request: *mut c_void, _status: ucs_status_t)) -> Result<SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>, ErrorCodeWithMessageBuffer<MessageBuffer>>
+	pub fn non_blocking_send_tagged_message_completing_only_when_recipient_has_matched_its_tag<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>, ErrorCodeWithMessageBuffer<MessageBuffer>>
 	{
 		self.debug_assert_handle_is_valid();
 
-		let status_pointer = unsafe { ucp_tag_send_sync_nb(self.handle, message_buffer.address().as_ptr() as *const c_void, message_buffer.length(), data_type, tag, Some(callback)) };
+		let status_pointer = unsafe { ucp_tag_send_sync_nb(self.handle, message_buffer.address().as_ptr() as *const c_void, message_buffer.length(), data_type, tag, Some(callback_when_finished_or_cancelled)) };
 		let parsed = self.parent_worker.parse_status_pointer(status_pointer);
 		match parsed
 		{
@@ -277,9 +278,6 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	
 	
 	/*
-	Tag
-	#[link_name = "\u{1}_ucp_tag_send_nbr"] pub fn ucp_tag_send_nbr(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, req: *mut c_void) -> ucs_status_t;
-	
 	
 	Stream
 	#[link_name = "\u{1}_ucp_stream_data_release"] pub fn ucp_stream_data_release(ep: ucp_ep_h, data: *mut c_void);
@@ -293,10 +291,10 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	///
 	/// Potentially quite expensive.
 	///
-	/// `request` should not be freed inside the callback.
 	/// `request` points to memory that was previously initialized using the `NonBlockingRequestMemoryCustomization` trait, which is a type parameter of `MemoryCustomization` on the `ApplicationContext`.
 	///
-	/// For a callback that does nothing, use `EndPoint::callback_is_ignored`.
+	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::callback_is_ignored`.
+	/// `request` should not be freed inside the `callback_when_finished_or_cancelled`.
 	///
 	/// Returns `Ok(())` if initiated and is already complete.
 	/// Returns `Ok(WorkerWithNonBlockingRequest)` if initiated but not complete.
@@ -304,12 +302,12 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	/// Returns `Err` for other failures, the cause of which isn't clear.
 	///
 	#[inline(always)]
-	pub fn non_blocking_flush<'worker>(&'worker self, callback: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
+	pub fn non_blocking_flush<'worker>(&'worker self, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
 	{
 		self.debug_assert_handle_is_valid();
 		
-		// NOTE: Despite the signature of `ucp_ep_flush_nb`, the callback is *NOT* optional.
-		let status_pointer = unsafe { ucp_ep_flush_nb(self.handle, ReservedForFutureUseFlags, Some(callback)) };
+		// NOTE: Despite the signature of `ucp_ep_flush_nb`, the callback_when_finished_or_cancelled is *NOT* optional.
+		let status_pointer = unsafe { ucp_ep_flush_nb(self.handle, ReservedForFutureUseFlags, Some(callback_when_finished_or_cancelled)) };
 		
 		self.parent_worker.parse_status_pointer(status_pointer)
 	}
@@ -322,13 +320,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	{
 		self.debug_assert_handle_is_valid();
 		
-		self.parent_worker.block_until_non_blocking_request_is_complete(unsafe { ucp_ep_flush_nb(self.handle, ReservedForFutureUseFlags, Some(Self::callback_is_ignored)) })
-	}
-	
-	/// This function is provided to pass to non-blocking calls where the caller doesn't care about being notified of completion of the non-blocking call.
-	#[inline(always)]
-	pub unsafe extern "C" fn callback_is_ignored(_request: *mut c_void, _status: ucs_status_t)
-	{
+		self.parent_worker.block_until_non_blocking_request_is_complete(unsafe { ucp_ep_flush_nb(self.handle, ReservedForFutureUseFlags, Some(callback_is_ignored)) })
 	}
 	
 	#[inline(always)]

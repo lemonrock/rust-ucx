@@ -7,10 +7,8 @@
 #[derive(Debug)]
 pub struct WorkerWithNonBlockingRequest<'worker, Request = UcxAllocatedNonBlockingRequest>
 {
-	/// Parent worker.
-	pub parent_worker: &'worker Worker,
+	pub(crate) parent_worker: &'worker Worker,
 	
-	/// Non-blocking request.
 	pub(crate) non_blocking_request: Request,
 }
 

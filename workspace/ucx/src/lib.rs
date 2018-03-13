@@ -106,6 +106,7 @@
 
 
 #[cfg(target_os = "linux")] include!("ApplicationContext.rs");
+#[cfg(target_os = "linux")] include!("callback_is_ignored.rs");
 #[cfg(target_os = "linux")] include!("EndPoint.rs");
 #[cfg(target_os = "linux")] include!("MemoryAdvice.rs");
 #[cfg(target_os = "linux")] include!("OurLocalMemoryAddressToMakeRemotelyAccessible.rs");
