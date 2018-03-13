@@ -76,6 +76,11 @@
 #[cfg(target_os = "linux")] pub mod client_server;
 
 
+/// Data types used for describing data sent in tagged messages and streams.
+/// A data type lets UCX manage serialization and deserialization.
+#[cfg(target_os = "linux")] pub mod data_types;
+
+
 /// Configuration.
 #[cfg(target_os = "linux")] pub mod configuration;
 

@@ -115,6 +115,7 @@
       <w>spinlock</w>
       <w>spmc</w>
       <w>strdup</w>
+      <w>strided</w>
       <w>structs</w>
       <w>sundell</w>
       <w>sysconf</w>

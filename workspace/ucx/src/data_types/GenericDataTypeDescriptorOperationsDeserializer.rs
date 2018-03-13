@@ -2,20 +2,9 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use ::libc::c_void;
-use ::ring::aead::open_in_place;
-use ::ring::aead::OpeningKey;
-use ::ring::aead::seal_in_place;
-use ::ring::aead::SealingKey;
-use ::ring::rand::SecureRandom;
-use ::ring::rand::SystemRandom;
-use ::std::fmt::Debug;
-use ::std::mem::uninitialized;
-use ::std::ptr::copy_nonoverlapping;
-use ::std::ptr::NonNull;
-use ::std::slice::from_raw_parts;
-
-
-include!("ByteBuffer.rs");
-include!("Sealed.rs");
-include!("UcxAllocatedByteBuffer.rs");
+/// Trait to abstract away functionality required by UCX.
+pub trait GenericDataTypeDescriptorOperationsDeserializer
+{
+	/// Deserialize.
+	fn deserialize(&self, virtual_offset_in_the_input_stream: usize, input_buffer: UcxAllocatedByteBuffer) -> Result<(), ErrorCode>;
+}

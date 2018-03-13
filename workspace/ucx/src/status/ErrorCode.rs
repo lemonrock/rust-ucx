@@ -175,3 +175,43 @@ quick_error!
 		}
 	}
 }
+
+impl ErrorCode
+{
+	#[inline(always)]
+	pub(crate) fn to_ucs_status_t(&self) -> ucs_status_t
+	{
+		use self::ErrorCode::*;
+		
+		let value = match *self
+		{
+			NoPendingMessage => -1,
+			NoResourcesAreAvailableToInitiateTheOperation => -2,
+			InputOutputError => -3,
+			OutOfMemory => -4,
+			InvalidParameter => -5,
+			DestinationIsUnreachable => -6,
+			InvalidAddress => -7,
+			FunctionNotImplemented => -8,
+			MessageTruncated => -9,
+			NoProgress => -10,
+			ProvidedBufferIsTooSmall => -11,
+			NoSuchElement => -12,
+			FailedToConnectToSomeOfTheRequestedEndPoints => -13,
+			NoSuchDevice => -14,
+			DeviceIsBusy => -15,
+			RequestCancelled => -16,
+			ShmemSegment => -17,
+			ElementAlreadyExists => -18,
+			IndexOutOfRange => -19,
+			OperationTimedOut => -20,
+			UserDefinedLimitWasExceeded => -21,
+			UnsupportedOperation => -22,
+			LinkFailure(relative_code) => -(relative_code as i8 + 40) as i8,
+			EndPointFailure(relative_code) => -(relative_code as i8 + 60) as i8,
+			EndPointTimeOut => -80,
+		};
+		
+		unsafe { transmute(value) }
+	}
+}
