@@ -16,14 +16,14 @@
 
 #[cfg(target_os = "linux")] #[macro_use] extern crate bitflags;
 #[cfg(target_os = "linux")] extern crate indexmap;
-#[cfg(target_os = "linux")] extern crate libc;
+#[cfg(target_os = "linux")] pub extern crate libc;
 #[cfg(target_os = "linux")] extern crate libc_extra;
 #[cfg(target_os = "linux")] #[macro_use] extern crate quick_error;
 #[cfg(target_os = "linux")] extern crate ring;
 #[cfg(target_os = "linux")] extern crate serde;
 #[cfg(target_os = "linux")] #[macro_use] extern crate serde_derive;
 #[cfg(target_os = "linux")] extern crate spin_locks;
-#[cfg(target_os = "linux")] extern crate ucx_sys;
+#[cfg(target_os = "linux")] pub extern crate ucx_sys;
 
 
 #[cfg(target_os = "linux")] include!("macros/mod.rs");
@@ -35,6 +35,7 @@
 #[cfg(target_os = "linux")] use self::configuration::non_blocking_request_memory_customization::*;
 #[cfg(target_os = "linux")] use self::configuration::values::*;
 #[cfg(target_os = "linux")] use self::cpu_set::*;
+#[cfg(target_os = "linux")] use self::data_type_descriptors::*;
 #[cfg(target_os = "linux")] use self::ffi_helpers::*;
 #[cfg(target_os = "linux")] use self::handle_drop_safeties::*;
 #[cfg(target_os = "linux")] use self::print_information::PrintInformation;
@@ -76,9 +77,9 @@
 #[cfg(target_os = "linux")] pub mod client_server;
 
 
-/// Data types used for describing data sent in tagged messages and streams.
-/// A data type lets UCX manage serialization and deserialization.
-#[cfg(target_os = "linux")] pub mod data_types;
+/// Data types descriptors are used for describing data sent in tagged messages and streams.
+/// A data type descriptor lets UCX manage serialization and deserialization.
+#[cfg(target_os = "linux")] pub mod data_type_descriptors;
 
 
 /// Configuration.

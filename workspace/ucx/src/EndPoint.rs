@@ -205,11 +205,11 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	///
 	/// Returns Ok(true, message buffer)
 	#[inline(always)]
-	pub fn non_blocking_send_tagged_message_user_allocated<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, user_allocated_non_blocking_request: UserAllocatedNonBlockingRequest) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer, UserAllocatedNonBlockingRequest>>, ErrorCodeWithMessageBuffer<MessageBuffer>>
+	pub fn non_blocking_send_tagged_message_user_allocated<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type_descriptor: &DataTypeDescriptor, tag: ucp_tag_t, user_allocated_non_blocking_request: UserAllocatedNonBlockingRequest) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer, UserAllocatedNonBlockingRequest>>, ErrorCodeWithMessageBuffer<MessageBuffer>>
 	{
 		self.debug_assert_handle_is_valid();
 
-		let status = unsafe { ucp_tag_send_nbr(self.handle, message_buffer.address().as_ptr() as *const c_void, message_buffer.length(), data_type, tag, user_allocated_non_blocking_request.non_null_pointer().as_ptr() as *mut c_void) };
+		let status = unsafe { ucp_tag_send_nbr(self.handle, message_buffer.address().as_ptr() as *const c_void, message_buffer.length(), data_type_descriptor.to_ucp_datatype_t(), tag, user_allocated_non_blocking_request.non_null_pointer().as_ptr() as *mut c_void) };
 
 		use self::Status::*;
 		use self::NonBlockingRequestCompletedOrInProgress::*;
@@ -237,11 +237,11 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	///
 	/// If a returned `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message_buffer` dropped.
 	#[inline(always)]
-	pub fn non_blocking_send_tagged_message_ucx_allocated<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>>, ErrorCodeWithMessageBuffer<MessageBuffer>>
+	pub fn non_blocking_send_tagged_message_ucx_allocated<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type_descriptor: &DataTypeDescriptor, tag: ucp_tag_t, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<MessageBuffer, SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>>, ErrorCodeWithMessageBuffer<MessageBuffer>>
 	{
 		self.debug_assert_handle_is_valid();
 
-		let status_pointer = unsafe { ucp_tag_send_nb(self.handle, message_buffer.address().as_ptr() as *const c_void, message_buffer.length(), data_type, tag, Some(callback_when_finished_or_cancelled)) };
+		let status_pointer = unsafe { ucp_tag_send_nb(self.handle, message_buffer.address().as_ptr() as *const c_void, message_buffer.length(), data_type_descriptor.to_ucp_datatype_t(), tag, Some(callback_when_finished_or_cancelled)) };
 		let parsed = self.parent_worker.parse_status_pointer(status_pointer);
 		match parsed
 		{
@@ -267,11 +267,11 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	///
 	/// If a returned `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message_buffer` dropped.
 	#[inline(always)]
-	pub fn non_blocking_send_tagged_message_completing_only_when_recipient_has_matched_its_tag<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type: ucp_datatype_t, tag: ucp_tag_t, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>, ErrorCodeWithMessageBuffer<MessageBuffer>>
+	pub fn non_blocking_send_tagged_message_completing_only_when_recipient_has_matched_its_tag<'worker, MessageBuffer: ByteBuffer>(&'worker self, message_buffer: MessageBuffer, data_type_descriptor: &DataTypeDescriptor, tag: ucp_tag_t, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<SendingTaggedMessageNonBlockingRequest<'worker, MessageBuffer>, ErrorCodeWithMessageBuffer<MessageBuffer>>
 	{
 		self.debug_assert_handle_is_valid();
 
-		let status_pointer = unsafe { ucp_tag_send_sync_nb(self.handle, message_buffer.address().as_ptr() as *const c_void, message_buffer.length(), data_type, tag, Some(callback_when_finished_or_cancelled)) };
+		let status_pointer = unsafe { ucp_tag_send_sync_nb(self.handle, message_buffer.address().as_ptr() as *const c_void, message_buffer.length(), data_type_descriptor.to_ucp_datatype_t(), tag, Some(callback_when_finished_or_cancelled)) };
 		let parsed = self.parent_worker.parse_status_pointer(status_pointer);
 		match parsed
 		{
