@@ -36,16 +36,33 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 		local_address as *mut u8
 	}
 	
-	/// Blocking remote load (get) operations.
+	/// Blocking remote store (put) operation.
 	///
 	/// This routine loads a contiguous block of data of `length` bytes from the remote address and puts into the local address.
+	///
+	/// The local memory is safe to use immediately afterwards.
+	#[inline(always)]
+	pub fn blocking_store(&self, local_source_address: NonNull<u8>, length_in_bytes: usize) -> Result<(), ErrorCode>
+	{
+		let local_address = local_source_address.as_ptr()  as *mut c_void;
+		let remote_address = self.remote_address(local_source_address);
+		
+		let status = unsafe { ucp_put(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
+		Self::parse_status(status)
+	}
+	
+	/// Blocking remote load (get) operation.
+	///
+	/// This routine loads a contiguous block of data of `length` bytes from the remote address and puts into the local address.
+	///
+	/// The local memory is safe to use immediately afterwards.
 	#[inline(always)]
 	pub fn blocking_load(&self, local_destination_address: NonNull<u8>, length_in_bytes: usize) -> Result<(), ErrorCode>
 	{
 		let local_address = local_destination_address.as_ptr()  as *mut c_void;
 		let remote_address = self.remote_address(local_destination_address);
 		
-		let status = unsafe { ucp_get(self.parent_end_point.debug_assert_handle_is_valid(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
+		let status = unsafe { ucp_get(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
 		Self::parse_status(status)
 	}
 	
@@ -53,6 +70,12 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	fn remote_address(&self, local_address: NonNull<u8>) -> u64
 	{
 		self.local_to_remote_address_translation.from_local_address_to_remote_address(local_address)
+	}
+	
+	#[inline(always)]
+	fn end_point_handle(&self) -> ucp_ep_h
+	{
+		self.parent_end_point.debug_assert_handle_is_valid()
 	}
 	
 	#[inline(always)]
