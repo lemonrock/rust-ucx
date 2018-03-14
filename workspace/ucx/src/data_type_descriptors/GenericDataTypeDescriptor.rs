@@ -6,7 +6,8 @@
 #[derive(Debug)]
 pub struct GenericDataTypeDescriptor<Operations: GenericDataTypeDescriptorOperations>
 {
-	handle: Option<ucp_datatype_t>,
+	// The `handle` in UCX-land is a actually a tagged pointer (to ucp_dt_generic_t) with the lower three bits set to `ucp_dt_type::UCP_DATATYPE_GENERIC`...
+	handle: ucp_datatype_t,
 	operations: Operations,
 }
 
@@ -15,9 +16,9 @@ impl<Operations: GenericDataTypeDescriptorOperations> Drop for GenericDataTypeDe
 	#[inline(always)]
 	fn drop(&mut self)
 	{
-		if let Some(handle) = self.handle
+		if self.handle != Self::NoHandle
 		{
-			unsafe { ucp_dt_destroy(handle) }
+			unsafe { ucp_dt_destroy(self.handle) }
 		}
 	}
 }
@@ -33,28 +34,37 @@ impl<Operations: GenericDataTypeDescriptorOperations> DataTypeDescriptor for Gen
 	#[inline(always)]
 	fn to_ucp_datatype_t(&self) -> ucp_datatype_t
 	{
-		self.handle.unwrap()
+		self.handle
 	}
 }
 
 impl<Operations: GenericDataTypeDescriptorOperations> GenericDataTypeDescriptor<Operations>
 {
-	/// Creates new instance.
+	const NoHandle: ucp_datatype_t = !0;
+	
+	/// Creates new (global) instance.
+	///
+	/// Currently, the only known way this can fail is due to `ErrorCode::OutOfMemory`.
+	///
+	/// Returns an `Arc` because when this instance goes out of scope, it will drop the underlying generic type used by UCX.
+	///
+	/// It would probably be possible to use a `Rc` or a reference (stored as a field on a Worker) with some care.
 	#[inline(always)]
-	pub fn new(operations: Operations) -> Result<Box<Self>, ErrorCode>
+	pub fn new(operations: Operations) -> Result<Arc<UnsafeCell<Self>>, ErrorCode>
 	{
-		let this = Box::new
+		let this = Arc::new
 		(
-			Self
-			{
-				handle: None,
-				operations,
-			}
+			UnsafeCell::new
+			(
+				Self
+				{
+					handle: Self::NoHandle,
+					operations,
+				}
+			)
 		);
 		
-		let mut handle = unsafe { uninitialized() };
-		
-		let ops = ucp_generic_dt_ops_t
+		let operations = ucp_generic_dt_ops_t
 		{
 			start_pack: Some(Self::start_pack),
 			start_unpack: Some(Self::start_unpack),
@@ -64,19 +74,15 @@ impl<Operations: GenericDataTypeDescriptorOperations> GenericDataTypeDescriptor<
 			finish: Some(Self::finish),
 		};
 		
-		let raw_this = Box::into_raw(this);
-		let status = unsafe { ucp_dt_create_generic(&ops, raw_this as *mut c_void, &mut handle) };
-		let mut this = unsafe { Box::from_raw(raw_this) };
+		let raw_this: *mut Self = this.get();
+		let handle_pointer = &mut (unsafe { &mut * raw_this }).handle;
+		let status = unsafe { ucp_dt_create_generic(&operations, raw_this as *mut c_void, handle_pointer) };
 		
 		use self::Status::*;
 		
 		match status.parse()
 		{
-			IsOk =>
-			{
-				this.handle = Some(handle);
-				Ok(this)
-			}
+			IsOk => Ok(this),
 			
 			Error(error_code) => Err(error_code),
 			
@@ -87,8 +93,9 @@ impl<Operations: GenericDataTypeDescriptorOperations> GenericDataTypeDescriptor<
 	unsafe extern "C" fn start_pack(context: *mut c_void, buffer: *const c_void, count: usize) -> *mut c_void
 	{
 		debug_assert!(!buffer.is_null(), "buffer is null");
+		debug_assert_eq!(count, size_of::<Operations::SerializedAndDeserialized>(), "count '{}' is not size_of::<Operations::SerializedAndDeserialized>() '{}'", count, size_of::<Operations::SerializedAndDeserialized>());
 		
-		let untagged_pointer = Box::into_raw(Self::context_to_operations(context).start_serialization(UcxAllocatedByteBuffer::new(buffer as *mut _, count))) as *mut c_void;
+		let untagged_pointer = Box::into_raw(Self::context_to_operations(context).start_serialization(& * (buffer as *const Operations::SerializedAndDeserialized))) as *mut c_void;
 		TagForLowestThreeBits::SerializerTag.tag(untagged_pointer)
 	}
 	

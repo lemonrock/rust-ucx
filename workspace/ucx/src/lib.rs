@@ -35,7 +35,7 @@
 #[cfg(target_os = "linux")] use self::configuration::non_blocking_request_memory_customization::*;
 #[cfg(target_os = "linux")] use self::configuration::values::*;
 #[cfg(target_os = "linux")] use self::cpu_set::*;
-#[cfg(target_os = "linux")] use self::data_type_descriptors::*;
+#[cfg(target_os = "linux")] use self::data_type_descriptors::messages::Message;
 #[cfg(target_os = "linux")] use self::ffi_helpers::*;
 #[cfg(target_os = "linux")] use self::handle_drop_safeties::*;
 #[cfg(target_os = "linux")] use self::print_information::PrintInformation;

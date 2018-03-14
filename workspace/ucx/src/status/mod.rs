@@ -4,10 +4,10 @@
 
 use self::non_blocking_requests::*;
 pub use self::NonBlockingRequestCompletedOrInProgress::*;
+use super::data_type_descriptors::messages::Message;
 use super::EndPoint;
 use super::TheirRemotelyAccessibleEndPointAddress;
 use super::Worker;
-use super::buffers::ByteBuffer;
 use self::ucs_status_t::*;
 use ::std::cell::RefCell;
 use ::std::error::Error;
@@ -29,7 +29,7 @@ pub mod non_blocking_requests;
 include!("EndPointPeerFailureErrorHandler.rs");
 include!("EndPointReadyToConsumeStreamingData.rs");
 include!("ErrorCode.rs");
-include!("ErrorCodeWithMessageBuffer.rs");
+include!("ErrorCodeWithMessage.rs");
 include!("NonBlockingRequestCompletedOrInProgress.rs");
 include!("SendingTaggedMessageNonBlockingRequest.rs");
 include!("Status.rs");

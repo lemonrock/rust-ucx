@@ -2,18 +2,41 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// Trait to abstract away functionality required by UCX.
-pub trait GenericDataTypeDescriptorOperationsSerializer
+/// Similar to, but easier to work with, than `ucp_dt_iov_t`.
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct IoVec
 {
-	/// Type serialized.
-	type Serialized;
+	/// Address
+	pub address: NonNull<u8>,
 	
-	/// Serialized size.
+	/// Length
+	pub length: usize,
+}
+
+impl ByteBuffer for IoVec
+{
 	#[inline(always)]
-	fn serialized_size(&self) -> usize;
+	fn address(&self) -> NonNull<u8>
+	{
+		self.address
+	}
 	
-	/// Serialize.
-	///
-	/// Returns number of bytes written; this must not exceed `output_buffer.length()`.
-	fn serialize(&self, virtual_offset_in_the_output_stream: usize, output_buffer: UcxAllocatedByteBuffer) -> usize;
+	#[inline(always)]
+	fn length(&self) -> usize
+	{
+		self.length
+	}
+}
+
+impl IoVec
+{
+	/// Create a new new instance.
+	pub fn new(address: NonNull<u8>, length: usize) -> Self
+	{
+		Self
+		{
+			address,
+			length,
+		}
+	}
 }

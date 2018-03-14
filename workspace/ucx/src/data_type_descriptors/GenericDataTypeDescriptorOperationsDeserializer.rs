@@ -5,6 +5,9 @@
 /// Trait to abstract away functionality required by UCX.
 pub trait GenericDataTypeDescriptorOperationsDeserializer
 {
+	/// Type deserialized.
+	type Deserialized;
+	
 	/// Deserialize.
 	fn deserialize(&self, virtual_offset_in_the_input_stream: usize, input_buffer: UcxAllocatedByteBuffer) -> Result<(), ErrorCode>;
 }

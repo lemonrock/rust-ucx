@@ -2,18 +2,19 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// Trait to abstract away functionality required by UCX.
-pub trait GenericDataTypeDescriptorOperationsSerializer
+/// A message.
+pub trait Message: Debug
 {
-	/// Type serialized.
-	type Serialized;
-	
-	/// Serialized size.
+	/// Start address of this message.
 	#[inline(always)]
-	fn serialized_size(&self) -> usize;
+	fn address(&self) -> NonNull<u8>;
 	
-	/// Serialize.
-	///
-	/// Returns number of bytes written; this must not exceed `output_buffer.length()`.
-	fn serialize(&self, virtual_offset_in_the_output_stream: usize, output_buffer: UcxAllocatedByteBuffer) -> usize;
+	/// Count of items in this message.
+	/// This is ***not*** the number of bytes.
+	#[inline(always)]
+	fn count(&self) -> usize;
+	
+	#[doc(hidden)]
+	#[inline(always)]
+	fn data_type_descriptor(&self) -> ucp_datatype_t;
 }

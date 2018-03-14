@@ -2,18 +2,18 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// Error codes with a MessageBuffer; far more useful than `ucs_status_t`.
+/// Error codes with a Message; far more useful than `ucs_status_t`.
 #[derive(Debug)]
-pub struct ErrorCodeWithMessageBuffer<MessageBuffer: ByteBuffer>
+pub struct ErrorCodeWithMessage<M: Message>
 {
 	/// Error code
 	pub error_code: ErrorCode,
 	
 	/// Message buffer; can be re-used at this point.
-	pub message_buffer: MessageBuffer,
+	pub message_buffer: M,
 }
 
-impl<MessageBuffer: ByteBuffer> Display for ErrorCodeWithMessageBuffer<MessageBuffer>
+impl<M: Message> Display for ErrorCodeWithMessage<M>
 {
 	#[inline(always)]
 	fn fmt(&self, f: &mut Formatter) -> fmt::Result
@@ -22,7 +22,7 @@ impl<MessageBuffer: ByteBuffer> Display for ErrorCodeWithMessageBuffer<MessageBu
 	}
 }
 
-impl<MessageBuffer: ByteBuffer> Error for ErrorCodeWithMessageBuffer<MessageBuffer>
+impl<M: Message> Error for ErrorCodeWithMessage<M>
 {
 	#[inline(always)]
 	fn description(&self) -> &str
@@ -37,10 +37,10 @@ impl<MessageBuffer: ByteBuffer> Error for ErrorCodeWithMessageBuffer<MessageBuff
 	}
 }
 
-impl<MessageBuffer: ByteBuffer> ErrorCodeWithMessageBuffer<MessageBuffer>
+impl<M: Message> ErrorCodeWithMessage<M>
 {
 	#[inline(always)]
-	pub(crate) fn new(error_code: ErrorCode, message_buffer: MessageBuffer) -> Self
+	pub(crate) fn new(error_code: ErrorCode, message_buffer: M) -> Self
 	{
 		Self
 		{

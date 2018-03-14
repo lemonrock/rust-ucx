@@ -3,19 +3,20 @@
 
 
 /// Trait to abstract away functionality required by UCX.
-pub trait GenericDataTypeDescriptorOperations
+pub trait GenericDataTypeDescriptorOperations: Debug
 {
+	/// Type serialized and deserialized.
+	type SerializedAndDeserialized;
+	
 	/// Serializer type.
-	type Serializer: GenericDataTypeDescriptorOperationsSerializer;
+	type Serializer: GenericDataTypeDescriptorOperationsSerializer<Serialized=Self::SerializedAndDeserialized>;
 	
 	/// Deserializer type.
-	type Deserializer: GenericDataTypeDescriptorOperationsDeserializer;
+	type Deserializer: GenericDataTypeDescriptorOperationsDeserializer<Deserialized=Self::SerializedAndDeserialized>;
 	
 	/// Starts serializing ("packing").
-	///
-	/// The `UcxAllocatedByteBuffer` does not free memory when dropped.
 	#[inline(always)]
-	fn start_serialization(&self, buffer: UcxAllocatedByteBuffer) -> Box<Self::Serializer>;
+	fn start_serialization(&self, message: &Self::SerializedAndDeserialized) -> Box<Self::Serializer>;
 	
 	/// Starts serializing ("packing").
 	///

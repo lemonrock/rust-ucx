@@ -5,9 +5,18 @@
 use super::buffers::*;
 use super::status::*;
 use ::libc::c_void;
+use ::std::cell::UnsafeCell;
+use ::std::fmt::Debug;
 use ::std::mem::forget;
-use ::std::mem::uninitialized;
+use ::std::mem::size_of;
+use ::std::sync::Arc;
 use ::ucx_sys::*;
+
+
+/// Types of message associated with data type descriptors.
+///
+/// Each data type descriptor has a particular implementation or implementations of a message.
+pub mod messages;
 
 
 include!("ContiguousDataTypeDescriptor.rs");
@@ -16,5 +25,5 @@ include!("GenericDataTypeDescriptor.rs");
 include!("GenericDataTypeDescriptorOperations.rs");
 include!("GenericDataTypeDescriptorOperationsDeserializer.rs");
 include!("GenericDataTypeDescriptorOperationsSerializer.rs");
-include!("StridedDataTypeDescriptor.rs");
+include!("IoVecDataTypeDescriptor.rs");
 include!("TagForLowestThreeBits.rs");

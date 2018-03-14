@@ -2,23 +2,43 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// ?
-#[derive(Default, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct StridedDataTypeDescriptor;
-
-impl DataTypeDescriptor for StridedDataTypeDescriptor
+/// An IoVec message.
+#[derive(Debug)]
+pub struct IoVecMessage<'a>
 {
-	#[doc(hidden)]
+	array: &'a [IoVec],
+}
+
+impl<'a> Message for IoVecMessage<'a>
+{
 	#[inline(always)]
-	fn to_ucp_dt_type(&self) -> ucp_dt_type
+	fn address(&self) -> NonNull<u8>
 	{
-		ucp_dt_type::UCP_DATATYPE_STRIDED
+		unsafe { NonNull::new_unchecked(self.array.as_ptr() as *mut _) }
 	}
 	
-	#[doc(hidden)]
 	#[inline(always)]
-	fn to_ucp_datatype_t(&self) -> ucp_datatype_t
+	fn count(&self) -> usize
 	{
-		ucp_dt_type::UCP_DATATYPE_STRIDED as u64
+		self.array.len()
+	}
+	
+	#[inline(always)]
+	fn data_type_descriptor(&self) -> ucp_datatype_t
+	{
+		IoVecDataTypeDescriptor.to_ucp_datatype_t()
+	}
+}
+
+impl<'a> IoVecMessage<'a>
+{
+	/// Creates new instance.
+	#[inline(always)]
+	pub fn new(array: &'a [IoVec]) -> Self
+	{
+		Self
+		{
+			array,
+		}
 	}
 }

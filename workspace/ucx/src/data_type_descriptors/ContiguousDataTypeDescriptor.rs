@@ -20,7 +20,7 @@ impl Default for ContiguousDataTypeDescriptor
 	}
 }
 
-impl DataTypeDescriptor for ContiguousDataTypeDescriptor
+impl<'message_buffer> DataTypeDescriptor for ContiguousDataTypeDescriptor
 {
 	#[doc(hidden)]
 	#[inline(always)]

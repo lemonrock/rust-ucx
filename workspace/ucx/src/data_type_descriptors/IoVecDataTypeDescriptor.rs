@@ -6,7 +6,9 @@
 ///
 /// UCX describes this as "Scatter-gather list with multiple pointers".
 ///
-/// Associated buffer must be of type `ucp_dt_iov_t`.
+/// Associated message buffer must be an array of `ucp_dt_iov_t`.
+/// * In this case, `MessageBuffer`'s `length()` is either: the number of entries or the total array size;
+///*  In this case, `MessageBuffer`'s `address()` is the pointer to the first item in the array.
 #[derive(Default, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct IoVecDataTypeDescriptor;
 
