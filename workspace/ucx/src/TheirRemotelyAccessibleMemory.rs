@@ -6,13 +6,13 @@
 ///
 /// Use this to perform remote memory load() and store(), and atomic operations such as fetch_and_add() and compare_and_swap().
 #[derive(Debug)]
-pub struct TheirRemotelyAccessibleMemory<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>
+pub struct TheirRemotelyAccessibleMemory<E: EndPointPeerFailureErrorHandler>
 {
 	handle: ucp_rkey_h,
-	parent_end_point: Rc<RefCell<TheirRemotelyAccessibleEndPoint<E, A>>>,
+	parent_end_point: Rc<RefCell<TheirRemotelyAccessibleEndPoint<E, TheirRemotelyAccessibleWorkerEndPointAddress>>>,
 }
 
-impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> Drop for TheirRemotelyAccessibleMemory<E, A>
+impl<E: EndPointPeerFailureErrorHandler> Drop for TheirRemotelyAccessibleMemory<E>
 {
 	#[inline(always)]
 	fn drop(&mut self)
@@ -21,7 +21,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	}
 }
 
-impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> TheirRemotelyAccessibleMemory<E, A>
+impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleMemory<E>
 {
 	/// Returns a local pointer which can be used for all atomic memory operations.
 	///
