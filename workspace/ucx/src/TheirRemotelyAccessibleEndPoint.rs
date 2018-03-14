@@ -3,7 +3,6 @@
 
 
 /// An end point.
-/// *MUST* be used inside as `Rc<RefCell<Endpoint<E, A>>`.
 pub struct TheirRemotelyAccessibleEndPoint<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>
 {
 	handle: ucp_ep_h,
@@ -16,9 +15,12 @@ pub struct TheirRemotelyAccessibleEndPoint<E: EndPointPeerFailureErrorHandler, A
 impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> Drop for TheirRemotelyAccessibleEndPoint<E, A>
 {
 	// Dropping because there are no more Rc strong references.
+	// There will still be at least one Weak reference, held within `user_data_and_peer_failure_error_handler` as a `*mut c_void`.
+	// Yep, horrible, but we have to work with the C API of UCX that we've been given.
 	#[inline(always)]
 	fn drop(&mut self)
 	{
+		// We must drop the remaining weak reference to force Rust to de-allocate memory used for the internals of Rc.
 		#[inline(always)]
 		fn drop_user_data<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>(user_data: *mut c_void)
 		{
@@ -190,10 +192,10 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 	/// Think of the world as multiple threads (worker), each of which is connected to a remote peer (end point), each of which is connected to zero or more remote memory regions.
 	/// Remote memory regions are not needed for tagged messages and streams.
 	#[inline(always)]
-	pub fn use_remote_memory_region<A: LocalToRemoteAddressTranslation>(this: &Rc<RefCell<Self>>, their_remotely_accessible_memory_address: TheirRemotelyAccessibleMemoryAddress, local_to_remote_address_translation: A) -> Result<TheirRemotelyAccessibleMemory<E, A>, ErrorCode>
+	pub fn use_remote_memory_region<A: LocalToRemoteAddressTranslation>(this: &Rc<Self>, their_remotely_accessible_memory_address: TheirRemotelyAccessibleMemoryAddress, local_to_remote_address_translation: A) -> Result<TheirRemotelyAccessibleMemory<E, A>, ErrorCode>
 	{
 		let mut handle = unsafe { uninitialized() };
-		let status = unsafe { ucp_ep_rkey_unpack(this.borrow().debug_assert_handle_is_valid(), their_remotely_accessible_memory_address.0.as_ptr() as *mut _, &mut handle) };
+		let status = unsafe { ucp_ep_rkey_unpack(this.debug_assert_handle_is_valid(), their_remotely_accessible_memory_address.0.as_ptr() as *mut _, &mut handle) };
 		
 		use self::Status::*;
 		
@@ -334,7 +336,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	}
 	
 	#[inline(always)]
-	pub(crate) fn new(peer_failure_error_handler: E, their_remote_address: &Rc<A>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool, parent_worker: &Worker) -> Result<Rc<RefCell<Self>>, ErrorCode>
+	pub(crate) fn new(peer_failure_error_handler: E, their_remote_address: &Rc<A>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool, parent_worker: &Worker) -> Result<Rc<Self>, ErrorCode>
 	{
 		#[inline(always)]
 		fn populated_by_their_remote_address<T>() -> T
@@ -344,9 +346,9 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 		
 		use self::ucp_err_handling_mode_t::*;
 		
-		let end_point = Rc::new
+		Self::assign_user_data_to_self_and_connect
 		(
-			RefCell::new
+			Rc::new
 			(
 				Self
 				{
@@ -386,50 +388,36 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 					),
 				}
 			)
-		);
-		Self::assign_user_data_to_self(&end_point);
-		
-		(*end_point).borrow_mut().connect()?;
-		
-		Ok(end_point)
+		)
 	}
 	
-	#[inline(always)]
-	fn connect(&mut self) -> Result<(), ErrorCode>
-	{
-		let mut handle = unsafe { uninitialized() };
-		let result = unsafe { ucp_ep_create(self.parent_worker.handle, &self.end_point_parameters, &mut handle) };
-		let status = result.parse();
-		
-		use self::Status::*;
-		
-		match status
-		{
-			IsOk =>
-			{
-				self.handle = handle;
-				Ok(())
-			}
-			
-			Error(error_code) => Err(error_code),
-			
-			unexpected @ _ => panic!("Unexpected status '{:?}'", unexpected)
-		}
-	}
-	
-	// Yes, this is horrible, but how else does one pack a Weak<TheirRemotelyAccessibleEndPointEndPoint<E>> into a C FFI `user_data` field of type void*?
+	// Yes, this is horrible, but how else does one pack a Weak<TheirRemotelyAccessibleEndPointEndPoint<E>> into a C FFI `user_data` field of type void* (and avoid using a RefCell)?
 	// (Actually, by possibly using a user_data = Box<Weak<TheirRemotelyAccessibleEndPointEndPoint<E>>>::into_raw()... but that involves indirection).
 	#[inline(always)]
-	pub(crate) fn assign_user_data_to_self(this: &Rc<RefCell<Self>>)
+	pub(crate) fn assign_user_data_to_self_and_connect(this: Rc<Self>) -> Result<Rc<Self>, ErrorCode>
 	{
-		let mut end_point = this.borrow_mut();
-		(*end_point).end_point_parameters.user_data = unsafe { transmute(Rc::downgrade(this)) };
+		let weak_reference_for_user_data = Rc::downgrade(&this);
+		
+		let raw_this = Rc::into_raw(this);
+		
+		unsafe
+		{
+			let mutable_reference_this = &mut * (raw_this as *mut Self);
+			
+			write(&mut mutable_reference_this.end_point_parameters.user_data, transmute(weak_reference_for_user_data));
+			
+			let connection_result = mutable_reference_this.connect();
+			
+			let this = Rc::from_raw(raw_this);
+			
+			connection_result.map(|_| this)
+		}
 	}
 	
 	// Yes, this is also horrible.
 	// `user_data` is an aliased value - there can be multiple copies for one logical `Weak<Self>`.
 	#[inline(always)]
-	pub(crate) fn end_point_from_user_data(user_data: *mut c_void, handle: ucp_ep_h) -> Option<Rc<RefCell<Self>>>
+	pub(crate) fn end_point_from_user_data(user_data: *mut c_void, handle: ucp_ep_h) -> Option<Rc<Self>>
 	{
 		// This can only happen during the drop of the end point (we tell UCX to modify the end point and give it null user_data).
 		if user_data.is_null()
@@ -437,7 +425,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 			return None;
 		}
 		
-		let weak: Weak<RefCell<Self>> = unsafe { transmute(user_data) };
+		let weak: Weak<Self> = unsafe { transmute(user_data) };
 		let possibly_strong = weak.upgrade();
 		forget(weak);
 		
@@ -445,7 +433,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 		{
 			// Either not yet initialized (so no errors should have been raised).
 			// Or has been dropped but not freed.
-			let our_handle = strong.borrow().handle;
+			let our_handle = strong.handle;
 			if our_handle.is_null()
 			{
 				None
@@ -468,7 +456,30 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	{
 		if let Some(this) = Self::end_point_from_user_data(user_data, ep)
 		{
-			this.borrow_mut().user_data_and_peer_failure_error_handler.peer_failure(status.error_code_or_panic())
+			this.user_data_and_peer_failure_error_handler.peer_failure(status.error_code_or_panic())
+		}
+	}
+	
+	#[inline(always)]
+	fn connect(&mut self) -> Result<(), ErrorCode>
+	{
+		let mut handle = unsafe { uninitialized() };
+		let result = unsafe { ucp_ep_create(self.parent_worker.handle, &self.end_point_parameters, &mut handle) };
+		let status = result.parse();
+		
+		use self::Status::*;
+		
+		match status
+		{
+			IsOk =>
+			{
+				self.handle = handle;
+				Ok(())
+			}
+			
+			Error(error_code) => Err(error_code),
+			
+			unexpected @ _ => panic!("Unexpected status '{:?}'", unexpected)
 		}
 	}
 	

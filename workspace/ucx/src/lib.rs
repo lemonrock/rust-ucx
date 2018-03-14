@@ -65,6 +65,7 @@
 #[cfg(target_os = "linux")] use ::std::os::unix::io::RawFd;
 #[cfg(target_os = "linux")] use ::std::ptr::NonNull;
 #[cfg(target_os = "linux")] use ::std::ptr::null_mut;
+#[cfg(target_os = "linux")] use ::std::ptr::write;
 #[cfg(target_os = "linux")] use ::std::rc::Rc;
 #[cfg(target_os = "linux")] use ::std::rc::Weak;
 #[cfg(target_os = "linux")] use ::ucx_sys::*;

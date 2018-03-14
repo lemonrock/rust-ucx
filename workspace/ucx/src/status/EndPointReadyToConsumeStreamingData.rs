@@ -10,7 +10,7 @@ impl EndPointReadyToConsumeStreamingData
 {
 	/// Gets their remotely accessible end point that is ready to consume streaming data.
 	#[inline(always)]
-	pub fn their_remotely_accessible_end_point<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>(&self) -> Option<Rc<RefCell<TheirRemotelyAccessibleEndPoint<E, A>>>>
+	pub fn their_remotely_accessible_end_point<E: EndPointPeerFailureErrorHandler>(&self) -> Option<Rc<TheirRemotelyAccessibleEndPoint<E, TheirRemotelyAccessibleServerEndPointAddress>>>
 	{
 		TheirRemotelyAccessibleEndPoint::end_point_from_user_data(self.0.user_data, self.0.ep)
 	}

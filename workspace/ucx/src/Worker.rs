@@ -98,7 +98,7 @@ impl Worker
 	/// * it may affect performance
 	/// * it may increase memory footprint
 	#[inline(always)]
-	pub fn new_end_point<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>(&self, peer_failure_error_handler: E, their_remote_address: &Rc<A>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool) -> Result<Rc<RefCell<TheirRemotelyAccessibleEndPoint<E, A>>>, ErrorCode>
+	pub fn new_end_point<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>(&self, peer_failure_error_handler: E, their_remote_address: &Rc<A>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool) -> Result<Rc<TheirRemotelyAccessibleEndPoint<E, A>>, ErrorCode>
 	{
 		TheirRemotelyAccessibleEndPoint::new(peer_failure_error_handler, their_remote_address, guarantee_that_send_requests_are_always_completed_successfully_or_error, self)
 	}

@@ -10,7 +10,7 @@ pub struct TheirRemotelyAccessibleMemory<E: EndPointPeerFailureErrorHandler, A =
 where A: LocalToRemoteAddressTranslation
 {
 	handle: ucp_rkey_h,
-	parent_end_point: Rc<RefCell<TheirRemotelyAccessibleEndPoint<E, TheirRemotelyAccessibleWorkerEndPointAddress>>>,
+	parent_end_point: Rc<TheirRemotelyAccessibleEndPoint<E, TheirRemotelyAccessibleWorkerEndPointAddress>>,
 	local_to_remote_address_translation: A,
 }
 
@@ -45,7 +45,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 		let local_address = local_destination_address.as_ptr()  as *mut c_void;
 		let remote_address = self.remote_address(local_destination_address);
 		
-		let status = unsafe { ucp_get(self.parent_end_point.borrow().debug_assert_handle_is_valid(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
+		let status = unsafe { ucp_get(self.parent_end_point.debug_assert_handle_is_valid(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
 		Self::parse_status(status)
 	}
 	

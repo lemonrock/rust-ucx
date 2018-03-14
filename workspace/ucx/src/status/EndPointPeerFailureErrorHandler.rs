@@ -7,5 +7,5 @@ pub trait EndPointPeerFailureErrorHandler: Debug
 {
 	/// Remote peer failure.
 	#[inline(always)]
-	fn peer_failure(&mut self, error_code: ErrorCode);
+	fn peer_failure(&self, error_code: ErrorCode);
 }
