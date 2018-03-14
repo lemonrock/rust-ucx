@@ -124,6 +124,12 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 	
 	/// Receives a message from a stream.
 	///
+	/// If `wait_for_all_data` is true, then the receive request will not complete until all of the requested data is received and is in `message`.
+	///
+	/// If `wait_for_all_data` is not specified, then less than a complete amount of data may be received, but what is received will be aligned to message's element size, ie there may be less items.
+	///
+	/// It is probably appropriate to use `wait_for_all_data` when message is a `GenericMessage` (UCX's documentation is lacking on this point).
+	///
 	/// The provided message is not safe to re-use or write-to until this request has completed.
 	///
 	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::callbacks::stream_receive_callback_is_ignored`.
@@ -131,10 +137,20 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 	///
 	/// If a returned `SendingStreamNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
 	#[inline(always)]
-	pub fn stream_receive_non_blocking_ucx_allocated<'worker, M: Message>(&'worker self, message: M, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t, length: usize)) -> Result<NonBlockingRequestCompletedOrInProgress<M, ReceivingStreamNonBlockingRequest<'worker, M>>, ErrorCodeWithMessage<M>>
+	pub fn stream_receive_non_blocking_ucx_allocated<'worker, M: Message>(&'worker self, message: M, wait_for_all_data: bool, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t, length: usize)) -> Result<NonBlockingRequestCompletedOrInProgress<M, ReceivingStreamNonBlockingRequest<'worker, M>>, ErrorCodeWithMessage<M>>
 	{
+		// ?length
+		let flags = if wait_for_all_data
+		{
+			UCP_STREAM_RECV_FLAG_WAITALL
+		}
+		else
+		{
+			0
+		};
+		
 		let mut length = unsafe { uninitialized() };
-		let status_pointer = unsafe { ucp_stream_recv_nb(self.debug_assert_handle_is_valid(), message.address().as_ptr() as *mut c_void, message.count(), message.data_type_descriptor(), Some(callback_when_finished_or_cancelled), &mut length, ReservedForFutureUseFlags) };
+		let status_pointer = unsafe { ucp_stream_recv_nb(self.debug_assert_handle_is_valid(), message.address().as_ptr() as *mut c_void, message.count(), message.data_type_descriptor(), Some(callback_when_finished_or_cancelled), &mut length, flags) };
 		
 		match self.parent_worker.parse_status_pointer(status_pointer)
 		{
@@ -152,10 +168,6 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 	/*
 	
 	Stream
-	
-	
-	#[link_name = "\u{1}_ucp_stream_recv_nb"] pub fn ucp_stream_recv_nb(ep: ucp_ep_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, cb: ucp_stream_recv_callback_t, length: *mut usize, flags: c_uint) -> ucs_status_ptr_t;
-	
 	
 	
 	#[link_name = "\u{1}_ucp_stream_data_release"] pub fn ucp_stream_data_release(ep: ucp_ep_h, data: *mut c_void);

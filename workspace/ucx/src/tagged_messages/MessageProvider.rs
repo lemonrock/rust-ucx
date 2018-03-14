@@ -10,5 +10,5 @@ pub trait MessageProvider
 	
 	/// Provides an uninitialized message.
 	#[inline(always)]
-	fn provide_uninitialized_message(&mut self, received_tagged_message_information: ReceivedTaggedMessageInformation) -> Self::M;
+	fn provide_uninitialized_message(&mut self, received_tagged_message_information: &ReceivedTaggedMessageInformation) -> Self::M;
 }
