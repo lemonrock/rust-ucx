@@ -94,6 +94,21 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 		Self::parse_status_for_blocking(status)
 	}
 	
+	/// Non-blocking remote load (get) operation.
+	///
+	/// This routine loads a contiguous block of data of `length` bytes from the remote address and puts into the local address.
+	///
+	/// The local memory is ***not*** safe to use immediately afterwards if 'InProgress' is returned; in this case, flush either the end point or the worker.
+	#[inline(always)]
+	pub fn non_blocking_load(&self, local_source_address: NonNull<u8>, length_in_bytes: usize) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
+	{
+		let local_address = local_source_address.as_ptr()  as *mut c_void;
+		let remote_address = self.remote_address(local_source_address);
+		
+		let status = unsafe { ucp_get_nbi(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
+		Self::parse_status_for_non_blocking(status)
+	}
+	
 	#[inline(always)]
 	fn remote_address(&self, local_address: NonNull<u8>) -> u64
 	{
