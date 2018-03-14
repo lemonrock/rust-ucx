@@ -38,14 +38,21 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> Der
 
 impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> TheirRemotelyAccessibleMemory<E, A>
 {
+	/// Translates a local address to a remote address.
+	#[inline(always)]
+	pub fn remote_address(&self, local_address: NonNull<u8>) -> u64
+	{
+		self.local_to_remote_address_translation.from_local_address_to_remote_address(local_address)
+	}
+	
 	/// Returns a local pointer which can be used for all atomic memory operations.
 	///
 	/// Will only work for `mmap`, `shmem`, `xpmem`, and `knmem` memory domains, ie memory on the same machine.
 	#[inline(always)]
-	pub fn local_pointer_if_remote_memory_is_shared_memory(&self, remote_address: *mut u8) -> *mut u8
+	pub fn local_pointer_if_remote_memory_is_shared_memory(&self, remote_address: u64) -> *mut u8
 	{
 		let mut local_address = unsafe { uninitialized() };
-		panic_on_error!(ucp_rkey_ptr, self.handle, remote_address as u64, &mut local_address);
+		panic_on_error!(ucp_rkey_ptr, self.handle, remote_address, &mut local_address);
 		local_address as *mut u8
 	}
 	
@@ -231,12 +238,6 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 		
 		let status = unsafe { ucp_atomic_cswap64(self.end_point_handle(), value_to_expect, value_to_swap_for, aligned_remote_address, self.debug_assert_handle_is_valid(), &mut previous_value) };
 		Self::parse_status_for_blocking(status, previous_value)
-	}
-	
-	#[inline(always)]
-	fn remote_address(&self, local_address: NonNull<u8>) -> u64
-	{
-		self.local_to_remote_address_translation.from_local_address_to_remote_address(local_address)
 	}
 	
 	#[inline(always)]
