@@ -33,19 +33,56 @@ impl TaggedMessageReceivingWorker
 		}
 	}
 	
+	/// This routine checks for a message which has been partially or fully received and matches according to `tag_matcher`.
 	///
-	/// Never completes immediately.
+	/// It does not wait for a message to be present; returns immediately.
+	///
+	/// It does not remove a matching message from the queue of received messages.
+	///
+	/// Call `self.progress()` occasionally; this function does not do any polling of the network.
+	#[inline(always)]
+	pub fn peek(&self, tag_matcher: TagMatcher) -> Option<ReceivedTaggedMessageInformation>
+	{
+		self.probe(tag_matcher, false.to_c_bool()).map(|(received_tagged_message_information, _message_handle)| received_tagged_message_information)
+	}
+	
+	/// Receive a message with matches the `tag_matcher`.
+	///
+	/// The provided message is not safe to re-use, reading or writing until this request has completed; it should be thought of as `::std::mem::uninitialized()` memory.
+	///
+	/// If a returned `ReceivingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
+	#[inline(always)]
+	pub fn non_blocking_receive_tagged_message_user_allocated<'worker, M: Message>(&'worker self, message: M, tag_matcher: TagMatcher, user_allocated_non_blocking_request: UserAllocatedNonBlockingRequest) -> Result<NonBlockingRequestCompletedOrInProgress<M, ReceivingTaggedMessageNonBlockingRequest<'worker, M, UserAllocatedNonBlockingRequest>>, ErrorCodeWithMessage<M>>
+	{
+		let status = unsafe { ucp_tag_recv_nbr(self.worker_handle(), message.address().as_ptr() as *mut u8 as *mut c_void, message.count(), message.data_type_descriptor(), tag_matcher.value.0, tag_matcher.bit_mask.0, user_allocated_non_blocking_request.non_null_pointer().as_ptr() as *mut c_void) };
+		
+		use self::Status::*;
+		use self::NonBlockingRequestCompletedOrInProgress::*;
+		
+		match status.parse()
+		{
+			IsOk => Ok(Completed(message)),
+			
+			OperationInProgress => Ok(InProgress(ReceivingTaggedMessageNonBlockingRequest::new(WorkerWithNonBlockingRequest::new(&self.parent_worker, user_allocated_non_blocking_request), message))),
+			
+			Error(error_code) => Err(ErrorCodeWithMessage::new(error_code, message)),
+			
+			UnknownErrorCode(unknown_error_code) => panic!("UnknownErrorCode '{}'", unknown_error_code),
+		}
+	}
+	
+	/// Receive a message with matches the `tag_matcher`.
 	///
 	/// The provided message is not safe to re-use, reading or writing until this request has completed; it should be thought of as `::std::mem::uninitialized()` memory.
 	///
 	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::receive_callback_is_ignored`.
 	/// `request` should not be freed inside the `callback_when_finished_or_cancelled`.
 	///
-	/// If a returned `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
+	/// If a returned `ReceivingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
 	#[inline(always)]
 	pub fn non_blocking_receive_tagged_message_ucx_allocated<'worker, M: Message>(&'worker self, message: M, tag_matcher: TagMatcher, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t, info: *mut ucp_tag_recv_info_t)) -> Result<NonBlockingRequestCompletedOrInProgress<M, ReceivingTaggedMessageNonBlockingRequest<'worker, M>>, ErrorCodeWithMessage<M>>
 	{
-		let status_pointer = unsafe { ucp_tag_recv_nb(self.parent_worker.debug_assert_handle_is_valid(), message.address().as_ptr() as *mut u8 as *mut c_void, message.count(), message.data_type_descriptor(), tag_matcher.value.0, tag_matcher.bit_mask.0, Some(callback_when_finished_or_cancelled)) };
+		let status_pointer = unsafe { ucp_tag_recv_nb(self.worker_handle(), message.address().as_ptr() as *mut u8 as *mut c_void, message.count(), message.data_type_descriptor(), tag_matcher.value.0, tag_matcher.bit_mask.0, Some(callback_when_finished_or_cancelled)) };
 		
 		match self.parent_worker.parse_status_pointer(status_pointer)
 		{
@@ -60,34 +97,9 @@ impl TaggedMessageReceivingWorker
 		}
 	}
 	
-	/*
-	
-	#[link_name = "\u{1}_ucp_tag_msg_recv_nb"] pub fn ucp_tag_msg_recv_nb(worker: ucp_worker_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, message: ucp_tag_message_h, cb: ucp_tag_recv_callback_t) -> ucs_status_ptr_t;
-	
-	
-	#[link_name = "\u{1}_ucp_tag_recv_nbr"] pub fn ucp_tag_recv_nbr(worker: ucp_worker_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, tag_mask: ucp_tag_t, req: *mut c_void) -> ucs_status_t;
-	
-	*/
-	
-	
-	
-	
-	/// This routine checks for a message which has been partially or fully received and matches according to `tag_matcher`.
-	///
-	/// It does not wait for a message to be present; returns immediately.
-	///
-	/// It does not remove a matching message from the queue of received messages.
-	///
-	/// Call `self.progress()` occasionally; this function does not do any polling of the network.
-	#[inline(always)]
-	pub fn peek(&self, tag_matcher: TagMatcher) -> Option<ReceivedTaggedMessageInformation>
-	{
-		self.probe(tag_matcher, false.to_c_bool()).map(|(received_tagged_message_information, _message_handle)| received_tagged_message_information)
-	}
-	
 	/// This routine pops a message which has been partially or fully received and matches according to `tag_matcher`.
 	///
-	/// It does not wait for a message to be present; returns immediately.
+	/// It does not wait for a message to be present; if none is present, `None` is returned.
 	///
 	/// It removes a matching message from the queue of received messages.
 	///
@@ -106,7 +118,7 @@ impl TaggedMessageReceivingWorker
 			{
 				let message = message_provider.provide_uninitialized_message(received_tagged_message_information);
 				
-				let status_pointer = unsafe { ucp_tag_msg_recv_nb(self.parent_worker.debug_assert_handle_is_valid(), message.address().as_ptr() as *mut u8 as *mut c_void, message.count(), message.data_type_descriptor(), message_handle.as_ptr(), Some(callback_when_finished_or_cancelled)) };
+				let status_pointer = unsafe { ucp_tag_msg_recv_nb(self.worker_handle(), message.address().as_ptr() as *mut u8 as *mut c_void, message.count(), message.data_type_descriptor(), message_handle.as_ptr(), Some(callback_when_finished_or_cancelled)) };
 				
 				let popped = match self.parent_worker.parse_status_pointer(status_pointer)
 				{
@@ -129,7 +141,7 @@ impl TaggedMessageReceivingWorker
 	fn probe(&self, tag_matcher: TagMatcher, remove_c_bool: i32) -> Option<(ReceivedTaggedMessageInformation, NonNull<ucp_recv_desc>)>
 	{
 		let mut received_tagged_message_information: ReceivedTaggedMessageInformation = unsafe { uninitialized() };
-		let message_handle = unsafe { ucp_tag_probe_nb(self.parent_worker.debug_assert_handle_is_valid(), tag_matcher.value.0, tag_matcher.bit_mask.0, remove_c_bool, &mut received_tagged_message_information.0) };
+		let message_handle = unsafe { ucp_tag_probe_nb(self.worker_handle(), tag_matcher.value.0, tag_matcher.bit_mask.0, remove_c_bool, &mut received_tagged_message_information.0) };
 		
 		if message_handle.is_null()
 		{
@@ -139,5 +151,11 @@ impl TaggedMessageReceivingWorker
 		{
 			Some((received_tagged_message_information, unsafe { NonNull::new_unchecked(message_handle) }))
 		}
+	}
+	
+	#[inline(always)]
+	fn worker_handle(&self) -> ucp_worker_h
+	{
+		self.parent_worker.debug_assert_handle_is_valid()
 	}
 }

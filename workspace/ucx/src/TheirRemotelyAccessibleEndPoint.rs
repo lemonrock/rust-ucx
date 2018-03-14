@@ -49,7 +49,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 				cb: None,
 				arg: null_mut(),
 			};
-			let change_user_data_status_pointer = unsafe { ucp_ep_modify_nb(self.handle, &self.end_point_parameters) };
+			let change_user_data_status_pointer = unsafe { ucp_ep_modify_nb(self.debug_assert_handle_is_valid(), &self.end_point_parameters) };
 			
 			// We discard any errors; there's nothing we can do with them.
 			#[allow(unused_must_use)]
@@ -60,7 +60,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 			// Drop the weak reference in user data.
 			drop_user_data::<E, A>(user_data_original);
 			
-			let close_status_pointer = unsafe { ucp_ep_close_nb(self.handle, ucp_ep_close_mode::UCP_EP_CLOSE_MODE_FLUSH as u32) };
+			let close_status_pointer = unsafe { ucp_ep_close_nb(self.debug_assert_handle_is_valid(), ucp_ep_close_mode::UCP_EP_CLOSE_MODE_FLUSH as u32) };
 			
 			// We discard any errors; there's nothing we can do with them.
 			#[allow(unused_must_use)]
@@ -89,7 +89,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	#[inline(always)]
 	fn print_information_to_stream(&self, stream: *mut FILE)
 	{
-		unsafe { ucp_ep_print_info(self.handle, stream) };
+		unsafe { ucp_ep_print_info(self.debug_assert_handle_is_valid(), stream) };
 	}
 }
 
@@ -117,7 +117,7 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 	pub fn use_remote_memory_region(this: &Rc<RefCell<Self>>, their_remotely_accessible_memory_address: TheirRemotelyAccessibleMemoryAddress) -> Result<TheirRemotelyAccessibleMemory<E>, ErrorCode>
 	{
 		let mut handle = unsafe { uninitialized() };
-		let status = unsafe { ucp_ep_rkey_unpack(this.borrow().handle, their_remotely_accessible_memory_address.0.as_ptr() as *mut _, &mut handle) };
+		let status = unsafe { ucp_ep_rkey_unpack(this.borrow().debug_assert_handle_is_valid(), their_remotely_accessible_memory_address.0.as_ptr() as *mut _, &mut handle) };
 		
 		use self::Status::*;
 		
@@ -148,9 +148,7 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 	#[inline(always)]
 	pub fn non_blocking_send_tagged_message_user_allocated<'worker, M: Message>(&'worker self, message: M, tag: TagValue, user_allocated_non_blocking_request: UserAllocatedNonBlockingRequest) -> Result<NonBlockingRequestCompletedOrInProgress<M, SendingTaggedMessageNonBlockingRequest<'worker, M, UserAllocatedNonBlockingRequest>>, ErrorCodeWithMessage<M>>
 	{
-		self.debug_assert_handle_is_valid();
-		
-		let status = unsafe { ucp_tag_send_nbr(self.handle, message.address().as_ptr() as *const c_void, message.count(), message.data_type_descriptor(), tag.0, user_allocated_non_blocking_request.non_null_pointer().as_ptr() as *mut c_void) };
+		let status = unsafe { ucp_tag_send_nbr(self.debug_assert_handle_is_valid(), message.address().as_ptr() as *const c_void, message.count(), message.data_type_descriptor(), tag.0, user_allocated_non_blocking_request.non_null_pointer().as_ptr() as *mut c_void) };
 		
 		use self::Status::*;
 		use self::NonBlockingRequestCompletedOrInProgress::*;
@@ -180,9 +178,7 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 	#[inline(always)]
 	pub fn non_blocking_send_tagged_message_ucx_allocated<'worker, M: Message>(&'worker self, message: M, tag: TagValue, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<M, SendingTaggedMessageNonBlockingRequest<'worker, M>>, ErrorCodeWithMessage<M>>
 	{
-		self.debug_assert_handle_is_valid();
-		
-		let status_pointer = unsafe { ucp_tag_send_nb(self.handle, message.address().as_ptr() as *const c_void, message.count(), message.data_type_descriptor(), tag.0, Some(callback_when_finished_or_cancelled)) };
+		let status_pointer = unsafe { ucp_tag_send_nb(self.debug_assert_handle_is_valid(), message.address().as_ptr() as *const c_void, message.count(), message.data_type_descriptor(), tag.0, Some(callback_when_finished_or_cancelled)) };
 
 		match self.parent_worker.parse_status_pointer(status_pointer)
 		{
@@ -210,9 +206,7 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 	#[inline(always)]
 	pub fn non_blocking_send_tagged_message_completing_only_when_recipient_has_matched_its_tag<'worker, M: Message>(&'worker self, message: M, tag: TagValue, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<SendingTaggedMessageNonBlockingRequest<'worker, M>, ErrorCodeWithMessage<M>>
 	{
-		self.debug_assert_handle_is_valid();
-		
-		let status_pointer = unsafe { ucp_tag_send_sync_nb(self.handle, message.address().as_ptr() as *const c_void, message.count(), message.data_type_descriptor(), tag.0, Some(callback_when_finished_or_cancelled)) };
+		let status_pointer = unsafe { ucp_tag_send_sync_nb(self.debug_assert_handle_is_valid(), message.address().as_ptr() as *const c_void, message.count(), message.data_type_descriptor(), tag.0, Some(callback_when_finished_or_cancelled)) };
 
 		match self.parent_worker.parse_status_pointer(status_pointer)
 		{
@@ -247,10 +241,8 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	#[inline(always)]
 	pub fn non_blocking_flush<'worker>(&'worker self, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
 	{
-		self.debug_assert_handle_is_valid();
-		
 		// NOTE: Despite the signature of `ucp_ep_flush_nb`, the callback_when_finished_or_cancelled is *NOT* optional.
-		let status_pointer = unsafe { ucp_ep_flush_nb(self.handle, ReservedForFutureUseFlags, Some(callback_when_finished_or_cancelled)) };
+		let status_pointer = unsafe { ucp_ep_flush_nb(self.debug_assert_handle_is_valid(), ReservedForFutureUseFlags, Some(callback_when_finished_or_cancelled)) };
 		
 		self.parent_worker.parse_status_pointer(status_pointer)
 	}
@@ -261,9 +253,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	#[inline(always)]
 	pub fn blocking_flush(&self) -> Result<(), ErrorCode>
 	{
-		self.debug_assert_handle_is_valid();
-		
-		self.parent_worker.block_until_non_blocking_request_is_complete(unsafe { ucp_ep_flush_nb(self.handle, ReservedForFutureUseFlags, Some(send_callback_is_ignored)) })
+		self.parent_worker.block_until_non_blocking_request_is_complete(unsafe { ucp_ep_flush_nb(self.debug_assert_handle_is_valid(), ReservedForFutureUseFlags, Some(send_callback_is_ignored)) })
 	}
 	
 	#[inline(always)]
@@ -406,8 +396,10 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	}
 	
 	#[inline(always)]
-	fn debug_assert_handle_is_valid(&self)
+	fn debug_assert_handle_is_valid(&self) -> ucp_ep_h
 	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
+		let handle = self.handle;
+		debug_assert!(!handle.is_null(), "handle is null");
+		handle
 	}
 }
