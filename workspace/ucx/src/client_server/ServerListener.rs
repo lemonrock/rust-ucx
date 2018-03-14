@@ -8,7 +8,7 @@ pub struct ServerListener<L: ServerListenerAcceptHandler>
 {
 	handle: ucp_listener_h,
 	worker_handle_drop_safety: Rc<WorkerHandleDropSafety>,
-	our_listening_socket: Rc<SocketAddress>, // We *MUST* hold a reference to this, otherwise the `params` data used to construct a Server contains raw pointers to socket address structures that may have been dropped.
+	our_remotely_accessible_server_end_point_address: OurRemotelyAccessibleServerEndPointAddress, // We *MUST* hold a reference to this, otherwise the `params` data used to construct a Server contains raw pointers to socket address structures that may have been dropped.
 	server_listener_accept_handler: L,
 }
 
@@ -29,7 +29,7 @@ impl<L: ServerListenerAcceptHandler> ServerListener<L>
 	/// A server listener listens for incoming client connections on a particular address.
 	/// It then creates ?end points? to handle them.
 	#[inline(always)]
-	pub(crate) fn create_server_listener(our_listening_socket: &Rc<SocketAddress>, server_listener_accept_handler: L, worker_handle_drop_safety: &Rc<WorkerHandleDropSafety>, worker_handle: ucp_worker_h) -> Result<Box<Self>, ErrorCode>
+	pub(crate) fn create_server_listener(our_remotely_accessible_server_end_point_address: OurRemotelyAccessibleServerEndPointAddress, server_listener_accept_handler: L, worker_handle_drop_safety: &Rc<WorkerHandleDropSafety>, worker_handle: ucp_worker_h) -> Result<Box<Self>, ErrorCode>
 	{
 		let mut server_listener = Box::new
 		(
@@ -37,12 +37,12 @@ impl<L: ServerListenerAcceptHandler> ServerListener<L>
 			{
 				handle: null_mut(),
 				worker_handle_drop_safety: worker_handle_drop_safety.clone(),
-				our_listening_socket: our_listening_socket.clone(),
+				our_remotely_accessible_server_end_point_address,
 				server_listener_accept_handler,
 			}
 		);
 		
-		let (socket_address, length) = our_listening_socket.suitable_for_ffi();
+		let (socket_address, length) = server_listener.our_remotely_accessible_server_end_point_address.suitable_for_ffi();
 		
 		let parameters = ucp_listener_params_t
 		{
@@ -59,19 +59,13 @@ impl<L: ServerListenerAcceptHandler> ServerListener<L>
 			},
 		};
 		
-		let mut handle = unsafe { uninitialized() };
-		
-		let status = unsafe { ucp_listener_create(worker_handle, &parameters, &mut handle) };
+		let status = unsafe { ucp_listener_create(worker_handle, &parameters, &mut server_listener.handle) };
 		
 		use self::Status::*;
 		
 		match status.parse()
 		{
-			IsOk =>
-			{
-				server_listener.handle = handle;
-				Ok(server_listener)
-			}
+			IsOk => Ok(server_listener),
 			
 			Error(error_code) => Err(error_code),
 			

@@ -45,6 +45,8 @@
 #[cfg(target_os = "linux")] use self::status::non_blocking_requests::*;
 #[cfg(target_os = "linux")] use ::libc::c_void;
 #[cfg(target_os = "linux")] use ::libc::FILE;
+#[cfg(target_os = "linux")] use ::libc::sockaddr;
+#[cfg(target_os = "linux")] use ::libc::socklen_t;
 #[cfg(target_os = "linux")] use ::libc_extra::sched::sched_getcpu;
 #[cfg(target_os = "linux")] use ::ring::aead::OpeningKey;
 #[cfg(target_os = "linux")] use ::ring::aead::SealingKey;
@@ -113,16 +115,17 @@
 
 #[cfg(target_os = "linux")] include!("ApplicationContext.rs");
 #[cfg(target_os = "linux")] include!("callback_is_ignored.rs");
-#[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleEndPoint.rs");
 #[cfg(target_os = "linux")] include!("MemoryAdvice.rs");
 #[cfg(target_os = "linux")] include!("OurLocalMemoryAddressToMakeRemotelyAccessible.rs");
+#[cfg(target_os = "linux")] include!("OurRemotelyAccessibleMemory.rs");
+#[cfg(target_os = "linux")] include!("OurRemotelyAccessibleMemoryAddress.rs");
+#[cfg(target_os = "linux")] include!("OurRemotelyAccessibleServerEndPointAddress.rs");
+#[cfg(target_os = "linux")] include!("OurRemotelyAccessibleWorkerEndPointAddress.rs");
+#[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleEndPoint.rs");
 #[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleEndPointAddress.rs");
 #[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleMemory.rs");
 #[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleMemoryAddress.rs");
 #[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleServerEndPointAddress.rs");
 #[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleWorkerEndPointAddress.rs");
-#[cfg(target_os = "linux")] include!("OurRemotelyAccessibleMemory.rs");
-#[cfg(target_os = "linux")] include!("OurRemotelyAccessibleMemoryAddress.rs");
-#[cfg(target_os = "linux")] include!("OurRemotelyAccessibleWorkerAddress.rs");
 #[cfg(target_os = "linux")] include!("Worker.rs");
 #[cfg(target_os = "linux")] include!("ZeroBasedHyperThreadIndex.rs");

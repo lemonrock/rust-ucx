@@ -4,7 +4,7 @@
 
 /// This address can be passed to remote instances of the UCP library in order to to connect to this worker.
 #[derive(Debug)]
-pub struct OurRemotelyAccessibleWorkerAddress
+pub struct OurRemotelyAccessibleWorkerEndPointAddress
 {
 	address: NonNull<u8>,
 	length: usize,
@@ -12,7 +12,7 @@ pub struct OurRemotelyAccessibleWorkerAddress
 	worker_handle_drop_safety: Rc<WorkerHandleDropSafety>,
 }
 
-impl Drop for OurRemotelyAccessibleWorkerAddress
+impl Drop for OurRemotelyAccessibleWorkerEndPointAddress
 {
 	#[inline(always)]
 	fn drop(&mut self)
@@ -21,7 +21,7 @@ impl Drop for OurRemotelyAccessibleWorkerAddress
 	}
 }
 
-impl ByteBuffer for OurRemotelyAccessibleWorkerAddress
+impl ByteBuffer for OurRemotelyAccessibleWorkerEndPointAddress
 {
 	#[inline(always)]
 	fn address(&self) -> NonNull<u8>

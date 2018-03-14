@@ -106,7 +106,7 @@ impl Worker
 	/// This routine returns the address of the worker object.
 	/// This address can be passed to remote instances of the UCP library in order to to connect to this worker.
 	#[inline(always)]
-	pub fn our_remotely_accessible_worker_address(&self) -> OurRemotelyAccessibleWorkerAddress
+	pub fn our_remotely_accessible_worker_end_point_address(&self) -> OurRemotelyAccessibleWorkerEndPointAddress
 	{
 		self.debug_assert_handle_is_valid();
 		
@@ -117,7 +117,7 @@ impl Worker
 		debug_assert!(!address.is_null(), "handle is null");
 		debug_assert_ne!(length, 0, "length is zero");
 		
-		OurRemotelyAccessibleWorkerAddress
+		OurRemotelyAccessibleWorkerEndPointAddress
 		{
 			address: unsafe { NonNull::new_unchecked(address as *mut u8) },
 			length,
@@ -128,11 +128,11 @@ impl Worker
 	
 	/// A server listener listens for incoming client connections on a particular address.
 	#[inline(always)]
-	pub fn create_server_listener<L: ServerListenerAcceptHandler>(&self, our_listening_socket: &Rc<SocketAddress>, server_listener_accept_handler: L) -> Result<Box<ServerListener<L>>, ErrorCode>
+	pub fn create_server_listener<L: ServerListenerAcceptHandler>(&self, our_remotely_accessible_server_end_point_address: OurRemotelyAccessibleServerEndPointAddress, server_listener_accept_handler: L) -> Result<Box<ServerListener<L>>, ErrorCode>
 	{
 		self.debug_assert_handle_is_valid();
 		
-		ServerListener::create_server_listener(our_listening_socket, server_listener_accept_handler, &self.worker_handle_drop_safety, self.handle)
+		ServerListener::create_server_listener(our_remotely_accessible_server_end_point_address, server_listener_accept_handler, &self.worker_handle_drop_safety, self.handle)
 	}
 	
 	
