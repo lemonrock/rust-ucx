@@ -9,7 +9,7 @@
 pub struct TheirRemotelyAccessibleMemory<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>
 {
 	handle: ucp_rkey_h,
-	parent_end_point: Rc<RefCell<EndPoint<E, A>>>,
+	parent_end_point: Rc<RefCell<TheirRemotelyAccessibleEndPoint<E, A>>>,
 }
 
 impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> Drop for TheirRemotelyAccessibleMemory<E, A>

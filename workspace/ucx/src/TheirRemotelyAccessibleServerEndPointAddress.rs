@@ -4,9 +4,9 @@
 
 /// The address of a remotely accessible server.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct TheirRemotelyAccessibleServerAddress(SocketAddress);
+pub struct TheirRemotelyAccessibleServerEndPointAddress(SocketAddress);
 
-impl TheirRemotelyAccessibleEndPointAddress for TheirRemotelyAccessibleServerAddress
+impl TheirRemotelyAccessibleEndPointAddress for TheirRemotelyAccessibleServerEndPointAddress
 {
 	// NOTE: It is important that this instance of `TheirRemoteAddress` is not dropped until after these parameters have been used to create an end point.
 	#[inline(always)]

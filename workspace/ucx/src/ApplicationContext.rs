@@ -115,52 +115,55 @@ impl<MemoryCustomization: NonBlockingRequestMemoryCustomization> ApplicationCont
 		}
 	}
 	
-	/// Set remotely accessible worker address.
-	#[inline(always)]
-	pub fn set_remotely_accessible_worker_address(&self, application_context_name: ApplicationContextName, worker_name: WorkerName, worker_address: TheirRemotelyAccessibleWorkerAddress)
-	{
-		self.master_their_remotely_accessible.update::<(), _>(|master|
-		{
-			master.get_mut_or_create(application_context_name).set_remotely_accessible_worker_address(worker_name, worker_address);
-			Ok(())
-		}).expect("Was OK")
-	}
-	
-	/// Set remotely accessible memory address.
-	#[inline(always)]
-	pub fn set_remotely_accessible_memory_address(&self, application_context_name: ApplicationContextName, memory_name: MemoryName, memory_address: TheirRemotelyAccessibleMemoryAddress)
-	{
-		self.master_their_remotely_accessible.update::<(), _>(|master|
-		{
-			master.get_mut_or_create(application_context_name).set_remotely_accessible_memory_address(memory_name, memory_address);
-			Ok(())
-		}).expect("Was OK")
-	}
-	
-	/// Set remotely accessible server address.
-	#[inline(always)]
-	pub fn set_remotely_accessible_server_address(&self, application_context_name: ApplicationContextName, worker_and_server_name: (WorkerName, ServerName), server_address: TheirRemotelyAccessibleServerAddress)
-	{
-		self.master_their_remotely_accessible.update::<(), _>(|master|
-		{
-			master.get_mut_or_create(application_context_name).set_remotely_accessible_server_address(worker_and_server_name, server_address);
-			Ok(())
-		}).expect("Was OK")
-	}
-	
-	/// Get remotely accessible worker address.
+	/// Get remotely accessible worker end point address.
 	/// Whilst there can be only multiple remote workers, we only need to get one to be able to access remote memory regions.
 	#[inline(always)]
-	pub fn get_remotely_accessible_worker_address(&self, application_context_name: &ApplicationContextName, worker_name: &WorkerName) -> Option<Rc<TheirRemotelyAccessibleWorkerAddress>>
+	pub fn get_remotely_accessible_worker_end_point_address(&self, application_context_name: &ApplicationContextName, worker_name: &WorkerName) -> Option<Rc<TheirRemotelyAccessibleWorkerEndPointAddress>>
 	{
 		if let Some(remote_application_context) = self.master_their_remotely_accessible.read().get(application_context_name)
 		{
-			remote_application_context.get_remotely_accessible_worker_address(worker_name).map(|reference| reference.clone())
+			remote_application_context.get_remotely_accessible_worker_end_point_address(worker_name).map(|reference| reference.clone())
 		}
 		else
 		{
 			None
 		}
+	}
+	
+	/// Set remotely accessible worker end point address.
+	#[inline(always)]
+	pub fn set_remotely_accessible_worker_address(&self, application_context_name: ApplicationContextName, worker_name: WorkerName, worker_address: TheirRemotelyAccessibleWorkerEndPointAddress)
+	{
+		self.master_their_remotely_accessible.update::<(), _>(|master|
+		{
+			master.get_mut_or_create(application_context_name).set_remotely_accessible_worker_end_point_address(worker_name, worker_address);
+			Ok(())
+		}).expect("Was OK")
+	}
+	
+	/// Get remotely accessible server end point address.
+	#[inline(always)]
+	pub fn get_remotely_accessible_server_end_point_address(&self, application_context_name: &ApplicationContextName, worker_and_server_name: &(WorkerName, ServerName)) -> Option<Rc<TheirRemotelyAccessibleServerEndPointAddress>>
+	{
+		if let Some(remote_application_context) = self.master_their_remotely_accessible.read().get(application_context_name)
+		{
+			remote_application_context.get_remotely_accessible_server_end_point_address(worker_and_server_name).map(|reference| reference.clone())
+		}
+		else
+		{
+			None
+		}
+	}
+	
+	/// Set remotely accessible server end point address.
+	#[inline(always)]
+	pub fn set_remotely_accessible_server_end_point_address(&self, application_context_name: ApplicationContextName, worker_and_server_name: (WorkerName, ServerName), server_address: TheirRemotelyAccessibleServerEndPointAddress)
+	{
+		self.master_their_remotely_accessible.update::<(), _>(|master|
+		{
+			master.get_mut_or_create(application_context_name).set_remotely_accessible_server_end_point_address(worker_and_server_name, server_address);
+			Ok(())
+		}).expect("Was OK")
 	}
 	
 	/// Get remotely accessible memory address.
@@ -177,17 +180,14 @@ impl<MemoryCustomization: NonBlockingRequestMemoryCustomization> ApplicationCont
 		}
 	}
 	
-	/// Get remotely accessible server address.
+	/// Set remotely accessible memory address.
 	#[inline(always)]
-	pub fn get_remotely_accessible_server_address(&self, application_context_name: &ApplicationContextName, worker_and_server_name: &(WorkerName, ServerName)) -> Option<Rc<TheirRemotelyAccessibleServerAddress>>
+	pub fn set_remotely_accessible_memory_address(&self, application_context_name: ApplicationContextName, memory_name: MemoryName, memory_address: TheirRemotelyAccessibleMemoryAddress)
 	{
-		if let Some(remote_application_context) = self.master_their_remotely_accessible.read().get(application_context_name)
+		self.master_their_remotely_accessible.update::<(), _>(|master|
 		{
-			remote_application_context.get_remotely_accessible_server_address(worker_and_server_name).map(|reference| reference.clone())
-		}
-		else
-		{
-			None
-		}
+			master.get_mut_or_create(application_context_name).set_remotely_accessible_memory_address(memory_name, memory_address);
+			Ok(())
+		}).expect("Was OK")
 	}
 }

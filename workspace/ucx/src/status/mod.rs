@@ -5,7 +5,7 @@
 use self::non_blocking_requests::*;
 pub use self::NonBlockingRequestCompletedOrInProgress::*;
 use super::data_type_descriptors::messages::Message;
-use super::EndPoint;
+use super::TheirRemotelyAccessibleEndPoint;
 use super::TheirRemotelyAccessibleEndPointAddress;
 use super::Worker;
 use self::ucs_status_t::*;

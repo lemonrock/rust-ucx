@@ -113,14 +113,14 @@
 
 #[cfg(target_os = "linux")] include!("ApplicationContext.rs");
 #[cfg(target_os = "linux")] include!("callback_is_ignored.rs");
-#[cfg(target_os = "linux")] include!("EndPoint.rs");
+#[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleEndPoint.rs");
 #[cfg(target_os = "linux")] include!("MemoryAdvice.rs");
 #[cfg(target_os = "linux")] include!("OurLocalMemoryAddressToMakeRemotelyAccessible.rs");
 #[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleEndPointAddress.rs");
 #[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleMemory.rs");
 #[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleMemoryAddress.rs");
-#[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleServerAddress.rs");
-#[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleWorkerAddress.rs");
+#[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleServerEndPointAddress.rs");
+#[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleWorkerEndPointAddress.rs");
 #[cfg(target_os = "linux")] include!("OurRemotelyAccessibleMemory.rs");
 #[cfg(target_os = "linux")] include!("OurRemotelyAccessibleMemoryAddress.rs");
 #[cfg(target_os = "linux")] include!("OurRemotelyAccessibleWorkerAddress.rs");

@@ -4,7 +4,7 @@
 
 /// An end point.
 /// *MUST* be used inside as `Rc<RefCell<Endpoint<E, A>>`.
-pub struct EndPoint<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>
+pub struct TheirRemotelyAccessibleEndPoint<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>
 {
 	handle: ucp_ep_h,
 	user_data_and_peer_failure_error_handler: E,
@@ -13,7 +13,7 @@ pub struct EndPoint<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessib
 	end_point_parameters: ucp_ep_params_t,
 }
 
-impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> Drop for EndPoint<E, A>
+impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> Drop for TheirRemotelyAccessibleEndPoint<E, A>
 {
 	// Dropping because there are no more Rc strong references.
 	#[inline(always)]
@@ -22,7 +22,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 		#[inline(always)]
 		fn drop_user_data<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>(user_data: *mut c_void)
 		{
-			let weak: Weak<EndPoint<E, A>> = unsafe { transmute(user_data) };
+			let weak: Weak<TheirRemotelyAccessibleEndPoint<E, A>> = unsafe { transmute(user_data) };
 			drop(weak);
 		}
 		
@@ -73,7 +73,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	}
 }
 
-impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> Debug for EndPoint<E, A>
+impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> Debug for TheirRemotelyAccessibleEndPoint<E, A>
 {
 	#[inline(always)]
 	fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error>
@@ -82,9 +82,9 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	}
 }
 
-impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> PrintInformation for EndPoint<E, A>
+impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> PrintInformation for TheirRemotelyAccessibleEndPoint<E, A>
 {
-	const DebugName: &'static str = "EndPoint";
+	const DebugName: &'static str = "TheirRemotelyAccessibleEndPointEndPoint";
 	
 	#[inline(always)]
 	fn print_information_to_stream(&self, stream: *mut FILE)
@@ -108,7 +108,7 @@ Stream
 
 
 
-impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> EndPoint<E, A>
+impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress> TheirRemotelyAccessibleEndPoint<E, A>
 {
 	#[inline(always)]
 	pub(crate) fn new_end_point(peer_failure_error_handler: E, their_remote_address: &Rc<A>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool, parent_worker: &Worker) -> Result<Rc<RefCell<Self>>, ErrorCode>
@@ -347,8 +347,8 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 		}
 	}
 	
-	// Yes, this is horrible, but how else does one pack a Weak<EndPoint<E>> into a C FFI `user_data` field of type void*?
-	// (Actually, by possibly using a user_data = Box<Weak<EndPoint<E>>>::into_raw()... but that involves indirection).
+	// Yes, this is horrible, but how else does one pack a Weak<TheirRemotelyAccessibleEndPointEndPoint<E>> into a C FFI `user_data` field of type void*?
+	// (Actually, by possibly using a user_data = Box<Weak<TheirRemotelyAccessibleEndPointEndPoint<E>>>::into_raw()... but that involves indirection).
 	#[inline(always)]
 	pub(crate) fn assign_user_data_to_self(this: &Rc<RefCell<Self>>)
 	{

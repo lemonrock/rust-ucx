@@ -14,7 +14,7 @@
 ///
 /// Although the worker can represent multiple network resources, it is associated with a single `ApplicationContext`.
 ///
-/// All communication functions require a context to perform the operation on the dedicated hardware resource(s) and an `EndPoint` to address the destination.
+/// All communication functions require a context to perform the operation on the dedicated hardware resource(s) and an `TheirRemotelyAccessibleEndPointEndPoint` to address the destination.
 ///
 /// NOTE: Workers are parallel 'threading points' that an upper layer may use to optimize concurrent communications.
 #[derive(Clone)]
@@ -84,7 +84,7 @@ impl Worker
 	/// Other:-
 	/// * `InvalidAddress` (the destination address format is invalid).
 	///
-	/// `peer_failure_error_handler` is moved into the `EndPoint`.
+	/// `peer_failure_error_handler` is moved into the `TheirRemotelyAccessibleEndPointEndPoint`.
 	///
 	/// `guarantee_that_send_requests_are_always_completed_successfully_or_error` has some advantages:-
 	/// * guarantees that send requests are always completed, ie the peer has to be alive.
@@ -96,11 +96,11 @@ impl Worker
 	/// * it may affect performance
 	/// * it may increase memory footprint
 	#[inline(always)]
-	pub fn new_end_point<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>(&self, peer_failure_error_handler: E, their_remote_address: &Rc<A>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool) -> Result<Rc<RefCell<EndPoint<E, A>>>, ErrorCode>
+	pub fn new_end_point<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>(&self, peer_failure_error_handler: E, their_remote_address: &Rc<A>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool) -> Result<Rc<RefCell<TheirRemotelyAccessibleEndPoint<E, A>>>, ErrorCode>
 	{
 		self.debug_assert_handle_is_valid();
 		
-		EndPoint::new_end_point(peer_failure_error_handler, their_remote_address, guarantee_that_send_requests_are_always_completed_successfully_or_error, self)
+		TheirRemotelyAccessibleEndPoint::new_end_point(peer_failure_error_handler, their_remote_address, guarantee_that_send_requests_are_always_completed_successfully_or_error, self)
 	}
 	
 	/// This routine returns the address of the worker object.
@@ -134,6 +134,25 @@ impl Worker
 		
 		ServerListener::create_server_listener(our_listening_socket, server_listener_accept_handler, &self.worker_handle_drop_safety, self.handle)
 	}
+	
+	
+	/*
+	
+	#[link_name = "\u{1}_ucp_tag_msg_recv_nb"] pub fn ucp_tag_msg_recv_nb(worker: ucp_worker_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, message: ucp_tag_message_h, cb: ucp_tag_recv_callback_t) -> ucs_status_ptr_t;
+	#[link_name = "\u{1}_ucp_tag_probe_nb"] pub fn ucp_tag_probe_nb(worker: ucp_worker_h, tag: ucp_tag_t, tag_mask: ucp_tag_t, remove: c_int, info: *mut ucp_tag_recv_info_t) -> ucp_tag_message_h;
+	
+	
+	#[link_name = "\u{1}_ucp_tag_recv_nb"] pub fn ucp_tag_recv_nb(worker: ucp_worker_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, tag_mask: ucp_tag_t, cb: ucp_tag_recv_callback_t) -> ucs_status_ptr_t;
+	#[link_name = "\u{1}_ucp_tag_recv_nbr"] pub fn ucp_tag_recv_nbr(worker: ucp_worker_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, tag_mask: ucp_tag_t, req: *mut c_void) -> ucs_status_t;
+	
+	
+	
+	#[link_name = "\u{1}_ucp_tag_recv_request_test"] pub fn ucp_tag_recv_request_test(request: *mut c_void, info: *mut ucp_tag_recv_info_t) -> ucs_status_t;
+	*/
+	
+	
+	
+	
 	
 	/// This non-blocking routine returns endpoints on a worker which are ready to consume streaming data.
 	/// The ready end points are put into `end_points`.

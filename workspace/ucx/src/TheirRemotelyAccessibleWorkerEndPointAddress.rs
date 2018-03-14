@@ -4,9 +4,9 @@
 
 /// The address of a remotely accessible worker.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct TheirRemotelyAccessibleWorkerAddress(NonNull<ucp_address_t>);
+pub struct TheirRemotelyAccessibleWorkerEndPointAddress(NonNull<ucp_address_t>);
 
-impl TheirRemotelyAccessibleEndPointAddress for TheirRemotelyAccessibleWorkerAddress
+impl TheirRemotelyAccessibleEndPointAddress for TheirRemotelyAccessibleWorkerEndPointAddress
 {
 	// NOTE: It is important that this instance of `TheirRemoteAddress` is not dropped until after these parameters have been used to create an end point.
 	#[inline(always)]

@@ -44,7 +44,7 @@ quick_error!
 		}
 
 		/// Usually called because we can not connect to the remote memory access key (`rkey`).
-		/// Tear down `RemoteMemoryAccessKey` and probably `EndPoint`.
+		/// Tear down `RemoteMemoryAccessKey` and probably `TheirRemotelyAccessibleEndPointEndPoint`.
 		///
 		/// Seems to be a recoverable failure.
 		DestinationIsUnreachable
@@ -167,7 +167,7 @@ quick_error!
 			display("EndPointFailure {}", index)
 		}
 
-		/// Tear down RemoteMemoryAccessKey and probably EndPoint.
+		/// Tear down RemoteMemoryAccessKey and probably TheirRemotelyAccessibleEndPointEndPoint.
 		///
 		/// Seems to be a recoverable failure.
 		EndPointTimeOut
