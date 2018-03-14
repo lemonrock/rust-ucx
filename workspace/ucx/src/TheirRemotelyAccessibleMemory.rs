@@ -6,13 +6,15 @@
 ///
 /// Use this to perform remote memory load() and store(), and atomic operations such as fetch_and_add() and compare_and_swap().
 #[derive(Debug)]
-pub struct TheirRemotelyAccessibleMemory<E: EndPointPeerFailureErrorHandler>
+pub struct TheirRemotelyAccessibleMemory<E: EndPointPeerFailureErrorHandler, A = DirectLocalToRemoteAddressTranslation>
+where A: LocalToRemoteAddressTranslation
 {
 	handle: ucp_rkey_h,
 	parent_end_point: Rc<RefCell<TheirRemotelyAccessibleEndPoint<E, TheirRemotelyAccessibleWorkerEndPointAddress>>>,
+	local_to_remote_address_translation: A,
 }
 
-impl<E: EndPointPeerFailureErrorHandler> Drop for TheirRemotelyAccessibleMemory<E>
+impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> Drop for TheirRemotelyAccessibleMemory<E, A>
 {
 	#[inline(always)]
 	fn drop(&mut self)
@@ -21,7 +23,7 @@ impl<E: EndPointPeerFailureErrorHandler> Drop for TheirRemotelyAccessibleMemory<
 	}
 }
 
-impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleMemory<E>
+impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> TheirRemotelyAccessibleMemory<E, A>
 {
 	/// Returns a local pointer which can be used for all atomic memory operations.
 	///
@@ -32,5 +34,47 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleMemory<E>
 		let mut local_address = unsafe { uninitialized() };
 		panic_on_error!(ucp_rkey_ptr, self.handle, remote_address as u64, &mut local_address);
 		local_address as *mut u8
+	}
+	
+	/// Blocking remote load (get) operations.
+	///
+	/// This routine loads a contiguous block of data of `length` bytes from the remote address and puts into the local address.
+	#[inline(always)]
+	pub fn blocking_load(&self, local_destination_address: NonNull<u8>, length_in_bytes: usize) -> Result<(), ErrorCode>
+	{
+		let local_address = local_destination_address.as_ptr()  as *mut c_void;
+		let remote_address = self.remote_address(local_destination_address);
+		
+		let status = unsafe { ucp_get(self.parent_end_point.borrow().debug_assert_handle_is_valid(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
+		Self::parse_status(status)
+	}
+	
+	#[inline(always)]
+	fn remote_address(&self, local_address: NonNull<u8>) -> u64
+	{
+		self.local_to_remote_address_translation.from_local_address_to_remote_address(local_address)
+	}
+	
+	#[inline(always)]
+	fn parse_status(status: ucs_status_t) -> Result<(), ErrorCode>
+	{
+		use self::Status::*;
+		
+		match status.parse()
+		{
+			IsOk => Ok(()),
+			
+			Error(error_code) => Err(error_code),
+			
+			unexpected @ _ => panic!("Unexpected status '{:?}'", unexpected)
+		}
+	}
+	
+	#[inline(always)]
+	fn debug_assert_handle_is_valid(&self) -> ucp_rkey_h
+	{
+		let handle = self.handle;
+		debug_assert!(!handle.is_null(), "handle is null");
+		handle
 	}
 }

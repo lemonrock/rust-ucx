@@ -38,6 +38,7 @@
 #[cfg(target_os = "linux")] use self::cpu_set::*;
 #[cfg(target_os = "linux")] use self::ffi_helpers::*;
 #[cfg(target_os = "linux")] use self::handle_drop_safeties::*;
+#[cfg(target_os = "linux")] use self::local_to_remote_address_translations::*;
 #[cfg(target_os = "linux")] use self::print_information::PrintInformation;
 #[cfg(target_os = "linux")] use self::remotely_accessible::*;
 #[cfg(target_os = "linux")] use self::sockets::SocketAddress;
@@ -92,6 +93,9 @@
 
 
 #[cfg(target_os = "linux")] mod handle_drop_safeties;
+
+/// Different strategies for converting local addresses to remote addresses.
+#[cfg(target_os = "linux")] mod local_to_remote_address_translations;
 
 
 /// Print information helpers.
