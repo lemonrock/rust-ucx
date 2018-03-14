@@ -53,6 +53,8 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	///
 	/// This routine loads a contiguous block of data of `length` bytes from the remote address and puts into the local address.
 	///
+	/// Should be thought of as sequentially consistent.
+	///
 	/// The local memory is safe to use immediately afterwards.
 	#[inline(always)]
 	pub fn blocking_store(&self, local_source_address: NonNull<u8>, length_in_bytes: usize) -> Result<(), ErrorCode>
@@ -61,7 +63,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 		let remote_address = self.remote_address(local_source_address);
 		
 		let status = unsafe { ucp_put(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
-		Self::parse_status_for_blocking(status)
+		Self::parse_status_for_blocking(status, ())
 	}
 	
 	/// Non-blocking remote store (put) operation.
@@ -83,6 +85,8 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	///
 	/// This routine loads a contiguous block of data of `length` bytes from the remote address and puts into the local address.
 	///
+	/// Should be thought of as sequentially consistent.
+	///
 	/// The local memory is safe to use immediately afterwards.
 	#[inline(always)]
 	pub fn blocking_load(&self, local_destination_address: NonNull<u8>, length_in_bytes: usize) -> Result<(), ErrorCode>
@@ -91,7 +95,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 		let remote_address = self.remote_address(local_destination_address);
 		
 		let status = unsafe { ucp_get(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
-		Self::parse_status_for_blocking(status)
+		Self::parse_status_for_blocking(status, ())
 	}
 	
 	/// Non-blocking remote load (get) operation.
@@ -109,6 +113,94 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 		Self::parse_status_for_non_blocking(status)
 	}
 	
+	/// ?Blocking operation that atomically adds a u32 increment to a remote memory location.
+	///
+	/// The remote address must be 4-byte (32-bit) aligned.
+	#[inline(always)]
+	pub fn blocking_atomic_add_u32_increment(&self, aligned_remote_address: u64, increment: u32) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
+	{
+		debug_assert_eq!(aligned_remote_address % 4, 0, "aligned_remote_address '{}' is not 4-byte (32-bit) aligned", aligned_remote_address);
+		
+		let status = unsafe { ucp_atomic_add32(self.end_point_handle(), increment, aligned_remote_address, self.debug_assert_handle_is_valid()) };
+		Self::parse_status_for_non_blocking(status)
+	}
+	
+	/// ?Blocking operation that atomically adds a u64 increment to a remote memory location.
+	///
+	/// The remote address must be 8-byte (64-bit) aligned.
+	#[inline(always)]
+	pub fn blocking_atomic_add_u64_increment(&self, aligned_remote_address: u64, increment: u64) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
+	{
+		debug_assert_eq!(aligned_remote_address % 8, 0, "aligned_remote_address '{}' is not 8-byte (64-bit) aligned", aligned_remote_address);
+		
+		let status = unsafe { ucp_atomic_add64(self.end_point_handle(), increment, aligned_remote_address, self.debug_assert_handle_is_valid()) };
+		Self::parse_status_for_non_blocking(status)
+	}
+	
+	/// Blocking operation that atomically adds a u32 increment to a remote memory location and returns the previous value.
+	///
+	/// Should be thought of as sequentially consistent.
+	///
+	/// The remote address must be 4-byte (32-bit) aligned.
+	#[inline(always)]
+	pub fn blocking_atomic_fetch_and_add_u32_increment(&self, aligned_remote_address: u64, increment: u32) -> Result<u32, ErrorCode>
+	{
+		debug_assert_eq!(aligned_remote_address % 4, 0, "aligned_remote_address '{}' is not 4-byte (32-bit) aligned", aligned_remote_address);
+		
+		let mut previous_value = unsafe { uninitialized() };
+		
+		let status = unsafe { ucp_atomic_fadd32(self.end_point_handle(), increment, aligned_remote_address, self.debug_assert_handle_is_valid(), &mut previous_value) };
+		Self::parse_status_for_blocking(status, previous_value)
+	}
+	
+	/// Blocking operation that atomically adds a u64 increment to a remote memory location and returns the previous value.
+	///
+	/// Should be thought of as sequentially consistent.
+	///
+	/// The remote address must be 8-byte (64-bit) aligned.
+	#[inline(always)]
+	pub fn blocking_atomic_fetch_and_add_u64_increment(&self, aligned_remote_address: u64, increment: u64) -> Result<u64, ErrorCode>
+	{
+		debug_assert_eq!(aligned_remote_address % 8, 0, "aligned_remote_address '{}' is not 8-byte (64-bit) aligned", aligned_remote_address);
+		
+		let mut previous_value = unsafe { uninitialized() };
+		
+		let status = unsafe { ucp_atomic_fadd64(self.end_point_handle(), increment, aligned_remote_address, self.debug_assert_handle_is_valid(), &mut previous_value) };
+		Self::parse_status_for_blocking(status, previous_value)
+	}
+	
+	/// Blocking operation that atomically swaps a u32 value to a remote memory location and returns the previous value.
+	///
+	/// Should be thought of as sequentially consistent.
+	///
+	/// The remote address must be 4-byte (32-bit) aligned.
+	#[inline(always)]
+	pub fn blocking_atomic_swap_u32_value(&self, aligned_remote_address: u64, value_to_swap_for: u32) -> Result<u32, ErrorCode>
+	{
+		debug_assert_eq!(aligned_remote_address % 4, 0, "aligned_remote_address '{}' is not 4-byte (32-bit) aligned", aligned_remote_address);
+		
+		let mut previous_value = unsafe { uninitialized() };
+		
+		let status = unsafe { ucp_atomic_swap32(self.end_point_handle(), value_to_swap_for, aligned_remote_address, self.debug_assert_handle_is_valid(), &mut previous_value) };
+		Self::parse_status_for_blocking(status, previous_value)
+	}
+	
+	/// Blocking operation that atomically swaps a u64 value to a remote memory location and returns the previous value.
+	///
+	/// Should be thought of as sequentially consistent.
+	///
+	/// The remote address must be 8-byte (64-bit) aligned.
+	#[inline(always)]
+	pub fn blocking_atomic_swap_u64_value(&self, aligned_remote_address: u64, value_to_swap_for: u64) -> Result<u64, ErrorCode>
+	{
+		debug_assert_eq!(aligned_remote_address % 8, 0, "aligned_remote_address '{}' is not 8-byte (64-bit) aligned", aligned_remote_address);
+		
+		let mut previous_value = unsafe { uninitialized() };
+		
+		let status = unsafe { ucp_atomic_swap64(self.end_point_handle(), value_to_swap_for, aligned_remote_address, self.debug_assert_handle_is_valid(), &mut previous_value) };
+		Self::parse_status_for_blocking(status, previous_value)
+	}
+	
 	#[inline(always)]
 	fn remote_address(&self, local_address: NonNull<u8>) -> u64
 	{
@@ -122,13 +214,13 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	}
 	
 	#[inline(always)]
-	fn parse_status_for_blocking(status: ucs_status_t) -> Result<(), ErrorCode>
+	fn parse_status_for_blocking<R>(status: ucs_status_t, result: R) -> Result<R, ErrorCode>
 	{
 		use self::Status::*;
 		
 		match status.parse()
 		{
-			IsOk => Ok(()),
+			IsOk => Ok(result),
 			
 			Error(error_code) => Err(error_code),
 			
