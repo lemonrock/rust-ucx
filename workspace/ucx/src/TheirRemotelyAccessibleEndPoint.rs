@@ -114,7 +114,7 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 {
 	/// Can be called more than once per end point.
 	/// Think of the world as multiple threads (worker), each of which is connected to a remote peer (end point), each of which is connected to zero or more remote memory regions.
-	/// Remote memory regions are not needed for tagged messages and streams.
+	/// Remote memory regions are not needed for tagged tagged_messages and streams.
 	#[inline(always)]
 	pub fn use_remote_memory_region(this: &Rc<RefCell<Self>>, their_remotely_accessible_memory_address: TheirRemotelyAccessibleMemoryAddress) -> Result<TheirRemotelyAccessibleMemory<E>, ErrorCode>
 	{

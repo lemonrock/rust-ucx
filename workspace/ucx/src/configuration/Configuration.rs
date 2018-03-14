@@ -7,12 +7,12 @@
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Configuration
 {
-	/// Used to control encryption of AEAD-encrypted messages sent out-of-band to other peers.
+	/// Used to control encryption of AEAD-encrypted tagged_messages sent out-of-band to other peers.
 	pub secret_key_bytes: SecretKeyBytes,
-	
+
 	/// UCX settings.
 	#[serde(default)] pub ucx_settings: UcpSettings,
-	
+
 	/// Application context configuration details.
 	#[serde(default)] pub application_context: ApplicationContextConfiguration,
 }
@@ -25,9 +25,9 @@ impl Configuration
 	{
 		let sealing_key = self.secret_key_bytes.new_sealing_key();
 		let opening_key = self.secret_key_bytes.new_opening_key();
-		
+
 		let ucp_configuration_wrapper = self.ucx_settings.ucp_configuration_wrapper()?;
-		
+
 		self.application_context.new(sealing_key, opening_key, ucp_configuration_wrapper)
 	}
 }

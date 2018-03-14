@@ -4,7 +4,7 @@
 
 /// Remotely accessible memory is only needed for RMA and AMO32/AMO64 (atomic operations).
 ///
-/// It is *not* needed for sending or receiving tagged messages.
+/// It is *not* needed for sending or receiving tagged tagged_messages.
 ///
 /// The memory could be registered to one or multiple network resources that are supported by UCP, such as InfiniBand, Gemini, and others.
 ///

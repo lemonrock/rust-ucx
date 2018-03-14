@@ -45,7 +45,7 @@ pub trait NonBlockingRequest: Sized
 		}
 	}
 	
-	/// Check if the request is still in progress when receiving tag messages.
+	/// Check if the request is still in progress when receiving tag tagged_messages.
 	/// Use this after calling `ucp_tag_recv_nb` or `ucp_tag_recv_nbr`.
 	///
 	/// An Ok(true, tag_receive_information) means is completed successfully,
@@ -70,7 +70,7 @@ pub trait NonBlockingRequest: Sized
 		}
 	}
 	
-	/// Check if the request is still in progress when receiving tag messages.
+	/// Check if the request is still in progress when receiving tag tagged_messages.
 	/// Use this after calling `ucp_stream_recv_nb`.
 	///
 	/// An Ok(Some(received_data_in_bytes)) means is completed successfully,

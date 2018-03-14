@@ -4,17 +4,12 @@
 
 use self::non_blocking_requests::*;
 pub use self::NonBlockingRequestCompletedOrInProgress::*;
-use super::data_type_descriptors::messages::Message;
 use super::TheirRemotelyAccessibleEndPoint;
 use super::TheirRemotelyAccessibleEndPointAddress;
 use super::Worker;
 use self::ucs_status_t::*;
 use ::std::cell::RefCell;
-use ::std::error::Error;
 use ::std::ffi::CStr;
-use ::std::fmt;
-use ::std::fmt::Display;
-use ::std::fmt::Formatter;
 use ::std::mem::transmute;
 use ::std::ops::Deref;
 use ::std::ptr::NonNull;
@@ -29,9 +24,7 @@ pub mod non_blocking_requests;
 include!("EndPointPeerFailureErrorHandler.rs");
 include!("EndPointReadyToConsumeStreamingData.rs");
 include!("ErrorCode.rs");
-include!("ErrorCodeWithMessage.rs");
 include!("NonBlockingRequestCompletedOrInProgress.rs");
-include!("SendingTaggedMessageNonBlockingRequest.rs");
 include!("Status.rs");
 include!("StatusOrUcxAllocatedNonBlockingRequest.rs");
 include!("ucs_status_tExt.rs");

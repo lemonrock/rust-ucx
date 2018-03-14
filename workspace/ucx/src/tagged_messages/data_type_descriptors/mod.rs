@@ -2,8 +2,8 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::buffers::*;
-use super::status::*;
+use super::super::buffers::*;
+use super::super::status::*;
 use ::libc::c_void;
 use ::std::cell::UnsafeCell;
 use ::std::fmt::Debug;
@@ -11,12 +11,6 @@ use ::std::mem::forget;
 use ::std::mem::size_of;
 use ::std::sync::Arc;
 use ::ucx_sys::*;
-
-
-/// Types of message associated with data type descriptors.
-///
-/// Each data type descriptor has a particular implementation or implementations of a message.
-pub mod messages;
 
 
 include!("ContiguousDataTypeDescriptor.rs");

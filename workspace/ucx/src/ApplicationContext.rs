@@ -56,7 +56,7 @@ impl<MemoryCustomization: NonBlockingRequestMemoryCustomization> ApplicationCont
 {
 	/// Makes a region of memory remotely accessible (also known as 'mapping', 'registering' or 'pinning').
 	/// Panics on any error, including out-of-memory.
-	/// Remotely accessible memory is *not* needed for sending or receiving tagged messages.
+	/// Remotely accessible memory is *not* needed for sending or receiving tagged tagged_messages.
 	///
 	/// If passing a `memory_address` of `AllocateAndRegister` or `AllocateAndRegisterWithAddressAddress`, the resultant allocated address can be found by calling `OurRemotelyAccessibleMemory.attributes().address()` .
 	///

@@ -135,7 +135,6 @@ impl Worker
 		ServerListener::create_server_listener(our_remotely_accessible_server_end_point_address, server_listener_accept_handler, &self.worker_handle_drop_safety, self.handle)
 	}
 	
-	
 	/*
 	
 	#[link_name = "\u{1}_ucp_tag_msg_recv_nb"] pub fn ucp_tag_msg_recv_nb(worker: ucp_worker_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, message: ucp_tag_message_h, cb: ucp_tag_recv_callback_t) -> ucs_status_ptr_t;

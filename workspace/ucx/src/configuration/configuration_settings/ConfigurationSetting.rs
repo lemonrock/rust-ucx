@@ -17,7 +17,7 @@ macro_rules! configuration_setting
 		#[allow(missing_docs)]
 		#[derive(Serialize, Deserialize, Debug, Clone)]
 		pub struct $struct_name(pub $default_type);
-		
+
 		impl Default for $struct_name
 		{
 			#[inline(always)]
@@ -29,7 +29,7 @@ macro_rules! configuration_setting
 				)
 			}
 		}
-		
+
 		impl ConfigurationSetting for $struct_name
 		{
 			#[inline(always)]
@@ -38,7 +38,7 @@ macro_rules! configuration_setting
 				(c_str!($configuration_name), self.0.convert())
 			}
 		}
-		
+
 		impl $configuration_wrapper for $struct_name
 		{
 		}
@@ -342,7 +342,7 @@ configuration_setting!
 //// The following substitutions are performed on this string:-
 //// * `%p` - Replaced with process id.
 //// * `%h` - Replaced with host name.
-//// If empty (not null) then log messages are printed to standard out.
+//// If empty (not null) then log tagged_messages are printed to standard out.
 //configuration_setting!
 //{
 //	UcsGlobalConfigurationSetting,

@@ -31,11 +31,9 @@
 
 #[cfg(target_os = "linux")] use self::attributes::*;
 #[cfg(target_os = "linux")] use self::buffers::*;
-#[cfg(target_os = "linux")] use self::client_server::*;
 #[cfg(target_os = "linux")] use self::configuration::non_blocking_request_memory_customization::*;
 #[cfg(target_os = "linux")] use self::configuration::values::*;
 #[cfg(target_os = "linux")] use self::cpu_set::*;
-#[cfg(target_os = "linux")] use self::data_type_descriptors::messages::Message;
 #[cfg(target_os = "linux")] use self::ffi_helpers::*;
 #[cfg(target_os = "linux")] use self::handle_drop_safeties::*;
 #[cfg(target_os = "linux")] use self::print_information::PrintInformation;
@@ -43,6 +41,8 @@
 #[cfg(target_os = "linux")] use self::sockets::SocketAddress;
 #[cfg(target_os = "linux")] use self::status::*;
 #[cfg(target_os = "linux")] use self::status::non_blocking_requests::*;
+#[cfg(target_os = "linux")] use self::streams::*;
+#[cfg(target_os = "linux")] use self::tagged_messages::*;
 #[cfg(target_os = "linux")] use ::libc::c_void;
 #[cfg(target_os = "linux")] use ::libc::FILE;
 #[cfg(target_os = "linux")] use ::libc::sockaddr;
@@ -75,13 +75,14 @@
 #[cfg(target_os = "linux")] pub mod buffers;
 
 
-/// Client server model of working.
-#[cfg(target_os = "linux")] pub mod client_server;
+/// A client-server, reliable, connected transport similar in spirit to Berkeley sockets.
+#[cfg(target_os = "linux")] pub mod streams;
 
 
-/// Data types descriptors are used for describing data sent in tagged messages and streams.
-/// A data type descriptor lets UCX manage serialization and deserialization.
-#[cfg(target_os = "linux")] pub mod data_type_descriptors;
+/// Types of message associated with data type descriptors.
+///
+/// Each data type descriptor has a particular implementation or implementations of a message.
+#[cfg(target_os = "linux")] pub mod tagged_messages;
 
 
 /// Configuration.
