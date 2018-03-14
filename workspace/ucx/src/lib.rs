@@ -14,6 +14,7 @@
 //!
 
 
+#[cfg(target_os = "linux")] pub extern crate bit;
 #[cfg(target_os = "linux")] #[macro_use] extern crate bitflags;
 #[cfg(target_os = "linux")] extern crate indexmap;
 #[cfg(target_os = "linux")] pub extern crate libc;
@@ -75,16 +76,6 @@
 #[cfg(target_os = "linux")] pub mod buffers;
 
 
-/// A client-server, reliable, connected transport similar in spirit to Berkeley sockets.
-#[cfg(target_os = "linux")] pub mod streams;
-
-
-/// Types of message associated with data type descriptors.
-///
-/// Each data type descriptor has a particular implementation or implementations of a message.
-#[cfg(target_os = "linux")] pub mod tagged_messages;
-
-
 /// Configuration.
 #[cfg(target_os = "linux")] pub mod configuration;
 
@@ -92,14 +83,14 @@
 #[cfg(target_os = "linux")] mod cpu_set;
 
 
-/// Status, error and non-blocking request support.
-#[cfg(target_os = "linux")] pub mod status;
-
-
 #[cfg(target_os = "linux")] mod ffi_helpers;
 
 
 #[cfg(target_os = "linux")] mod handle_drop_safeties;
+
+
+/// Print information helpers.
+#[cfg(target_os = "linux")] pub mod print_information;
 
 
 /// Remotely accessible information.
@@ -110,18 +101,29 @@
 #[cfg(target_os = "linux")] pub mod sockets;
 
 
-/// Print information helpers.
-#[cfg(target_os = "linux")] pub mod print_information;
+/// Status, error and non-blocking request support.
+#[cfg(target_os = "linux")] pub mod status;
+
+
+/// A client-server, reliable, connected transport similar in spirit to Berkeley sockets.
+#[cfg(target_os = "linux")] pub mod streams;
+
+
+/// Types of message associated with data type descriptors.
+///
+/// Each data type descriptor has a particular implementation or implementations of a message.
+#[cfg(target_os = "linux")] pub mod tagged_messages;
 
 
 #[cfg(target_os = "linux")] include!("ApplicationContext.rs");
-#[cfg(target_os = "linux")] include!("callback_is_ignored.rs");
 #[cfg(target_os = "linux")] include!("MemoryAdvice.rs");
 #[cfg(target_os = "linux")] include!("OurLocalMemoryAddressToMakeRemotelyAccessible.rs");
 #[cfg(target_os = "linux")] include!("OurRemotelyAccessibleMemory.rs");
 #[cfg(target_os = "linux")] include!("OurRemotelyAccessibleMemoryAddress.rs");
 #[cfg(target_os = "linux")] include!("OurRemotelyAccessibleServerEndPointAddress.rs");
 #[cfg(target_os = "linux")] include!("OurRemotelyAccessibleWorkerEndPointAddress.rs");
+#[cfg(target_os = "linux")] include!("receive_callback_is_ignored.rs");
+#[cfg(target_os = "linux")] include!("send_callback_is_ignored.rs");
 #[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleEndPoint.rs");
 #[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleEndPointAddress.rs");
 #[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleMemory.rs");

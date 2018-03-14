@@ -48,21 +48,22 @@ pub trait NonBlockingRequest: Sized
 	/// Check if the request is still in progress when receiving tag tagged_messages.
 	/// Use this after calling `ucp_tag_recv_nb` or `ucp_tag_recv_nbr`.
 	///
-	/// An Ok(true, tag_receive_information) means is completed successfully,
-	/// An Ok(false, tag_receive_information) means it is still in progress.
+	/// An Ok(Some(tag_receive_information)) means is completed successfully,
+	/// An Ok(None) means it is still in progress.
 	/// An Err() means it completed with an error.
 	#[inline(always)]
-	fn is_still_in_progress_for_tag_receive(&self) -> Result<(bool, ucp_tag_recv_info_t), ErrorCode>
+	fn is_still_in_progress_for_tag_receive(&self) -> Result<Option<ReceivedTaggedMessageInformation>, ErrorCode>
 	{
 		let mut tag_receive_information = unsafe { uninitialized() };
 		
+		// tag_receive_information is only populated if status is not UCS_INPROGRESS.
 		let status = unsafe { ucp_tag_recv_request_test(self.non_null_pointer().as_ptr() as *mut c_void, &mut tag_receive_information) };
 		
 		match status.parse()
 		{
-			IsOk => Ok((false, tag_receive_information)),
+			IsOk => Ok(Some(ReceivedTaggedMessageInformation(tag_receive_information))),
 			
-			OperationInProgress => Ok((true, tag_receive_information)),
+			OperationInProgress => Ok(None),
 			
 			Error(error_code) => Err(error_code),
 			
@@ -81,6 +82,7 @@ pub trait NonBlockingRequest: Sized
 	{
 		let mut length = unsafe { uninitialized() };
 		
+		// length is only populated if status is not UCS_INPROGRESS.
 		let status = unsafe { ucp_stream_recv_request_test(self.non_null_pointer().as_ptr() as *mut c_void, &mut length) };
 		
 		match status.parse()

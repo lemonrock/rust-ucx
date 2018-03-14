@@ -2,23 +2,9 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// A message.
-pub trait Message: Debug
+
+/// This function is provided to pass to non-blocking calls where the caller doesn't care about being notified of completion of the non-blocking call.
+#[inline(always)]
+pub unsafe extern "C" fn receive_callback_is_ignored(_request: *mut c_void, _status: ucs_status_t, _info: *mut ucp_tag_recv_info_t)
 {
-	/// Start address of this message.
-	#[inline(always)]
-	fn address(&self) -> NonNull<u8>;
-	
-	/// Count of items in this message.
-	/// This is ***not*** the number of bytes.
-	#[inline(always)]
-	fn count(&self) -> usize;
-	
-	#[doc(hidden)]
-	#[inline(always)]
-	fn data_type_descriptor(&self) -> ucp_datatype_t;
-	
-	#[doc(hidden)]
-	#[inline(always)]
-	fn compute_count_from_length_in_bytes(length_in_bytes: usize) -> usize;
 }

@@ -2,23 +2,39 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// A message.
-pub trait Message: Debug
+/// Wrapper to make it easier to work with the underlying data.
+#[derive(Default, Debug)]
+pub struct ReceivedTaggedMessageInformation(pub(crate) ucp_tag_recv_info_t);
+
+impl Clone for ReceivedTaggedMessageInformation
 {
-	/// Start address of this message.
 	#[inline(always)]
-	fn address(&self) -> NonNull<u8>;
+	fn clone(&self) -> Self
+	{
+		ReceivedTaggedMessageInformation
+		(
+			ucp_tag_recv_info_t
+			{
+				sender_tag: self.0.sender_tag,
+				length: self.0.length,
+			}
+		)
+	}
+}
+
+impl ReceivedTaggedMessageInformation
+{
+	/// Message's tag.
+	#[inline(always)]
+	pub fn message_tag(&self) -> TagValue
+	{
+		TagValue(self.0.sender_tag)
+	}
 	
-	/// Count of items in this message.
-	/// This is ***not*** the number of bytes.
+	/// Message's length.
 	#[inline(always)]
-	fn count(&self) -> usize;
-	
-	#[doc(hidden)]
-	#[inline(always)]
-	fn data_type_descriptor(&self) -> ucp_datatype_t;
-	
-	#[doc(hidden)]
-	#[inline(always)]
-	fn compute_count_from_length_in_bytes(length_in_bytes: usize) -> usize;
+	pub fn message_length(&self) -> usize
+	{
+		self.0.length
+	}
 }

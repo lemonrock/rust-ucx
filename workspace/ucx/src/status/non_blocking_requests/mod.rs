@@ -7,6 +7,7 @@ use super::Status::*;
 use super::ucs_status_tExt;
 use super::super::Worker;
 use super::super::attributes::ApplicationContextAttributes;
+use super::super::tagged_messages::ReceivedTaggedMessageInformation;
 use ::libc::c_void;
 use ::std::mem::uninitialized;
 use ::std::ptr::NonNull;

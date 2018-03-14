@@ -20,7 +20,7 @@
 #[derive(Clone)]
 pub struct Worker
 {
-	pub(crate) handle: ucp_worker_h,
+	handle: ucp_worker_h,
 	worker_handle_drop_safety: Rc<WorkerHandleDropSafety>,
 }
 
@@ -40,12 +40,14 @@ impl PrintInformation for Worker
 	#[inline(always)]
 	fn print_information_to_stream(&self, stream: *mut FILE)
 	{
-		if self.handle.is_null()
+		let handle = self.handle;
+		
+		if handle.is_null()
 		{
 			return;
 		}
 		
-		unsafe { ucp_worker_print_info(self.handle, stream) };
+		unsafe { ucp_worker_print_info(handle, stream) };
 	}
 }
 
@@ -58,7 +60,7 @@ impl HasAttributes for Worker
 	{
 		self.debug_assert_handle_is_valid();
 		
-		Self::Attributes::query(self.handle)
+		Self::Attributes::query(self.debug_assert_handle_is_valid())
 	}
 }
 
@@ -98,9 +100,21 @@ impl Worker
 	#[inline(always)]
 	pub fn new_end_point<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddress>(&self, peer_failure_error_handler: E, their_remote_address: &Rc<A>, guarantee_that_send_requests_are_always_completed_successfully_or_error: bool) -> Result<Rc<RefCell<TheirRemotelyAccessibleEndPoint<E, A>>>, ErrorCode>
 	{
-		self.debug_assert_handle_is_valid();
-		
-		TheirRemotelyAccessibleEndPoint::new_end_point(peer_failure_error_handler, their_remote_address, guarantee_that_send_requests_are_always_completed_successfully_or_error, self)
+		TheirRemotelyAccessibleEndPoint::new(peer_failure_error_handler, their_remote_address, guarantee_that_send_requests_are_always_completed_successfully_or_error, self)
+	}
+	
+	/// Creates a convenience object to make it easier to focus on tagged message receiving.
+	#[inline(always)]
+	pub fn new_tagged_message_receiving_worker(&self) -> TaggedMessageReceivingWorker
+	{
+		TaggedMessageReceivingWorker::new(self)
+	}
+	
+	/// A server listener listens for incoming client connections on a particular address.
+	#[inline(always)]
+	pub fn create_server_listener<L: ServerListenerAcceptHandler>(&self, our_remotely_accessible_server_end_point_address: OurRemotelyAccessibleServerEndPointAddress, server_listener_accept_handler: L) -> Result<Box<ServerListener<L>>, ErrorCode>
+	{
+		ServerListener::create_server_listener(our_remotely_accessible_server_end_point_address, server_listener_accept_handler, &self.worker_handle_drop_safety, self.debug_assert_handle_is_valid())
 	}
 	
 	/// This routine returns the address of the worker object.
@@ -108,11 +122,9 @@ impl Worker
 	#[inline(always)]
 	pub fn our_remotely_accessible_worker_end_point_address(&self) -> OurRemotelyAccessibleWorkerEndPointAddress
 	{
-		self.debug_assert_handle_is_valid();
-		
 		let mut address = unsafe { uninitialized() };
 		let mut length = unsafe { uninitialized() };
-		panic_on_error!(ucp_worker_get_address, self.handle, &mut address, &mut length);
+		panic_on_error!(ucp_worker_get_address, self.debug_assert_handle_is_valid(), &mut address, &mut length);
 		
 		debug_assert!(!address.is_null(), "handle is null");
 		debug_assert_ne!(length, 0, "length is zero");
@@ -121,37 +133,10 @@ impl Worker
 		{
 			address: unsafe { NonNull::new_unchecked(address as *mut u8) },
 			length,
-			worker_handle: self.handle,
+			worker_handle: self.debug_assert_handle_is_valid(),
 			worker_handle_drop_safety: self.worker_handle_drop_safety.clone(),
 		}
 	}
-	
-	/// A server listener listens for incoming client connections on a particular address.
-	#[inline(always)]
-	pub fn create_server_listener<L: ServerListenerAcceptHandler>(&self, our_remotely_accessible_server_end_point_address: OurRemotelyAccessibleServerEndPointAddress, server_listener_accept_handler: L) -> Result<Box<ServerListener<L>>, ErrorCode>
-	{
-		self.debug_assert_handle_is_valid();
-		
-		ServerListener::create_server_listener(our_remotely_accessible_server_end_point_address, server_listener_accept_handler, &self.worker_handle_drop_safety, self.handle)
-	}
-	
-	/*
-	
-	#[link_name = "\u{1}_ucp_tag_msg_recv_nb"] pub fn ucp_tag_msg_recv_nb(worker: ucp_worker_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, message: ucp_tag_message_h, cb: ucp_tag_recv_callback_t) -> ucs_status_ptr_t;
-	#[link_name = "\u{1}_ucp_tag_probe_nb"] pub fn ucp_tag_probe_nb(worker: ucp_worker_h, tag: ucp_tag_t, tag_mask: ucp_tag_t, remove: c_int, info: *mut ucp_tag_recv_info_t) -> ucp_tag_message_h;
-	
-	
-	#[link_name = "\u{1}_ucp_tag_recv_nb"] pub fn ucp_tag_recv_nb(worker: ucp_worker_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, tag_mask: ucp_tag_t, cb: ucp_tag_recv_callback_t) -> ucs_status_ptr_t;
-	#[link_name = "\u{1}_ucp_tag_recv_nbr"] pub fn ucp_tag_recv_nbr(worker: ucp_worker_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, tag_mask: ucp_tag_t, req: *mut c_void) -> ucs_status_t;
-	
-	
-	
-	#[link_name = "\u{1}_ucp_tag_recv_request_test"] pub fn ucp_tag_recv_request_test(request: *mut c_void, info: *mut ucp_tag_recv_info_t) -> ucs_status_t;
-	*/
-	
-	
-	
-	
 	
 	/// This non-blocking routine returns endpoints on a worker which are ready to consume streaming data.
 	/// The ready end points are put into `end_points`.
@@ -178,7 +163,7 @@ impl Worker
 	///
 	/// Non-blocking.
 	///
-	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::callback_is_ignored`.
+	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::send_callback_is_ignored`.
 	/// `request` should not be freed inside the `callback_when_finished_or_cancelled`.
 	///
 	/// Returns `Ok(None)` if complete.
@@ -189,9 +174,7 @@ impl Worker
 	#[inline(always)]
 	pub fn non_blocking_flush_all_end_points<'worker>(&'worker self, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
 	{
-		self.debug_assert_handle_is_valid();
-		
-		let status_pointer = unsafe { ucp_worker_flush_nb(self.handle, ReservedForFutureUseFlags, Some(callback_when_finished_or_cancelled)) };
+		let status_pointer = unsafe { ucp_worker_flush_nb(self.debug_assert_handle_is_valid(), ReservedForFutureUseFlags, Some(callback_when_finished_or_cancelled)) };
 		
 		self.parse_status_pointer(status_pointer)
 	}
@@ -202,9 +185,7 @@ impl Worker
 	#[inline(always)]
 	pub fn blocking_flush_all_end_points(&self)
 	{
-		self.debug_assert_handle_is_valid();
-		
-		panic_on_error!(ucp_worker_flush, self.handle);
+		panic_on_error!(ucp_worker_flush, self.debug_assert_handle_is_valid());
 	}
 	
 	/// Assures ordering between non-blocking operations.
@@ -217,9 +198,7 @@ impl Worker
 	#[inline(always)]
 	pub fn fence(&self)
 	{
-		self.debug_assert_handle_is_valid();
-		
-		panic_on_error!(ucp_worker_fence, self.handle);
+		panic_on_error!(ucp_worker_fence, self.debug_assert_handle_is_valid());
 	}
 	
 	/// This routine explicitly progresses all communication operations on a worker.
@@ -234,9 +213,7 @@ impl Worker
 	#[inline(always)]
 	pub fn progress(&self) -> bool
 	{
-		self.debug_assert_handle_is_valid();
-		
-		unsafe { ucp_worker_progress(self.handle) }.from_c_bool()
+		unsafe { ucp_worker_progress(self.debug_assert_handle_is_valid()) }.from_c_bool()
 	}
 	
 	/// Returns an Err if internal logical returns `UCS_ERR_IO_ERROR`.
@@ -245,8 +222,6 @@ impl Worker
 	#[inline(always)]
 	pub fn block_waiting_for_any_event(&self) -> Result<(), ()>
 	{
-		self.debug_assert_handle_is_valid();
-		
 		panic_on_error_with_clean_up!
 		(
 			status,
@@ -257,7 +232,7 @@ impl Worker
 				};
 			},
 			ucp_worker_wait,
-			self.handle
+			self.debug_assert_handle_is_valid()
 		);
 		Ok(())
 	}
@@ -268,26 +243,20 @@ impl Worker
 	#[inline(always)]
 	pub fn block_waiting_for_a_memory_event(&self, address: *mut u8)
 	{
-		self.debug_assert_handle_is_valid();
-		
-		unsafe { ucp_worker_wait_mem(self.handle, address as *mut _) }
+		unsafe { ucp_worker_wait_mem(self.debug_assert_handle_is_valid(), address as *mut _) }
 	}
 	
 	/// Wakes up (signals) a worker blocked waiting (in `block_waiting_for_any_event` or `block_waiting_for_a_memory_event`) or in `epoll`.
 	#[inline(always)]
 	pub fn wake_up(&self)
 	{
-		self.debug_assert_handle_is_valid();
-		
-		panic_on_error!(ucp_worker_signal, self.handle);
+		panic_on_error!(ucp_worker_signal, self.debug_assert_handle_is_valid());
 	}
 	
 	/// Returns 'true' if one should call `ucp_worker_progress()`, ie the worker can not arm because it is 'busy'.
 	#[inline(always)]
 	pub fn arm(&self) -> bool
 	{
-		self.debug_assert_handle_is_valid();
-		
 		panic_on_error_with_clean_up!
 		(
 			status,
@@ -298,7 +267,7 @@ impl Worker
 				}
 			},
 			ucp_worker_arm,
-			self.handle
+			self.debug_assert_handle_is_valid()
 		);
 		false
 	}
@@ -307,18 +276,14 @@ impl Worker
 	#[inline(always)]
 	pub fn get_file_descriptor_suitable_for_epoll(&self) -> RawFd
 	{
-		self.debug_assert_handle_is_valid();
-		
 		let mut file_descriptor = unsafe { uninitialized() };
-		panic_on_error!(ucp_worker_get_efd, self.handle, &mut file_descriptor);
+		panic_on_error!(ucp_worker_get_efd, self.debug_assert_handle_is_valid(), &mut file_descriptor);
 		file_descriptor
 	}
 	
 	#[inline(always)]
 	pub(crate) fn parse_status_pointer<'worker>(&'worker self, status_pointer: ucs_status_ptr_t) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
 	{
-		self.debug_assert_handle_is_valid();
-		
 		use self::Status::*;
 		use self::StatusOrUcxAllocatedNonBlockingRequest::*;
 		
@@ -348,12 +313,18 @@ impl Worker
 	}
 	
 	#[inline(always)]
+	pub(crate) fn debug_assert_handle_is_valid(&self) -> ucp_worker_h
+	{
+		debug_assert!(!self.handle.is_null(), "handle is null");
+		self.handle
+	}
+	
+	#[inline(always)]
 	fn ucp_stream_worker_poll(&self, end_points: *mut EndPointReadyToConsumeStreamingData, maximum_end_points: usize) -> Result<usize, ErrorCode>
 	{
-		self.debug_assert_handle_is_valid();
 		debug_assert!(!end_points.is_null(), "end_points is null");
 		
-		let result = unsafe { ucp_stream_worker_poll(self.handle, end_points as *mut _, maximum_end_points, ReservedForFutureUseFlags) };
+		let result = unsafe { ucp_stream_worker_poll(self.debug_assert_handle_is_valid(), end_points as *mut _, maximum_end_points, ReservedForFutureUseFlags) };
 		if result >= 0
 		{
 			let count = result as usize;
@@ -366,11 +337,5 @@ impl Worker
 			let status: ucs_status_t = unsafe { transmute(result as i8) };
 			Err(status.error_code_or_panic())
 		}
-	}
-	
-	#[inline(always)]
-	fn debug_assert_handle_is_valid(&self)
-	{
-		debug_assert!(!self.handle.is_null(), "handle is null");
 	}
 }

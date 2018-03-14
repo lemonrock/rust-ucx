@@ -21,13 +21,19 @@ impl<SerializedAndDeserialized: Debug, Operations: GenericDataTypeDescriptorOper
 	#[inline(always)]
 	fn count(&self) -> usize
 	{
-		size_of::<SerializedAndDeserialized>()
+		Self::element_size()
 	}
 	
 	#[inline(always)]
 	fn data_type_descriptor(&self) -> ucp_datatype_t
 	{
 		self.generic_data_type_descriptor.to_ucp_datatype_t()
+	}
+	
+	#[inline(always)]
+	fn compute_count_from_length_in_bytes(_length_in_bytes: usize) -> usize
+	{
+		Self::element_size()
 	}
 }
 
@@ -41,5 +47,11 @@ impl<SerializedAndDeserialized: Debug, Operations: GenericDataTypeDescriptorOper
 			message,
 			generic_data_type_descriptor
 		}
+	}
+	
+	#[inline(always)]
+	fn element_size() -> usize
+	{
+		size_of::<SerializedAndDeserialized>()
 	}
 }

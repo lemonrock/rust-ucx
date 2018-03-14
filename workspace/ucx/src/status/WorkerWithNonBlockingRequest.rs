@@ -59,4 +59,16 @@ impl<'worker, Request: NonBlockingRequest> WorkerWithNonBlockingRequest<'worker,
 	{
 		self.non_blocking_request.is_still_in_progress()
 	}
+	
+	#[inline(always)]
+	pub(crate) fn is_still_in_progress_for_tag_receive(&self) -> Result<Option<ReceivedTaggedMessageInformation>, ErrorCode>
+	{
+		self.non_blocking_request.is_still_in_progress_for_tag_receive()
+	}
+	
+	#[inline(always)]
+	pub(crate) fn is_still_in_progress_for_stream(&self) -> Result<Option<usize>, ErrorCode>
+	{
+		self.non_blocking_request.is_still_in_progress_for_stream()
+	}
 }

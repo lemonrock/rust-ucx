@@ -6,11 +6,11 @@
 #[derive(Debug)]
 pub struct ContiguousMessage<'a, T: 'a + Debug>
 {
-	array: &'a [T],
+	array: &'a mut [T],
 	data_type_descriptor: ContiguousDataTypeDescriptor,
 }
 
-impl<'a, T: Debug> Message for ContiguousMessage<'a, T>
+impl<'a, T: 'a + Debug> Message for ContiguousMessage<'a, T>
 {
 	#[inline(always)]
 	fn address(&self) -> NonNull<u8>
@@ -29,18 +29,33 @@ impl<'a, T: Debug> Message for ContiguousMessage<'a, T>
 	{
 		self.data_type_descriptor.to_ucp_datatype_t()
 	}
+	
+	#[inline(always)]
+	fn compute_count_from_length_in_bytes(length_in_bytes: usize) -> usize
+	{
+		let element_size = Self::element_size();
+		
+		// Rounds count up (normal integer division rounds down).
+		(length_in_bytes + (element_size + 1)) / element_size
+	}
 }
 
 impl<'a, T: Debug> ContiguousMessage<'a, T>
 {
 	/// Creates new instance.
 	#[inline(always)]
-	pub fn new(array: &'a [T]) -> Self
+	pub fn new(array: &'a mut [T]) -> Self
 	{
 		Self
 		{
 			array,
-			data_type_descriptor: ContiguousDataTypeDescriptor::new(size_of::<T>() as u64),
+			data_type_descriptor: ContiguousDataTypeDescriptor::new(Self::element_size() as u64),
 		}
+	}
+	
+	#[inline(always)]
+	fn element_size() -> usize
+	{
+		size_of::<T>()
 	}
 }

@@ -2,23 +2,13 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// A message.
-pub trait Message: Debug
+/// A trait to use with `pop()` to create correctly-sized (or at least, sufficiently-sized) uninitialized messages.
+pub trait MessageProvider
 {
-	/// Start address of this message.
-	#[inline(always)]
-	fn address(&self) -> NonNull<u8>;
+	/// Type of messages provided.
+	type M: Message;
 	
-	/// Count of items in this message.
-	/// This is ***not*** the number of bytes.
+	/// Provides an uninitialized message.
 	#[inline(always)]
-	fn count(&self) -> usize;
-	
-	#[doc(hidden)]
-	#[inline(always)]
-	fn data_type_descriptor(&self) -> ucp_datatype_t;
-	
-	#[doc(hidden)]
-	#[inline(always)]
-	fn compute_count_from_length_in_bytes(length_in_bytes: usize) -> usize;
+	fn provide_uninitialized_message(&mut self, received_tagged_message_information: ReceivedTaggedMessageInformation) -> Self::M;
 }

@@ -6,7 +6,7 @@
 #[derive(Debug)]
 pub struct IoVecMessage<'a>
 {
-	array: &'a [IoVec],
+	array: &'a mut [IoVec],
 }
 
 impl<'a> Message for IoVecMessage<'a>
@@ -28,17 +28,32 @@ impl<'a> Message for IoVecMessage<'a>
 	{
 		IoVecDataTypeDescriptor.to_ucp_datatype_t()
 	}
+	
+	#[inline(always)]
+	fn compute_count_from_length_in_bytes(length_in_bytes: usize) -> usize
+	{
+		let element_size = Self::element_size();
+		
+		// Rounds count up (normal integer division rounds down).
+		(length_in_bytes + (element_size + 1)) / element_size
+	}
 }
 
 impl<'a> IoVecMessage<'a>
 {
 	/// Creates new instance.
 	#[inline(always)]
-	pub fn new(array: &'a [IoVec]) -> Self
+	pub fn new(array: &'a mut [IoVec]) -> Self
 	{
 		Self
 		{
 			array,
 		}
+	}
+	
+	#[inline(always)]
+	fn element_size() -> usize
+	{
+		size_of::<IoVec>()
 	}
 }

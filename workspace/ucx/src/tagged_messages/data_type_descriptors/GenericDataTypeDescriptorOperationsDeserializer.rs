@@ -8,6 +8,10 @@ pub trait GenericDataTypeDescriptorOperationsDeserializer
 	/// Type deserialized.
 	type Deserialized;
 	
+	/// Serialized size.
+	#[inline(always)]
+	fn size(&self) -> usize;
+	
 	/// Deserialize.
 	fn deserialize(&self, virtual_offset_in_the_input_stream: usize, input_buffer: UcxAllocatedByteBuffer) -> Result<(), ErrorCode>;
 }

@@ -22,14 +22,12 @@ impl Default for ContiguousDataTypeDescriptor
 
 impl<'message_buffer> DataTypeDescriptor for ContiguousDataTypeDescriptor
 {
-	#[doc(hidden)]
 	#[inline(always)]
 	fn to_ucp_dt_type(&self) -> ucp_dt_type
 	{
 		ucp_dt_type::UCP_DATATYPE_CONTIG
 	}
 	
-	#[doc(hidden)]
 	#[inline(always)]
 	fn to_ucp_datatype_t(&self) -> ucp_datatype_t
 	{

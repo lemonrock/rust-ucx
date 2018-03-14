@@ -10,7 +10,7 @@ pub trait GenericDataTypeDescriptorOperationsSerializer
 	
 	/// Serialized size.
 	#[inline(always)]
-	fn serialized_size(&self) -> usize;
+	fn size(&self) -> usize;
 	
 	/// Serialize.
 	///

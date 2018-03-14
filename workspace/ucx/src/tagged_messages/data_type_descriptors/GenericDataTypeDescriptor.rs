@@ -109,13 +109,26 @@ impl<Operations: GenericDataTypeDescriptorOperations> GenericDataTypeDescriptor<
 	
 	unsafe extern "C" fn packed_size(state: *mut c_void) -> usize
 	{
-		let serializer = Self::tagged_pointer_to_serializer(state);
-		
-		let serialized_size = serializer.serialized_size();
-		
-		forget(serializer);
-		
-		serialized_size
+		if TagForLowestThreeBits::untag_just_tag(state).is(TagForLowestThreeBits::SerializerTag)
+		{
+			let serializer = Self::tagged_pointer_to_serializer(state);
+			
+			let size = serializer.size();
+			
+			forget(serializer);
+			
+			size
+		}
+		else
+		{
+			let deserializer = Self::tagged_pointer_to_deserializer(state);
+			
+			let size = deserializer.size();
+			
+			forget(deserializer);
+			
+			size
+		}
 	}
 	
 	unsafe extern "C" fn pack(state: *mut c_void, offset: usize, dest: *mut c_void, max_length: usize) -> usize

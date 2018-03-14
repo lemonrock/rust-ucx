@@ -3,11 +3,12 @@
 
 
 use self::non_blocking_requests::*;
+use self::ucs_status_t::*;
 pub use self::NonBlockingRequestCompletedOrInProgress::*;
 use super::TheirRemotelyAccessibleEndPoint;
 use super::TheirRemotelyAccessibleEndPointAddress;
 use super::Worker;
-use self::ucs_status_t::*;
+use super::tagged_messages::ReceivedTaggedMessageInformation;
 use ::std::cell::RefCell;
 use ::std::ffi::CStr;
 use ::std::mem::transmute;
