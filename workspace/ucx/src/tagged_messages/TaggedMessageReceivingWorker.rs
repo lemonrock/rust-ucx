@@ -75,7 +75,7 @@ impl TaggedMessageReceivingWorker
 	///
 	/// The provided message is not safe to re-use, reading or writing until this request has completed; it should be thought of as `::std::mem::uninitialized()` memory.
 	///
-	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::receive_callback_is_ignored`.
+	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::callbacks::tagged_message_receive_callback_is_ignored`.
 	/// `request` should not be freed inside the `callback_when_finished_or_cancelled`.
 	///
 	/// If a returned `ReceivingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
@@ -103,7 +103,7 @@ impl TaggedMessageReceivingWorker
 	///
 	/// It removes a matching message from the queue of received messages.
 	///
-	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::receive_callback_is_ignored`.
+	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::callbacks::tagged_message_receive_callback_is_ignored`.
 	/// `request` should not be freed inside the `callback_when_finished_or_cancelled`.
 	///
 	/// Call `self.progress()` occasionally; this function does not do any polling of the network.

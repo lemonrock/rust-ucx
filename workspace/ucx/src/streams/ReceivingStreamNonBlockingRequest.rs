@@ -4,15 +4,15 @@
 
 /// Exists to ensure that the message used for the tagged message is not dropped, re-used or written to until this request completes.
 ///
-/// If a `SendingStreamNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
+/// If a `ReceivingStreamNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
 #[derive(Debug)]
-pub struct SendingTaggedMessageNonBlockingRequest<'worker, M: Message, Request = UcxAllocatedNonBlockingRequest>
+pub struct ReceivingStreamNonBlockingRequest<'worker, M: Message, Request = UcxAllocatedNonBlockingRequest>
 where Request: NonBlockingRequest
 {
 	drop_limitation_on_moving_out_work_around: Option<(WorkerWithNonBlockingRequest<'worker, Request>, M)>,
 }
 
-impl<'worker, M: Message, Request: NonBlockingRequest> Drop for SendingTaggedMessageNonBlockingRequest<'worker, M, Request>
+impl<'worker, M: Message, Request: NonBlockingRequest> Drop for ReceivingStreamNonBlockingRequest<'worker, M, Request>
 {
 	#[inline(always)]
 	fn drop(&mut self)
@@ -25,7 +25,7 @@ impl<'worker, M: Message, Request: NonBlockingRequest> Drop for SendingTaggedMes
 	}
 }
 
-impl<'worker, M: Message, Request: NonBlockingRequest> Deref for SendingTaggedMessageNonBlockingRequest<'worker, M, Request>
+impl<'worker, M: Message, Request: NonBlockingRequest> Deref for ReceivingStreamNonBlockingRequest<'worker, M, Request>
 {
 	type Target = Worker;
 	
@@ -36,7 +36,7 @@ impl<'worker, M: Message, Request: NonBlockingRequest> Deref for SendingTaggedMe
 	}
 }
 
-impl<'worker, M: Message, Request: NonBlockingRequest> SendingTaggedMessageNonBlockingRequest<'worker, M, Request>
+impl<'worker, M: Message, Request: NonBlockingRequest> ReceivingStreamNonBlockingRequest<'worker, M, Request>
 {
 	#[inline(always)]
 	pub(crate) fn new(worker_with_non_blocking_request: WorkerWithNonBlockingRequest<'worker, Request>, message: M) -> Self
@@ -90,6 +90,26 @@ impl<'worker, M: Message, Request: NonBlockingRequest> SendingTaggedMessageNonBl
 			Ok(true) => Ok(Completed(message)),
 			
 			Ok(false) => Ok(InProgress(Self::new(worker_with_non_blocking_request, message))),
+			
+			Err(error_code) => Err(ErrorCodeWithMessage::new(error_code, message)),
+		}
+	}
+	
+	/// Check if the request is still in progress when receiving tag tagged_messages.
+	///
+	/// An Ok(Some(length)) means is completed successfully.
+	/// An Ok(None) means it is still in progress.
+	/// An Err() means it completed with an error.
+	#[inline(always)]
+	pub fn is_still_in_progress_for_stream(mut self) -> Result<NonBlockingRequestCompletedOrInProgress<(M, StreamLengthOfReceivedDataInBytes), Self>, ErrorCodeWithMessage<M>>
+	{
+		let (worker_with_non_blocking_request, message) = self.drop_limitation_on_moving_out_work_around.take().unwrap();
+		
+		match worker_with_non_blocking_request.is_still_in_progress_for_stream()
+		{
+			Ok(Some(length)) => Ok(Completed((message, length))),
+			
+			Ok(None) => Ok(InProgress(Self::new(worker_with_non_blocking_request, message))),
 			
 			Err(error_code) => Err(ErrorCodeWithMessage::new(error_code, message)),
 		}

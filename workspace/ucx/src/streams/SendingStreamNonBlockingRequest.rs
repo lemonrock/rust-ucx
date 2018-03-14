@@ -6,13 +6,13 @@
 ///
 /// If a `SendingStreamNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
 #[derive(Debug)]
-pub struct SendingTaggedMessageNonBlockingRequest<'worker, M: Message, Request = UcxAllocatedNonBlockingRequest>
+pub struct SendingStreamNonBlockingRequest<'worker, M: Message, Request = UcxAllocatedNonBlockingRequest>
 where Request: NonBlockingRequest
 {
 	drop_limitation_on_moving_out_work_around: Option<(WorkerWithNonBlockingRequest<'worker, Request>, M)>,
 }
 
-impl<'worker, M: Message, Request: NonBlockingRequest> Drop for SendingTaggedMessageNonBlockingRequest<'worker, M, Request>
+impl<'worker, M: Message, Request: NonBlockingRequest> Drop for SendingStreamNonBlockingRequest<'worker, M, Request>
 {
 	#[inline(always)]
 	fn drop(&mut self)
@@ -25,7 +25,7 @@ impl<'worker, M: Message, Request: NonBlockingRequest> Drop for SendingTaggedMes
 	}
 }
 
-impl<'worker, M: Message, Request: NonBlockingRequest> Deref for SendingTaggedMessageNonBlockingRequest<'worker, M, Request>
+impl<'worker, M: Message, Request: NonBlockingRequest> Deref for SendingStreamNonBlockingRequest<'worker, M, Request>
 {
 	type Target = Worker;
 	
@@ -36,7 +36,7 @@ impl<'worker, M: Message, Request: NonBlockingRequest> Deref for SendingTaggedMe
 	}
 }
 
-impl<'worker, M: Message, Request: NonBlockingRequest> SendingTaggedMessageNonBlockingRequest<'worker, M, Request>
+impl<'worker, M: Message, Request: NonBlockingRequest> SendingStreamNonBlockingRequest<'worker, M, Request>
 {
 	#[inline(always)]
 	pub(crate) fn new(worker_with_non_blocking_request: WorkerWithNonBlockingRequest<'worker, Request>, message: M) -> Self

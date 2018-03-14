@@ -4,7 +4,7 @@
 
 /// Exists to ensure that the message used for the tagged message is not dropped, re-used or written to until this request completes.
 ///
-/// If a `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message_buffer` dropped.
+/// If a `SendingStreamNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
 #[derive(Debug)]
 pub struct ReceivingTaggedMessageNonBlockingRequest<'worker, M: Message, Request = UcxAllocatedNonBlockingRequest>
 where Request: NonBlockingRequest

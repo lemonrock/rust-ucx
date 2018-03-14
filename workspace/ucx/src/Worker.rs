@@ -163,7 +163,7 @@ impl Worker
 	///
 	/// Non-blocking.
 	///
-	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::send_callback_is_ignored`.
+	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::callbacks::send_callback_is_ignored`.
 	/// `request` should not be freed inside the `callback_when_finished_or_cancelled`.
 	///
 	/// Returns `Ok(None)` if complete.

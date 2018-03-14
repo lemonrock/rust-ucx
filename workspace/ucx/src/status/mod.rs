@@ -8,6 +8,7 @@ pub use self::NonBlockingRequestCompletedOrInProgress::*;
 use super::TheirRemotelyAccessibleEndPoint;
 use super::TheirRemotelyAccessibleEndPointAddress;
 use super::Worker;
+use super::streams::StreamLengthOfReceivedDataInBytes;
 use super::tagged_messages::ReceivedTaggedMessageInformation;
 use ::std::cell::RefCell;
 use ::std::ffi::CStr;

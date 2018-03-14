@@ -96,13 +96,75 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 /// Implemented only for behaviour suitable for accessing remote servers.
 impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, TheirRemotelyAccessibleServerEndPointAddress>
 {
+	/// Sends a message on a stream.
+	///
+	/// The provided message is not safe to re-use or write-to until this request has completed.
+	///
+	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::callbacks::send_callback_is_ignored`.
+	/// `request` should not be freed inside the `callback_when_finished_or_cancelled`.
+	///
+	/// If a returned `SendingStreamNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
+	#[inline(always)]
+	pub fn stream_send_non_blocking_ucx_allocated<'worker, M: Message>(&'worker self, message: M, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<M, SendingStreamNonBlockingRequest<'worker, M>>, ErrorCodeWithMessage<M>>
+	{
+		let status_pointer = unsafe { ucp_stream_send_nb(self.debug_assert_handle_is_valid(), message.address().as_ptr() as *const c_void, message.count(), message.data_type_descriptor(), Some(callback_when_finished_or_cancelled), ReservedForFutureUseFlags) };
+		
+		match self.parent_worker.parse_status_pointer(status_pointer)
+		{
+			Ok(non_blocking_request_completed_or_in_progress) => match non_blocking_request_completed_or_in_progress
+			{
+				Completed(()) => Ok(Completed(message)),
+				
+				InProgress(non_blocking_request_in_progress) => Ok(InProgress(SendingStreamNonBlockingRequest::new(non_blocking_request_in_progress, message))),
+			},
+			
+			Err(error_code) => Err(ErrorCodeWithMessage::new(error_code, message))
+		}
+	}
+	
+	/// Receives a message from a stream.
+	///
+	/// The provided message is not safe to re-use or write-to until this request has completed.
+	///
+	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::callbacks::stream_receive_callback_is_ignored`.
+	/// `request` should not be freed inside the `callback_when_finished_or_cancelled`.
+	///
+	/// If a returned `SendingStreamNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
+	#[inline(always)]
+	pub fn stream_receive_non_blocking_ucx_allocated<'worker, M: Message>(&'worker self, message: M, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t, length: usize)) -> Result<NonBlockingRequestCompletedOrInProgress<M, ReceivingStreamNonBlockingRequest<'worker, M>>, ErrorCodeWithMessage<M>>
+	{
+		let mut length = unsafe { uninitialized() };
+		let status_pointer = unsafe { ucp_stream_recv_nb(self.debug_assert_handle_is_valid(), message.address().as_ptr() as *mut c_void, message.count(), message.data_type_descriptor(), Some(callback_when_finished_or_cancelled), &mut length, ReservedForFutureUseFlags) };
+		
+		match self.parent_worker.parse_status_pointer(status_pointer)
+		{
+			Ok(non_blocking_request_completed_or_in_progress) => match non_blocking_request_completed_or_in_progress
+			{
+				Completed(()) => Ok(Completed(message)),
+				
+				InProgress(non_blocking_request_in_progress) => Ok(InProgress(ReceivingStreamNonBlockingRequest::new(non_blocking_request_in_progress, message))),
+			},
+			
+			Err(error_code) => Err(ErrorCodeWithMessage::new(error_code, message))
+		}
+	}
+	
 	/*
 	
 	Stream
+	
+	
+	#[link_name = "\u{1}_ucp_stream_recv_nb"] pub fn ucp_stream_recv_nb(ep: ucp_ep_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, cb: ucp_stream_recv_callback_t, length: *mut usize, flags: c_uint) -> ucs_status_ptr_t;
+	
+	
+	
 	#[link_name = "\u{1}_ucp_stream_data_release"] pub fn ucp_stream_data_release(ep: ucp_ep_h, data: *mut c_void);
 	#[link_name = "\u{1}_ucp_stream_recv_data_nb"] pub fn ucp_stream_recv_data_nb(ep: ucp_ep_h, length: *mut usize) -> ucs_status_ptr_t;
-	#[link_name = "\u{1}_ucp_stream_recv_nb"] pub fn ucp_stream_recv_nb(ep: ucp_ep_h, buffer: *mut c_void, count: usize, datatype: ucp_datatype_t, cb: ucp_stream_recv_callback_t, length: *mut usize, flags: c_uint) -> ucs_status_ptr_t;
-	#[link_name = "\u{1}_ucp_stream_send_nb"] pub fn ucp_stream_send_nb(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, cb: ucp_send_callback_t, flags: c_uint) -> ucs_status_ptr_t;
+	
+	
+	
+	#[link_name = "\u{1}_ucp_stream_recv_request_test"] pub fn ucp_stream_recv_request_test(request: *mut c_void, length_p: *mut usize) -> ucs_status_t;
+	#[link_name = "\u{1}_ucp_stream_worker_poll"] pub fn ucp_stream_worker_poll(worker: ucp_worker_h, poll_eps: *mut ucp_stream_poll_ep_t, max_eps: usize, flags: c_uint) -> isize;
 	
 	*/
 }
@@ -171,10 +233,10 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 	///
 	/// The provided message is not safe to re-use or write-to until this request has completed.
 	///
-	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::send_callback_is_ignored`.
+	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::callbacks::send_callback_is_ignored`.
 	/// `request` should not be freed inside the `callback_when_finished_or_cancelled`.
 	///
-	/// If a returned `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
+	/// If a returned `SendingStreamNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
 	#[inline(always)]
 	pub fn non_blocking_send_tagged_message_ucx_allocated<'worker, M: Message>(&'worker self, message: M, tag: TagValue, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<M, SendingTaggedMessageNonBlockingRequest<'worker, M>>, ErrorCodeWithMessage<M>>
 	{
@@ -199,10 +261,10 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 	///
 	/// The provided message is not safe to re-use or write-to until this request has completed.
 	///
-	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::send_callback_is_ignored`.
+	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::callbacks::send_callback_is_ignored`.
 	/// `request` should not be freed inside the `callback_when_finished_or_cancelled`.
 	///
-	/// If a returned `SendingTaggedMessageNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
+	/// If a returned `SendingStreamNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
 	#[inline(always)]
 	pub fn non_blocking_send_tagged_message_completing_only_when_recipient_has_matched_its_tag<'worker, M: Message>(&'worker self, message: M, tag: TagValue, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<SendingTaggedMessageNonBlockingRequest<'worker, M>, ErrorCodeWithMessage<M>>
 	{
@@ -230,7 +292,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: TheirRemotelyAccessibleEndPointAddre
 	///
 	/// `request` points to memory that was previously initialized using the `NonBlockingRequestMemoryCustomization` trait, which is a type parameter of `MemoryCustomization` on the `ApplicationContext`.
 	///
-	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::send_callback_is_ignored`.
+	/// For a `callback_when_finished_or_cancelled` that does nothing, use `::ucx::callbacks::send_callback_is_ignored`.
 	/// `request` should not be freed inside the `callback_when_finished_or_cancelled`.
 	///
 	/// Returns `Ok(())` if initiated and is already complete.

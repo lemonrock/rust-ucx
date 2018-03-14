@@ -78,7 +78,7 @@ pub trait NonBlockingRequest: Sized
 	/// An Ok(None) means it is still in progress.
 	/// An Err() means it completed with an error.
 	#[inline(always)]
-	fn is_still_in_progress_for_stream(&self) -> Result<Option<usize>, ErrorCode>
+	fn is_still_in_progress_for_stream(&self) -> Result<Option<StreamLengthOfReceivedDataInBytes>, ErrorCode>
 	{
 		let mut length = unsafe { uninitialized() };
 		

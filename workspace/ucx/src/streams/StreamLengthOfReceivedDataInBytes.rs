@@ -2,9 +2,6 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-
-/// This function is provided to pass to non-blocking calls where the caller doesn't care about being notified of completion of the non-blocking call.
-#[inline(always)]
-pub unsafe extern "C" fn receive_callback_is_ignored(_request: *mut c_void, _status: ucs_status_t, _info: *mut ucp_tag_recv_info_t)
-{
-}
+/// The size of the received data in bytes.
+/// This value is always an integral multiple of the datatype size associated with the request.
+pub type StreamLengthOfReceivedDataInBytes = usize;

@@ -32,6 +32,7 @@
 
 #[cfg(target_os = "linux")] use self::attributes::*;
 #[cfg(target_os = "linux")] use self::buffers::*;
+#[cfg(target_os = "linux")] use self::callbacks::*;
 #[cfg(target_os = "linux")] use self::configuration::non_blocking_request_memory_customization::*;
 #[cfg(target_os = "linux")] use self::configuration::values::*;
 #[cfg(target_os = "linux")] use self::cpu_set::*;
@@ -74,6 +75,10 @@
 
 /// Traits and structs to help with un-managed buffers from UCX.
 #[cfg(target_os = "linux")] pub mod buffers;
+
+
+/// Convenience functions to be used for callbacks.
+#[cfg(target_os = "linux")] pub mod callbacks;
 
 
 /// Configuration.
@@ -122,8 +127,6 @@
 #[cfg(target_os = "linux")] include!("OurRemotelyAccessibleMemoryAddress.rs");
 #[cfg(target_os = "linux")] include!("OurRemotelyAccessibleServerEndPointAddress.rs");
 #[cfg(target_os = "linux")] include!("OurRemotelyAccessibleWorkerEndPointAddress.rs");
-#[cfg(target_os = "linux")] include!("receive_callback_is_ignored.rs");
-#[cfg(target_os = "linux")] include!("send_callback_is_ignored.rs");
 #[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleEndPoint.rs");
 #[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleEndPointAddress.rs");
 #[cfg(target_os = "linux")] include!("TheirRemotelyAccessibleMemory.rs");

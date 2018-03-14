@@ -67,7 +67,7 @@ impl<'worker, Request: NonBlockingRequest> WorkerWithNonBlockingRequest<'worker,
 	}
 	
 	#[inline(always)]
-	pub(crate) fn is_still_in_progress_for_stream(&self) -> Result<Option<usize>, ErrorCode>
+	pub(crate) fn is_still_in_progress_for_stream(&self) -> Result<Option<StreamLengthOfReceivedDataInBytes>, ErrorCode>
 	{
 		self.non_blocking_request.is_still_in_progress_for_stream()
 	}
