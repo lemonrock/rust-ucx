@@ -160,7 +160,7 @@ impl TaggedMessageReceivingWorker
 	#[inline(always)]
 	fn completed_message_received_tagged_message_information<N: NonBlockingRequest>(non_blocking_request: &N) -> ReceivedTaggedMessageInformation
 	{
-		non_blocking_request.is_still_in_progress_for_tag_receive().unwrap().unwrap()
+		non_blocking_request.is_still_in_progress_for_tagged_message_receive().unwrap().unwrap()
 	}
 	
 	#[inline(always)]

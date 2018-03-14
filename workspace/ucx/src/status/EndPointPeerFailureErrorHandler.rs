@@ -3,7 +3,7 @@
 
 
 /// Handle a remote peer failure.
-pub trait EndPointPeerFailureErrorHandler
+pub trait EndPointPeerFailureErrorHandler: Debug
 {
 	/// Remote peer failure.
 	#[inline(always)]

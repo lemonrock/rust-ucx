@@ -3,5 +3,5 @@
 
 
 /// The size of the received data in bytes.
-/// This value is always an integral multiple of the datatype size associated with the request.
+/// This value is always an integral multiple of the data type size associated with the request when using data type descriptors.
 pub type StreamLengthOfReceivedDataInBytes = usize;

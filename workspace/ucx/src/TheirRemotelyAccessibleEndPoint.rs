@@ -137,9 +137,8 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 	///
 	/// If a returned `SendingStreamNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
 	#[inline(always)]
-	pub fn stream_receive_non_blocking_ucx_allocated<'worker, M: Message>(&'worker self, message: M, wait_for_all_data: bool, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t, length: usize)) -> Result<NonBlockingRequestCompletedOrInProgress<M, ReceivingStreamNonBlockingRequest<'worker, M>>, ErrorCodeWithMessage<M>>
+	pub fn stream_receive_non_blocking_ucx_allocated<'worker, M: Message>(&'worker self, message: M, wait_for_all_data: bool, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t, length: usize)) -> Result<NonBlockingRequestCompletedOrInProgress<(M, StreamLengthOfReceivedDataInBytes), ReceivingStreamNonBlockingRequest<'worker, M>>, ErrorCodeWithMessage<M>>
 	{
-		// ?length
 		let flags = if wait_for_all_data
 		{
 			UCP_STREAM_RECV_FLAG_WAITALL
@@ -156,7 +155,7 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 		{
 			Ok(non_blocking_request_completed_or_in_progress) => match non_blocking_request_completed_or_in_progress
 			{
-				Completed(()) => Ok(Completed(message)),
+				Completed(()) => Ok(Completed((message, length))),
 				
 				InProgress(non_blocking_request_in_progress) => Ok(InProgress(ReceivingStreamNonBlockingRequest::new(non_blocking_request_in_progress, message))),
 			},
@@ -165,20 +164,23 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 		}
 	}
 	
-	/*
-	
-	Stream
-	
-	
-	#[link_name = "\u{1}_ucp_stream_data_release"] pub fn ucp_stream_data_release(ep: ucp_ep_h, data: *mut c_void);
-	#[link_name = "\u{1}_ucp_stream_recv_data_nb"] pub fn ucp_stream_recv_data_nb(ep: ucp_ep_h, length: *mut usize) -> ucs_status_ptr_t;
-	
-	
-	
-	#[link_name = "\u{1}_ucp_stream_recv_request_test"] pub fn ucp_stream_recv_request_test(request: *mut c_void, length_p: *mut usize) -> ucs_status_t;
-	#[link_name = "\u{1}_ucp_stream_worker_poll"] pub fn ucp_stream_worker_poll(worker: ucp_worker_h, poll_eps: *mut ucp_stream_poll_ep_t, max_eps: usize, flags: c_uint) -> isize;
-	
-	*/
+	/// Receives zero or more bytes from a stream.
+	#[inline(always)]
+	pub fn stream_receive_bytes(this: &Rc<RefCell<Self>>) -> Option<ReceivedBytes<E>>
+	{
+		let mut length = unsafe { uninitialized() };
+		
+		// This status_pointer is not like any other...
+		let status_pointer = unsafe { ucp_stream_recv_data_nb(this.borrow().debug_assert_handle_is_valid(), &mut length) };
+		if status_pointer.is_null()
+		{
+			None
+		}
+		else
+		{
+			Some(ReceivedBytes::new(status_pointer as *mut u8, length, this))
+		}
+	}
 }
 
 /// Implemented only for behaviour suitable for accessing remote workers.

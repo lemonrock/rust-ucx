@@ -47,6 +47,18 @@ impl<'worker, M: Message, Request: NonBlockingRequest> SendingTaggedMessageNonBl
 		}
 	}
 	
+	/// Cancels a non-blocking request.
+	///
+	/// Returns the message for re-use.
+	#[inline(always)]
+	pub fn cancel(mut self) -> M
+	{
+		let (worker_with_non_blocking_request, message) = self.drop_limitation_on_moving_out_work_around.take().unwrap();
+		
+		worker_with_non_blocking_request.cancel();
+		message
+	}
+	
 	/// Blocks until a non-blocking request is complete.
 	#[inline(always)]
 	pub fn block_until_non_blocking_request_is_complete(mut self) -> Result<M, ErrorCodeWithMessage<M>>
@@ -59,18 +71,6 @@ impl<'worker, M: Message, Request: NonBlockingRequest> SendingTaggedMessageNonBl
 			
 			Err(error_code) => Err(ErrorCodeWithMessage::new(error_code, message))
 		}
-	}
-	
-	/// Cancels a non-blocking request.
-	///
-	/// Returns the message for re-use.
-	#[inline(always)]
-	pub fn cancel(mut self) -> M
-	{
-		let (worker_with_non_blocking_request, message) = self.drop_limitation_on_moving_out_work_around.take().unwrap();
-		
-		worker_with_non_blocking_request.cancel();
-		message
 	}
 	
 	/// Check if the request is still in progress.

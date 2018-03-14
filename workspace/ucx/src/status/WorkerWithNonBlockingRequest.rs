@@ -35,6 +35,13 @@ impl<'worker, Request: NonBlockingRequest> WorkerWithNonBlockingRequest<'worker,
 		}
 	}
 	
+	/// Cancels a non-blocking request.
+	#[inline(always)]
+	pub fn cancel(self)
+	{
+		self.non_blocking_request.cancel(self.parent_worker)
+	}
+	
 	/// Blocks until a non-blocking request is complete.
 	#[inline(always)]
 	pub fn block_until_non_blocking_request_is_complete(self) -> Result<(), ErrorCode>
@@ -42,11 +49,16 @@ impl<'worker, Request: NonBlockingRequest> WorkerWithNonBlockingRequest<'worker,
 		self.non_blocking_request.subsequently_block_until_non_blocking_request_is_complete(self.parent_worker)
 	}
 	
-	/// Cancels a non-blocking request.
 	#[inline(always)]
-	pub fn cancel(self)
+	pub(crate) fn block_until_non_blocking_request_is_complete_for_tagged_message_receive(self) -> Result<ReceivedTaggedMessageInformation, ErrorCode>
 	{
-		self.non_blocking_request.cancel(self.parent_worker)
+		self.non_blocking_request.subsequently_block_until_non_blocking_request_is_complete_for_tagged_message_receive(self.parent_worker)
+	}
+	
+	#[inline(always)]
+	pub(crate) fn block_until_non_blocking_request_is_complete_for_stream_receive(self) -> Result<StreamLengthOfReceivedDataInBytes, ErrorCode>
+	{
+		self.non_blocking_request.subsequently_block_until_non_blocking_request_is_complete_for_stream_receive(self.parent_worker)
 	}
 	
 	/// Check if the request is still in progress.
@@ -61,14 +73,14 @@ impl<'worker, Request: NonBlockingRequest> WorkerWithNonBlockingRequest<'worker,
 	}
 	
 	#[inline(always)]
-	pub(crate) fn is_still_in_progress_for_tag_receive(&self) -> Result<Option<ReceivedTaggedMessageInformation>, ErrorCode>
+	pub(crate) fn is_still_in_progress_for_tagged_message_receive(&self) -> Result<Option<ReceivedTaggedMessageInformation>, ErrorCode>
 	{
-		self.non_blocking_request.is_still_in_progress_for_tag_receive()
+		self.non_blocking_request.is_still_in_progress_for_tagged_message_receive()
 	}
 	
 	#[inline(always)]
-	pub(crate) fn is_still_in_progress_for_stream(&self) -> Result<Option<StreamLengthOfReceivedDataInBytes>, ErrorCode>
+	pub(crate) fn is_still_in_progress_for_stream_receive(&self) -> Result<Option<StreamLengthOfReceivedDataInBytes>, ErrorCode>
 	{
-		self.non_blocking_request.is_still_in_progress_for_stream()
+		self.non_blocking_request.is_still_in_progress_for_stream_receive()
 	}
 }

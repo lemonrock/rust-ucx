@@ -12,6 +12,7 @@ use super::streams::StreamLengthOfReceivedDataInBytes;
 use super::tagged_messages::ReceivedTaggedMessageInformation;
 use ::std::cell::RefCell;
 use ::std::ffi::CStr;
+use ::std::fmt::Debug;
 use ::std::mem::transmute;
 use ::std::ops::Deref;
 use ::std::ptr::NonNull;

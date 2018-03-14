@@ -5,9 +5,7 @@
 /// A non-blocking request.
 pub trait NonBlockingRequest: Sized
 {
-	/// Block until a non-blocking operation is complete.
-	///
-	/// Useful when the UCX API exposes non-blocking operations, but an application needs to wait for them to finish.
+	#[doc(hidden)]
 	#[inline(always)]
 	fn subsequently_block_until_non_blocking_request_is_complete(self, parent_worker: &Worker) -> Result<(), ErrorCode>
 	{
@@ -23,11 +21,37 @@ pub trait NonBlockingRequest: Sized
 		Ok(())
 	}
 	
-	/// Check if the request is still in progress.
-	///
-	/// An Ok(true) means is completed successfully,
-	/// An Ok(false) means it is still in progress.
-	/// An Err() means it completed with an error.
+	#[doc(hidden)]
+	#[inline(always)]
+	fn subsequently_block_until_non_blocking_request_is_complete_for_tagged_message_receive(self, parent_worker: &Worker) -> Result<ReceivedTaggedMessageInformation, ErrorCode>
+	{
+		loop
+		{
+			parent_worker.progress();
+			
+			if let Some(received_tagged_message_information) = self.is_still_in_progress_for_tagged_message_receive()?
+			{
+				return Ok(received_tagged_message_information)
+			}
+		}
+	}
+	
+	#[doc(hidden)]
+	#[inline(always)]
+	fn subsequently_block_until_non_blocking_request_is_complete_for_stream_receive(self, parent_worker: &Worker) -> Result<StreamLengthOfReceivedDataInBytes, ErrorCode>
+	{
+		loop
+		{
+			parent_worker.progress();
+			
+			if let Some(length) = self.is_still_in_progress_for_stream_receive()?
+			{
+				return Ok(length)
+			}
+		}
+	}
+	
+	#[doc(hidden)]
 	#[inline(always)]
 	fn is_still_in_progress(&self) -> Result<bool, ErrorCode>
 	{
@@ -45,14 +69,9 @@ pub trait NonBlockingRequest: Sized
 		}
 	}
 	
-	/// Check if the request is still in progress when receiving tag tagged_messages.
-	/// Use this after calling `ucp_tag_recv_nb` or `ucp_tag_recv_nbr`.
-	///
-	/// An Ok(Some(tag_receive_information)) means is completed successfully,
-	/// An Ok(None) means it is still in progress.
-	/// An Err() means it completed with an error.
+	#[doc(hidden)]
 	#[inline(always)]
-	fn is_still_in_progress_for_tag_receive(&self) -> Result<Option<ReceivedTaggedMessageInformation>, ErrorCode>
+	fn is_still_in_progress_for_tagged_message_receive(&self) -> Result<Option<ReceivedTaggedMessageInformation>, ErrorCode>
 	{
 		let mut tag_receive_information = unsafe { uninitialized() };
 		
@@ -71,14 +90,9 @@ pub trait NonBlockingRequest: Sized
 		}
 	}
 	
-	/// Check if the request is still in progress when receiving tag tagged_messages.
-	/// Use this after calling `ucp_stream_recv_nb`.
-	///
-	/// An Ok(Some(received_data_in_bytes)) means is completed successfully,
-	/// An Ok(None) means it is still in progress.
-	/// An Err() means it completed with an error.
+	#[doc(hidden)]
 	#[inline(always)]
-	fn is_still_in_progress_for_stream(&self) -> Result<Option<StreamLengthOfReceivedDataInBytes>, ErrorCode>
+	fn is_still_in_progress_for_stream_receive(&self) -> Result<Option<StreamLengthOfReceivedDataInBytes>, ErrorCode>
 	{
 		let mut length = unsafe { uninitialized() };
 		
@@ -97,11 +111,7 @@ pub trait NonBlockingRequest: Sized
 		}
 	}
 	
-	/// Cancel an outstanding communications request.
-	///
-	/// This routine tries to cancels an outstanding communication request.
-	/// After calling this routine, the request will be in completed or canceled (but not both) state regardless of the status of the target endpoint associated with the communication request.
-	/// If the request is completed successfully, the `ucp_send_callback_t` "send" or `ucp_tag_recv_callback_t` "receive" completion callbacks (based on the type of the request) will be called with the `status` argument of the callback set to `UCS_OK`, and in a case it is cancelled the status argument is set to `UCS_ERR_CANCELED`.
+	#[doc(hidden)]
 	#[inline(always)]
 	fn cancel(self, parent_worker: &Worker)
 	{

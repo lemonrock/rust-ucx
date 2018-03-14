@@ -2,7 +2,7 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// Exists to ensure that the message used for the tagged message is not dropped, re-used or written to until this request completes.
+/// Exists to ensure that the message is not dropped, re-used or written to until this request completes.
 ///
 /// If a `SendingStreamNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
 #[derive(Debug)]
@@ -47,6 +47,18 @@ impl<'worker, M: Message, Request: NonBlockingRequest> SendingStreamNonBlockingR
 		}
 	}
 	
+	/// Cancels a non-blocking request.
+	///
+	/// Returns the message for re-use.
+	#[inline(always)]
+	pub fn cancel(mut self) -> M
+	{
+		let (worker_with_non_blocking_request, message) = self.drop_limitation_on_moving_out_work_around.take().unwrap();
+		
+		worker_with_non_blocking_request.cancel();
+		message
+	}
+	
 	/// Blocks until a non-blocking request is complete.
 	#[inline(always)]
 	pub fn block_until_non_blocking_request_is_complete(mut self) -> Result<M, ErrorCodeWithMessage<M>>
@@ -59,18 +71,6 @@ impl<'worker, M: Message, Request: NonBlockingRequest> SendingStreamNonBlockingR
 			
 			Err(error_code) => Err(ErrorCodeWithMessage::new(error_code, message))
 		}
-	}
-	
-	/// Cancels a non-blocking request.
-	///
-	/// Returns the message for re-use.
-	#[inline(always)]
-	pub fn cancel(mut self) -> M
-	{
-		let (worker_with_non_blocking_request, message) = self.drop_limitation_on_moving_out_work_around.take().unwrap();
-		
-		worker_with_non_blocking_request.cancel();
-		message
 	}
 	
 	/// Check if the request is still in progress.

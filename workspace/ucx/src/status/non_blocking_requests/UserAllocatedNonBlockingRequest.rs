@@ -2,7 +2,7 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// A wrapper to make it possible to work with the API `TheirRemotelyAccessibleEndPointEndPoint.non_blocking_send_tagged_message_v2()`.
+/// A wrapper to make it possible to work with the UCX API with stack-allocated data.
 pub struct UserAllocatedNonBlockingRequest([u8; ApplicationContextAttributes::ReservedSpaceInNonBlockingRequestsRoundedUp]);
 
 impl Default for UserAllocatedNonBlockingRequest

@@ -47,20 +47,6 @@ impl<'worker, M: Message, Request: NonBlockingRequest> ReceivingTaggedMessageNon
 		}
 	}
 	
-	/// Blocks until a non-blocking request is complete.
-	#[inline(always)]
-	pub fn block_until_non_blocking_request_is_complete(mut self) -> Result<M, ErrorCodeWithMessage<M>>
-	{
-		let (worker_with_non_blocking_request, message) = self.drop_limitation_on_moving_out_work_around.take().unwrap();
-		
-		match worker_with_non_blocking_request.block_until_non_blocking_request_is_complete()
-		{
-			Ok(()) => Ok(message),
-			
-			Err(error_code) => Err(ErrorCodeWithMessage::new(error_code, message))
-		}
-	}
-	
 	/// Cancels a non-blocking request.
 	///
 	/// Returns the message for re-use.
@@ -73,29 +59,21 @@ impl<'worker, M: Message, Request: NonBlockingRequest> ReceivingTaggedMessageNon
 		message
 	}
 	
-	/// Check if the request is still in progress.
-	///
-	/// An Ok(M) means is completed successfully; returns the message for re-use.
-	///
-	/// An Ok(Self) means it is still in progress.
-	///
-	/// An Err() means it completed with an error.
+	/// Blocks until a non-blocking request is complete.
 	#[inline(always)]
-	pub fn is_still_in_progress(mut self) -> Result<NonBlockingRequestCompletedOrInProgress<M, Self>, ErrorCodeWithMessage<M>>
+	pub fn block_until_non_blocking_request_is_complete(mut self) -> Result<(M, ReceivedTaggedMessageInformation), ErrorCodeWithMessage<M>>
 	{
 		let (worker_with_non_blocking_request, message) = self.drop_limitation_on_moving_out_work_around.take().unwrap();
 		
-		match worker_with_non_blocking_request.is_still_in_progress()
+		match worker_with_non_blocking_request.block_until_non_blocking_request_is_complete_for_tagged_message_receive()
 		{
-			Ok(true) => Ok(Completed(message)),
+			Ok(received_tagged_message_information) => Ok((message, received_tagged_message_information)),
 			
-			Ok(false) => Ok(InProgress(Self::new(worker_with_non_blocking_request, message))),
-			
-			Err(error_code) => Err(ErrorCodeWithMessage::new(error_code, message)),
+			Err(error_code) => Err(ErrorCodeWithMessage::new(error_code, message))
 		}
 	}
 	
-	/// Check if the request is still in progress when receiving tag tagged_messages.
+	/// Check if the request is still in progress when receiving tag tagged messages.
 	///
 	/// An Ok(Some(tag_receive_information)) means is completed successfully.
 	/// An Ok(None) means it is still in progress.
@@ -105,9 +83,9 @@ impl<'worker, M: Message, Request: NonBlockingRequest> ReceivingTaggedMessageNon
 	{
 		let (worker_with_non_blocking_request, message) = self.drop_limitation_on_moving_out_work_around.take().unwrap();
 		
-		match worker_with_non_blocking_request.is_still_in_progress_for_tag_receive()
+		match worker_with_non_blocking_request.is_still_in_progress_for_tagged_message_receive()
 		{
-			Ok(Some(information)) => Ok(Completed((message, information))),
+			Ok(Some(received_tagged_message_information)) => Ok(Completed((message, received_tagged_message_information))),
 			
 			Ok(None) => Ok(InProgress(Self::new(worker_with_non_blocking_request, message))),
 			
