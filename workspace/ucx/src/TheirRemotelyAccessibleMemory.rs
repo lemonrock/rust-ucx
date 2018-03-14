@@ -5,6 +5,8 @@
 /// Their remotely accessible memory.
 ///
 /// Use this to perform remote memory load() and store(), and atomic operations such as fetch_and_add() and compare_and_swap().
+///
+/// Dereferences to its parent end point, so one can call `non_blocking_flush()`, etc.
 #[derive(Debug)]
 pub struct TheirRemotelyAccessibleMemory<E: EndPointPeerFailureErrorHandler, A = DirectLocalToRemoteAddressTranslation>
 where A: LocalToRemoteAddressTranslation
@@ -20,6 +22,17 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> Dro
 	fn drop(&mut self)
 	{
 		unsafe { ucp_rkey_destroy(self.handle) }
+	}
+}
+
+impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> Deref for TheirRemotelyAccessibleMemory<E, A>
+{
+	type Target = Rc<TheirRemotelyAccessibleEndPoint<E, TheirRemotelyAccessibleWorkerEndPointAddress>>;
+	
+	#[inline(always)]
+	fn deref(&self) -> &Self::Target
+	{
+		&self.parent_end_point
 	}
 }
 
@@ -48,7 +61,22 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 		let remote_address = self.remote_address(local_source_address);
 		
 		let status = unsafe { ucp_put(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
-		Self::parse_status(status)
+		Self::parse_status_for_blocking(status)
+	}
+	
+	/// Non-blocking remote store (put) operation.
+	///
+	/// This routine loads a contiguous block of data of `length` bytes from the remote address and puts into the local address.
+	///
+	/// The local memory is ***not*** safe to use immediately afterwards if 'InProgress' is returned; in this case, flush either the end point or the worker.
+	#[inline(always)]
+	pub fn non_blocking_store(&self, local_source_address: NonNull<u8>, length_in_bytes: usize) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
+	{
+		let local_address = local_source_address.as_ptr()  as *mut c_void;
+		let remote_address = self.remote_address(local_source_address);
+		
+		let status = unsafe { ucp_put_nbi(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
+		Self::parse_status_for_non_blocking(status)
 	}
 	
 	/// Blocking remote load (get) operation.
@@ -63,7 +91,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 		let remote_address = self.remote_address(local_destination_address);
 		
 		let status = unsafe { ucp_get(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
-		Self::parse_status(status)
+		Self::parse_status_for_blocking(status)
 	}
 	
 	#[inline(always)]
@@ -79,13 +107,31 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	}
 	
 	#[inline(always)]
-	fn parse_status(status: ucs_status_t) -> Result<(), ErrorCode>
+	fn parse_status_for_blocking(status: ucs_status_t) -> Result<(), ErrorCode>
 	{
 		use self::Status::*;
 		
 		match status.parse()
 		{
 			IsOk => Ok(()),
+			
+			Error(error_code) => Err(error_code),
+			
+			unexpected @ _ => panic!("Unexpected status '{:?}'", unexpected)
+		}
+	}
+	
+	#[inline(always)]
+	fn parse_status_for_non_blocking(status: ucs_status_t) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
+	{
+		use self::Status::*;
+		use self::NonBlockingRequestCompletedOrInProgress::*;
+		
+		match status.parse()
+		{
+			IsOk => Ok(Completed(())),
+			
+			OperationInProgress => Ok(InProgress(())),
 			
 			Error(error_code) => Err(error_code),
 			

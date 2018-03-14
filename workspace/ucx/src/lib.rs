@@ -63,6 +63,7 @@
 #[cfg(target_os = "linux")] use ::std::mem::uninitialized;
 #[cfg(target_os = "linux")] use ::std::mem::zeroed;
 #[cfg(target_os = "linux")] use ::std::os::unix::io::RawFd;
+#[cfg(target_os = "linux")] use ::std::ops::Deref;
 #[cfg(target_os = "linux")] use ::std::ptr::NonNull;
 #[cfg(target_os = "linux")] use ::std::ptr::null_mut;
 #[cfg(target_os = "linux")] use ::std::ptr::write;
