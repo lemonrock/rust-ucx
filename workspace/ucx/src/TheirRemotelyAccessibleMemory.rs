@@ -201,6 +201,38 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 		Self::parse_status_for_blocking(status, previous_value)
 	}
 	
+	/// Blocking operation that atomically compares and swaps a u32 value to a remote memory location and returns the previous value (which, if successful, will be the same as the `value_to_expect`).
+	///
+	/// Should be thought of as sequentially consistent.
+	///
+	/// The remote address must be 4-byte (32-bit) aligned.
+	#[inline(always)]
+	pub fn blocking_atomic_compare_and_swap_u32_value(&self, aligned_remote_address: u64, value_to_expect: u32, value_to_swap_for: u32) -> Result<u32, ErrorCode>
+	{
+		debug_assert_eq!(aligned_remote_address % 4, 0, "aligned_remote_address '{}' is not 4-byte (32-bit) aligned", aligned_remote_address);
+		
+		let mut previous_value = unsafe { uninitialized() };
+		
+		let status = unsafe { ucp_atomic_cswap32(self.end_point_handle(), value_to_expect, value_to_swap_for, aligned_remote_address, self.debug_assert_handle_is_valid(), &mut previous_value) };
+		Self::parse_status_for_blocking(status, previous_value)
+	}
+	
+	/// Blocking operation that atomically compares and swaps a u32 value to a remote memory location and returns the previous value (which, if successful, will be the same as the `value_to_expect`).
+	///
+	/// Should be thought of as sequentially consistent.
+	///
+	/// The remote address must be 8-byte (64-bit) aligned.
+	#[inline(always)]
+	pub fn blocking_atomic_compare_and_swap_u64_value(&self, aligned_remote_address: u64, value_to_expect: u64, value_to_swap_for: u64) -> Result<u64, ErrorCode>
+	{
+		debug_assert_eq!(aligned_remote_address % 8, 0, "aligned_remote_address '{}' is not 8-byte (64-bit) aligned", aligned_remote_address);
+		
+		let mut previous_value = unsafe { uninitialized() };
+		
+		let status = unsafe { ucp_atomic_cswap64(self.end_point_handle(), value_to_expect, value_to_swap_for, aligned_remote_address, self.debug_assert_handle_is_valid(), &mut previous_value) };
+		Self::parse_status_for_blocking(status, previous_value)
+	}
+	
 	#[inline(always)]
 	fn remote_address(&self, local_address: NonNull<u8>) -> u64
 	{
