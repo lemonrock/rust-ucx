@@ -12,6 +12,7 @@
       <w>chunksize</w>
       <w>condvar</w>
       <w>crummey</w>
+      <w>cswap</w>
       <w>cuda</w>
       <w>dedup</w>
       <w>dequeued</w>
@@ -32,6 +33,7 @@
       <w>errnum</w>
       <w>errormsg</w>
       <w>etimedout</w>
+      <w>fadd</w>
       <w>fclose</w>
       <w>fffd</w>
       <w>fflus</w>
@@ -40,6 +42,7 @@
       <w>getcpu</w>
       <w>growable</w>
       <w>homebrew</w>
+      <w>iface</w>
       <w>indexmap</w>
       <w>initializable</w>
       <w>inprogress</w>
