@@ -4,46 +4,55 @@
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct uct_sockaddr_accessibility_t(pub u32);
+pub struct ucm_mem_type(pub u32);
 
-impl BitOr<uct_sockaddr_accessibility_t> for uct_sockaddr_accessibility_t
+impl BitOr<ucm_mem_type> for ucm_mem_type
 {
 	type Output = Self;
 	
 	#[inline(always)]
 	fn bitor(self, other: Self) -> Self
 	{
-		uct_sockaddr_accessibility_t(self.0 | other.0)
+		ucm_mem_type(self.0 | other.0)
 	}
 }
 
-impl BitOrAssign for uct_sockaddr_accessibility_t
+impl BitOrAssign for ucm_mem_type
 {
 	
 	#[inline(always)]
-	fn bitor_assign(&mut self, rhs: uct_sockaddr_accessibility_t)
+	fn bitor_assign(&mut self, rhs: ucm_mem_type)
 	{
 		self.0 |= rhs.0;
 	}
 }
 
-impl BitAnd<uct_sockaddr_accessibility_t> for uct_sockaddr_accessibility_t
+impl BitAnd<ucm_mem_type> for ucm_mem_type
 {
 	type Output = Self;
 	
 	#[inline(always)]
 	fn bitand(self, other: Self) -> Self
 	{
-		uct_sockaddr_accessibility_t(self.0 & other.0)
+		ucm_mem_type(self.0 & other.0)
 	}
 }
 
-impl BitAndAssign for uct_sockaddr_accessibility_t
+impl BitAndAssign for ucm_mem_type
 {
 	
 	#[inline(always)]
-	fn bitand_assign(&mut self, rhs: uct_sockaddr_accessibility_t)
+	fn bitand_assign(&mut self, rhs: ucm_mem_type)
 	{
 		self.0 &= rhs.0;
 	}
+}
+
+impl ucm_mem_type
+{
+	pub const CUDA: Self = ucm_mem_type(1);
+}
+
+impl ucm_mem_type
+{
 }

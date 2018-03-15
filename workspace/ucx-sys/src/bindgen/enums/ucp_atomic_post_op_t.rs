@@ -2,7 +2,9 @@
 // Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-pub type uct_memory_type_t = u32;
-
-pub const UCT_MD_MEM_TYPE_CUDA: uct_memory_type_t = 1;
-pub const UCT_MD_MEM_TYPE_HOST: uct_memory_type_t = 0;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum ucp_atomic_post_op_t
+{
+	UCP_ATOMIC_POST_OP_ADD = 0,
+}

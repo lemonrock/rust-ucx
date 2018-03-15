@@ -143,7 +143,7 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 	{
 		let flags = if wait_for_all_data
 		{
-			UCP_STREAM_RECV_FLAG_WAITALL
+			ucp_stream_recv_flags_t::WAITALL.0
 		}
 		else
 		{

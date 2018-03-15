@@ -2,4 +2,19 @@
 // Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-pub type ucp_stream_recv_flags_t = u32;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum uct_alloc_method_t
+{
+	UCT_ALLOC_METHOD_THP = 0,
+	UCT_ALLOC_METHOD_MD = 1,
+	UCT_ALLOC_METHOD_HEAP = 2,
+	UCT_ALLOC_METHOD_MMAP = 3,
+	UCT_ALLOC_METHOD_HUGE = 4,
+	UCT_ALLOC_METHOD_LAST = 5,
+}
+
+impl uct_alloc_method_t
+{
+	pub const DEFAULT: Self = uct_alloc_method_t::UCT_ALLOC_METHOD_LAST;
+}

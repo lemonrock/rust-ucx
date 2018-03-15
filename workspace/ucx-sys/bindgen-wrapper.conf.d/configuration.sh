@@ -19,43 +19,6 @@ final_chance_to_tweak()
 	sed -i -e 's/#\[derive(Debug, Default, Copy)\]/#[derive(Copy)]/g' "$outputFolderPath"/structs/uct_md_attr.rs
 
 
-	_fix_type()
-	{
-		local constant_prefix="$1"
-		local constant_type="$2"
-
-		{
-			printf '\n'
-
-			grep "^pub const $constant_prefix" "$outputFolderPath"/constants/miscellany.rs
-		} >>"$outputFolderPath"/types/"$constant_type".rs
-
-		grep -v "^pub const $constant_prefix" "$outputFolderPath"/constants/miscellany.rs >"$outputFolderPath"/constants/miscellany.rs.tmp
-		rm "$outputFolderPath"/constants/miscellany.rs
-		mv "$outputFolderPath"/constants/miscellany.rs.tmp "$outputFolderPath"/constants/miscellany.rs
-	}
-
-	_fix_type UCP_ATOMIC_POST_OP_ ucp_atomic_post_op_t
-	_fix_type UCP_EP_PARAMS_FLAGS_ ucp_ep_params_flags_field
-	_fix_type UCT_ALLOC_METHOD_ uct_alloc_method_t
-	_fix_type UCT_MD_MEM_TYPE_ uct_memory_type_t
-	_fix_type UCT_SOCKADDR_ACC_ uct_sockaddr_accessibility_t
-
-
-	_fix_last_in_type()
-	{
-		local _type="$1"
-
-		grep -v "^pub const .*_LAST" "$outputFolderPath"/types/"$_type".rs >"$outputFolderPath"/types/"$_type".rs.tmp
-		rm "$outputFolderPath"/types/"$_type".rs
-		mv "$outputFolderPath"/types/"$_type".rs.tmp "$outputFolderPath"/types/"$_type".rs
-	}
-
-	_fix_last_in_type ucp_atomic_post_op_t
-	_fix_last_in_type uct_alloc_method_t
-	_fix_last_in_type uct_memory_type_t
-
-
 	_fix_bitfield()
 	{
 		local constant_prefix="$1"
@@ -104,6 +67,10 @@ final_chance_to_tweak()
 	_fix_bitfield UCP_MEM_MAP_ _bindgen_ty_2
 	_fix_bitfield UCT_MD_MEM_FLAG_ uct_md_mem_flags
 	_fix_bitfield UCS_HANDLE_ERROR_ ucs_handle_error_t
+	_fix_bitfield UCM_MEM_TYPE_ ucm_mem_type
+	_fix_bitfield UCP_EP_PARAMS_FLAGS_ ucp_ep_params_flags_field
+	_fix_bitfield UCM_MEM_TYPE_ ucm_mem_type
+	_fix_bitfield UCP_STREAM_RECV_FLAG_ ucp_stream_recv_flags_t
 
 
 	_fix_duplicate_enum_constant()
@@ -129,6 +96,7 @@ final_chance_to_tweak()
 	}
 
 	_fix_duplicate_enum_constant UCP_DATATYPE_ ucp_dt_type
+	_fix_duplicate_enum_constant UCT_ALLOC_METHOD_ uct_alloc_method_t
 
 
 	_fix_last_in_enum()
@@ -148,4 +116,6 @@ final_chance_to_tweak()
 	_fix_last_in_enum uct_device_type_t
 	_fix_last_in_enum ucs_log_level_t
 	_fix_last_in_enum ucs_thread_mode_t
+	_fix_last_in_enum ucp_atomic_post_op_t
+	_fix_last_in_enum uct_memory_type_t
 }

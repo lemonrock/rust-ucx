@@ -3,6 +3,7 @@
 
 
 include!("enums/ucp_atomic_fetch_op_t.rs");
+include!("enums/ucp_atomic_post_op_t.rs");
 include!("enums/ucp_dt_type.rs");
 include!("enums/ucp_ep_close_mode.rs");
 include!("enums/ucp_err_handling_mode_t.rs");
@@ -13,6 +14,9 @@ include!("enums/ucs_stats_formats_t.rs");
 include!("enums/ucs_status_t.rs");
 include!("enums/ucs_ternary_value.rs");
 include!("enums/ucs_thread_mode_t.rs");
+include!("enums/uct_alloc_method_t.rs");
 include!("enums/uct_am_trace_type.rs");
 include!("enums/uct_device_type_t.rs");
 include!("enums/uct_mem_advice_t.rs");
+include!("enums/uct_memory_type_t.rs");
+include!("enums/uct_sockaddr_accessibility_t.rs");

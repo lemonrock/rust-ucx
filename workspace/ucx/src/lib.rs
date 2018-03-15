@@ -99,6 +99,9 @@
 /// Different strategies for converting local addresses to remote addresses.
 #[cfg(target_os = "linux")] mod local_to_remote_address_translations;
 
+/// Low-level API for working with (or around) UCM's memory events for `mmap` et al.
+#[cfg(target_os = "linux")] pub mod memory_events;
+
 
 /// Print information helpers.
 #[cfg(target_os = "linux")] pub mod print_information;

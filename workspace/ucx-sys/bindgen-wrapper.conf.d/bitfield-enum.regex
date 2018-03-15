@@ -26,5 +26,7 @@ uct_iface_open_mode
 uct_md_mem_flags
 uct_msg_flags
 uct_progress_types
-uct_sockaddr_accessibility_t
 ucs_handle_error_t
+ucm_mem_type
+ucp_ep_params_flags_field
+ucp_stream_recv_flags_t

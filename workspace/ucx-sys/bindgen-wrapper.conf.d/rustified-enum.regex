@@ -14,3 +14,7 @@ uct_am_trace_type
 uct_device_type_t
 uct_mem_advice_t
 uct_memory_type_t
+ucp_atomic_post_op_t
+uct_alloc_method_t
+uct_memory_type_t
+uct_sockaddr_accessibility_t

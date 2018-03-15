@@ -20,7 +20,7 @@ impl TheirRemotelyAccessibleEndPointAddress for TheirRemotelyAccessibleServerEnd
 			addr: socket_address,
 			addrlen: length,
 		};
-		end_pointer_parameters.flags |= UCP_EP_PARAMS_FLAGS_CLIENT_SERVER;
+		end_pointer_parameters.flags |= ucp_ep_params_flags_field::CLIENT_SERVER.0;
 		
 		end_pointer_parameters
 	}
