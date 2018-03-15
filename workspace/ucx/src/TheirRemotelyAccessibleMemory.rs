@@ -120,11 +120,11 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 		Self::parse_status_for_non_blocking(status)
 	}
 	
-	/// ?Blocking operation that atomically adds a u32 increment to a remote memory location.
+	/// Partly blocking operation that atomically adds a u32 increment to a remote memory location.
 	///
 	/// The remote address must be 4-byte (32-bit) aligned.
 	#[inline(always)]
-	pub fn blocking_atomic_add_u32_increment(&self, aligned_remote_address: u64, increment: u32) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
+	pub fn partly_blocking_atomic_add_u32_increment(&self, aligned_remote_address: u64, increment: u32) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
 	{
 		debug_assert_eq!(aligned_remote_address % 4, 0, "aligned_remote_address '{}' is not 4-byte (32-bit) aligned", aligned_remote_address);
 		
@@ -132,17 +132,24 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 		Self::parse_status_for_non_blocking(status)
 	}
 	
-	/// ?Blocking operation that atomically adds a u64 increment to a remote memory location.
+	/// Partly blocking operation that atomically adds a u64 increment to a remote memory location.
 	///
 	/// The remote address must be 8-byte (64-bit) aligned.
 	#[inline(always)]
-	pub fn blocking_atomic_add_u64_increment(&self, aligned_remote_address: u64, increment: u64) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
+	pub fn partly_blocking_atomic_add_u64_increment(&self, aligned_remote_address: u64, increment: u64) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
 	{
 		debug_assert_eq!(aligned_remote_address % 8, 0, "aligned_remote_address '{}' is not 8-byte (64-bit) aligned", aligned_remote_address);
 		
 		let status = unsafe { ucp_atomic_add64(self.end_point_handle(), increment, aligned_remote_address, self.debug_assert_handle_is_valid()) };
 		Self::parse_status_for_non_blocking(status)
 	}
+	
+	//
+	// ucp_atomic_post can be used to atomically add but is partly blocking and duplicates existing functionality
+	
+	//
+	// non-blocking; fetch-add, swap or compare-and-swap, with a request returned.
+	// ucp_atomic_fetch_nb allows for non-blocking operations on u32 or u64 values.
 	
 	/// Blocking operation that atomically adds a u32 increment to a remote memory location and returns the previous value.
 	///
