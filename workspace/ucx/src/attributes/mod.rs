@@ -2,6 +2,9 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+use self::constraints::*;
+use super::status::*;
+use super::transport::InterfaceFeaturesSupported;
 use ::std::cmp::Eq;
 use ::std::cmp::Ord;
 use ::std::cmp::Ordering;
@@ -14,7 +17,12 @@ use ::std::ptr::NonNull;
 use ::ucx_sys::*;
 
 
+/// Constraint definitions helpers.
+pub mod constraints;
+
+
 include!("ApplicationContextAttributes.rs");
+include!("CommunicationInterfaceContextAttributes.rs");
 include!("HasAttributes.rs");
 include!("OurRemotelyAccessibleMemoryAttributes.rs");
 include!("WorkerAttributes.rs");

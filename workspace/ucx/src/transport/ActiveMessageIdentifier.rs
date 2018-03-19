@@ -13,7 +13,7 @@ impl ActiveMessageIdentifier
 	
 	pub const InclusiveMinimum: Self = ActiveMessageIdentifier(0);
 	
-	pub const InclusiveMaximum: Self = ActiveMessageIdentifier(Self::ExclusiveMaximum - 1);
+	pub const InclusiveMaximum: Self = ActiveMessageIdentifier(Self::ExclusiveMaximum as u8 - 1);
 	
 	/// Will panic in debug if value out-of-range
 	#[inline(always)]

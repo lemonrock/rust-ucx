@@ -143,6 +143,7 @@ impl CallbackQueue for ucs_callbackq
 	fn dispatch_thread_unsafe(&self) -> u32
 	{
 		// This loop works because the final array element's `cb` in `fast_elems` is always a None Sentinel (ie there are UCS_CALLBACKQ_FAST_COUNT - 1 elements).
+		// An alternative is to check that `element.id != UCS_CALLBACKQ_ID_NULL`.
 		let mut sum_of_all_return_values_from_dispatched_callbacks = 0;
 		let mut index = 0;
 		unsafe

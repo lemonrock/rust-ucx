@@ -5,22 +5,41 @@
 #[derive(Debug)]
 pub(crate) struct RemoteEndPoint(UnsafeCell<uct_ep>);
 
+/// ?
 impl RemoteEndPoint
 {
+	/// Check if the remote end point is alive with respect to the UCT library.
+	///
+	/// Equivalent to `uct_ep_check`.
+	///
+	///  * `completion_handle`: Modified by this call. It can be null (which means that the call will return the current state of the interface and no completion will be generated in case of outstanding communications). If not-null, then the completion counter is decremented by one (1) when this call completes. The completion callback is called when the completion counter reaches zero (0).
 	#[inline(always)]
-	fn transport_interface_operations(&self) -> &mut uct_iface_ops
+	pub fn check_if_destination_is_alive(&self, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
-		let iface = unsafe { &* self.ep() }.iface;
-		let iface = unsafe { &mut * iface };
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::EP_CHECK);
 		
-		&mut iface.ops
+		unsafe { (self.transport_interface_operations().ep_check)(self.ep(), ReservedForFutureUseFlags, completion_handle.mutable_reference()) }
 	}
 	
+	/// Destroys this remote end point.
+	///
+	/// Equivalent to `uct_ep_destroy`.
 	#[inline(always)]
-	fn ep(&self) -> *mut uct_ep
+	pub fn destroy(&self)
 	{
-		self.0.get()
+		unsafe { (self.transport_interface_operations().ep_destroy)(self.ep()) }
 	}
+	
+//#[link_name = "\u{1}_uct_ep_connect_to_ep"] pub fn uct_ep_connect_to_ep(ep: uct_ep_h, dev_addr: *const uct_device_addr_t, ep_addr: *const uct_ep_addr_t) -> ucs_status_t;
+
+//#[link_name = "\u{1}_uct_ep_create"] pub fn uct_ep_create(iface: uct_iface_h, ep_p: *mut uct_ep_h) -> ucs_status_t;
+
+//#[link_name = "\u{1}_uct_ep_create_connected"] pub fn uct_ep_create_connected(iface: uct_iface_h, dev_addr: *const uct_device_addr_t, iface_addr: *const uct_iface_addr_t, ep_p: *mut uct_ep_h) -> ucs_status_t;
+
+//#[link_name = "\u{1}_uct_ep_create_sockaddr"] pub fn uct_ep_create_sockaddr(iface: uct_iface_h, sockaddr: *const ucs_sock_addr_t, priv_data: *const c_void, length: usize, ep_p: *mut uct_ep_h) -> ucs_status_t;
+
+//#[link_name = "\u{1}_uct_ep_get_address"] pub fn uct_ep_get_address(ep: uct_ep_h, addr: *mut uct_ep_addr_t) -> ucs_status_t;
+
 }
 
 /// Resources (RESOURCE).
@@ -98,40 +117,77 @@ impl RemoteEndPoint
 	/// Send an immediate ('short') active message.
 	///
 	/// Equivalent to `uct_ep_am_short`.
-	///
-	/// `id` must be in the range `0 .. UCT_AM_ID_MAX-1`
 	#[inline(always)]
-	fn send_an_immediate_active_message(&self, id: ActiveMessageIdentifier, header: u64, payload: NonNull<u8>, length: u32) -> ucs_status_t
+	fn send_an_immediate_active_message(&self, id: ActiveMessageIdentifier, header: u64, payload: &[u8]) -> ucs_status_t
 	{
-		unsafe { (self.transport_interface_operations().ep_am_short)(self.ep(), id.0, header, payload.as_ptr() as *const c_void, length) }
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::AM_SHORT);
+		debug_assert!(payload.len() < ::std::u32::MAX as usize, "payload is too long");
+		debug_assert!(size_of_val(&header) + payload.len() <= self.attributes().active_message_constraints().max_short, "header length + payload length exceeds maximum for interface");
+		
+		unsafe { (self.transport_interface_operations().ep_am_short)(self.ep(), id.0, header, payload.as_ptr() as *const c_void, payload.len() as u32) }
 	}
 	
 	/// Send a buffered copy-and-send ('bcopy') active message.
 	///
-	/// bcopy == buffered copy-and-send
-	///
 	/// Equivalent to `uct_ep_am_bcopy`.
 	///
-	/// `id` must be in the range `0 .. UCT_AM_ID_MAX-1`
+	/// bcopy == buffered copy-and-send
+	///
+	/// * `pack_callback`: Will be specified a buffer that, including header, must not exceed `attributes().cap.am.max_bcopy`.
+	/// * `flags`: Specify `uct_msg_flags::SIGNALED` to trigger `uct_iface_event_types::RECV_SIG` on the receiver. May not be supported by the interface (in which case it will be ignored). Triggering `uct_iface_event_types::RECV_SIG` may not happen on the receiver in some cases and `uct_iface_event_types::RECV` will occur instead.
 	#[inline(always)]
-	fn send_a_buffered_copy_and_send_active_message(&self, id: ActiveMessageIdentifier, pack_cb: uct_pack_callback_t, arg: *mut c_void, flags: c_uint) -> ssize_t
+	fn send_a_buffered_copy_and_send_active_message<T>(&self, id: ActiveMessageIdentifier, pack_callback: uct_pack_callback_t, pack_callback_data: *mut T, flags: uct_msg_flags) -> ssize_t
 	{
-		unsafe { (self.transport_interface_operations().ep_am_bcopy)(self.ep(), id.0, pack_cb, arg, flags) }
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::AM_BCOPY);
+		unsafe { (self.transport_interface_operations().ep_am_bcopy)(self.ep(), id.0, pack_callback, pack_callback_data as *mut c_void, flags.0) }
 	}
 	
 	/// Send an active message while avoiding local memory copy, ie by 'zero copy'.
 	///
 	/// Equivalent to `uct_ep_am_zcopy`.
 	///
-	/// * `header` may be no longer than `::std::u32::MAX` (ie 2^32 -1).
+	/// * `header` may be no longer than `self.attributes().cap.am.max_hdr`.
 	/// * `io_vec` maximum length is `uct_iface_attr_cap_am_max_iov`
+	/// * `flags`: Specify `uct_msg_flags::SIGNALED` to trigger `uct_iface_event_types::RECV_SIG` on the receiver. May not be supported by the interface (in which case it will be ignored). Triggering `uct_iface_event_types::RECV_SIG` may not happen on the receiver in some cases and `uct_iface_event_types::RECV` will occur instead.
+	///
+	/// Note that `iovec` buffers should ideally be aligned to `self.active_message_constraints().opt_zcopy_align`.
+	/// This is usually one of:-
+	///
+	/// * `UCS_SYS_PCI_MAX_PAYLOAD` (for InfiniBand-like devices; 512 bytes)
+	/// * `UCS_SYS_CACHE_LINE_SIZE` (for Shared Memory devices)
+	/// * `1`
 	///
 	/// Returns:-
 	/// * `UCS_INPROGRESS` Some communication operations are still in progress.
 	#[inline(always)]
-	fn send_a_zero_copy_active_message(&self, id: ActiveMessageIdentifier, header: &[u8], io_vec: &[uct_iov_t], flags: uct_msg_flags, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
+	fn send_a_zero_copy_active_message(&self, id: ActiveMessageIdentifier, header: &[u8], io_vec: &[uct_iov], flags: uct_msg_flags, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::AM_ZCOPY);
 		debug_assert!(header.len() < ::std::u32::MAX as usize, "header is too long");
+		debug_assert!(header.len() <= self.attributes().active_message_constraints().max_hdr, "header exceeds maximum for interface");
+		
+		if cfg!(debug_assertions)
+		{
+			let mut total_length = header.len();
+			for entry in io_vec.iter()
+			{
+				total_length += entry.length;
+			}
+			
+			let attributes = self.attributes();
+			
+			let min_zcopy = attributes.active_message_constraints().min_zcopy;
+			if total_length < min_zcopy
+			{
+				panic!("total_length '{}' is less than min_zcopy '{}'", total_length, min_zcopy)
+			}
+			
+			let max_zcopy = attributes.active_message_constraints().max_zcopy;
+			if total_length > max_zcopy
+			{
+				panic!("total_length '{}' exceeds max_zcopy '{}'", total_length, max_zcopy)
+			}
+		}
 		
 		unsafe { (self.transport_interface_operations().ep_am_zcopy)(self.ep(), id.0, header.as_ptr() as *const c_void, header.len() as u32, io_vec.as_ptr(), io_vec.len(), flags.0, completion_handle.mutable_reference()) }
 	}
@@ -144,6 +200,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_put_short(&self, buffer: *const c_void, length: c_uint, remote_addr: uint64_t, rkey: uct_rkey_t) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::PUT_SHORT);
+		
 		unsafe { (self.transport_interface_operations().ep_put_short)(self.ep(), buffer, length, remote_addr, rkey) }
 	}
 	
@@ -151,6 +209,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_put_bcopy(&self, pack_cb: uct_pack_callback_t, arg: *mut c_void, remote_addr: uint64_t, rkey: uct_rkey_t) -> ssize_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::PUT_BCOPY);
+		
 		unsafe { (self.transport_interface_operations().ep_put_bcopy)(self.ep(), pack_cb, arg, remote_addr, rkey) }
 	}
 	
@@ -178,13 +238,19 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_put_zcopy(&self, iov: *const uct_iov_t, iovcnt: size_t, remote_addr: uint64_t, rkey: uct_rkey_t, comp: *mut uct_completion_t) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::PUT_ZCOPY);
+		
 		unsafe { (self.transport_interface_operations().ep_put_zcopy)(self.ep(), iov, iovcnt, remote_addr, rkey, comp) }
 	}
+	
+	// NOTE: There is no `uct_ep_get_short`.
 	
 	/// @brief
 	#[inline(always)]
 	fn uct_ep_get_bcopy(&self, unpack_cb: uct_unpack_callback_t, arg: *mut c_void, length: size_t, remote_addr: uint64_t, rkey: uct_rkey_t, comp: *mut uct_completion_t) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::GET_BCOPY);
+		
 		unsafe { (self.transport_interface_operations().ep_get_bcopy)(self.ep(), unpack_cb, arg, length, remote_addr, rkey, comp) }
 	}
 	
@@ -212,6 +278,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_get_zcopy(&self, iov: *const uct_iov_t, iovcnt: size_t, remote_addr: uint64_t, rkey: uct_rkey_t, comp: *mut uct_completion_t) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::GET_ZCOPY);
+		
 		unsafe { (self.transport_interface_operations().ep_get_zcopy)(self.ep(), iov, iovcnt, remote_addr, rkey, comp) }
 	}
 }
@@ -225,6 +293,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_add_u64(&self, add: u64, remote_addr: u64, rkey: uct_rkey_t) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::ATOMIC_ADD64);
+		
 		unsafe { (self.transport_interface_operations().ep_atomic_add64)(self.ep(), add, remote_addr, rkey) }
 	}
 	
@@ -240,6 +310,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_fetch_and_add_u64(&self, add: u64, remote_addr: u64, rkey: uct_rkey_t, result: &mut u64, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::ATOMIC_FADD64);
+		
 		unsafe { (self.transport_interface_operations().ep_atomic_fadd64)(self.ep(), add, remote_addr, rkey, result, completion_handle.mutable_reference()) }
 	}
 	
@@ -255,6 +327,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_swap_u64(&self, swap: u64, remote_addr: u64, rkey: uct_rkey_t, result: &mut u64, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::ATOMIC_SWAP64);
+		
 		unsafe { (self.transport_interface_operations().ep_atomic_swap64)(self.ep(), swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
 	}
 	
@@ -270,6 +344,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_compare_and_swap_u64(&self, compare: u64, swap: u64, remote_addr: u64, rkey: uct_rkey_t, result: &mut u64, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::ATOMIC_CSWAP64);
+		
 		unsafe { (self.transport_interface_operations().ep_atomic_cswap64)(self.ep(), compare, swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
 	}
 	
@@ -279,6 +355,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_add_u32(&self, add: u32, remote_addr: u64, rkey: uct_rkey_t) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::ATOMIC_ADD32);
+		
 		unsafe { (self.transport_interface_operations().ep_atomic_add32)(self.ep(), add, remote_addr, rkey) }
 	}
 	
@@ -294,6 +372,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_fetch_and_add_u32(&self, add: u32, remote_addr: u64, rkey: uct_rkey_t, result: &mut u32, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::ATOMIC_FADD32);
+		
 		unsafe { (self.transport_interface_operations().ep_atomic_fadd32)(self.ep(), add, remote_addr, rkey, result, completion_handle.mutable_reference()) }
 	}
 	
@@ -309,6 +389,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_swap_u32(&self, swap: u32, remote_addr: u64, rkey: uct_rkey_t, result: &mut u32, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::ATOMIC_SWAP32);
+		
 		unsafe { (self.transport_interface_operations().ep_atomic_swap32)(self.ep(), swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
 	}
 	
@@ -324,6 +406,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_compare_and_swap_u32(&self, compare: u32, swap: u32, remote_addr: u64, rkey: uct_rkey_t, result: &mut u32, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::ATOMIC_CSWAP32);
+		
 		unsafe { (self.transport_interface_operations().ep_atomic_cswap32)(self.ep(), compare, swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
 	}
 }
@@ -350,6 +434,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_tag_eager_short(&self, tag: uct_tag_t, data: *const c_void, length: size_t) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::TAG_EAGER_SHORT);
+		
 		unsafe { (self.transport_interface_operations().ep_tag_eager_short)(self.ep(), tag, data, length) }
 	}
 	
@@ -372,6 +458,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_tag_eager_bcopy(&self, tag: uct_tag_t, imm: uint64_t, pack_cb: uct_pack_callback_t, arg: *mut c_void, flags: c_uint) -> ssize_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::TAG_EAGER_BCOPY);
+		
 		unsafe { (self.transport_interface_operations().ep_tag_eager_bcopy)(self.ep(), tag, imm, pack_cb, arg, flags) }
 	}
 	
@@ -408,6 +496,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_tag_eager_zcopy(&self, tag: uct_tag_t, imm: uint64_t, iov: *const uct_iov_t, iovcnt: size_t, flags: c_uint, comp: *mut uct_completion_t) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::TAG_EAGER_ZCOPY);
+		
 		unsafe { (self.transport_interface_operations().ep_tag_eager_zcopy)(self.ep(), tag, imm, iov, iovcnt, flags, comp) }
 	}
 	
@@ -443,6 +533,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_tag_rndv_zcopy(&self, tag: uct_tag_t, header: *const c_void, header_length: c_uint, iov: *const uct_iov_t, iovcnt: size_t, flags: c_uint, comp: *mut uct_completion_t) -> ucs_status_ptr_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::TAG_RNDV_ZCOPY);
+		
 		unsafe { (self.transport_interface_operations().ep_tag_rndv_zcopy)(self.ep(), tag, header, header_length, iov, iovcnt, flags, comp) }
 	}
 	
@@ -460,6 +552,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_tag_rndv_cancel(&self, op: *mut c_void) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::TAG_RNDV_ZCOPY);
+		
 		unsafe { (self.transport_interface_operations().ep_tag_rndv_cancel)(self.ep(), op) }
 	}
 	
@@ -479,6 +573,41 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_tag_rndv_request(&self, tag: uct_tag_t, header: *const c_void, header_length: c_uint, flags: c_uint) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::TAG_RNDV_ZCOPY);
+		
 		unsafe { (self.transport_interface_operations().ep_tag_rndv_request)(self.ep(), tag, header, header_length, flags) }
+	}
+}
+
+impl RemoteEndPoint
+{
+	#[inline(always)]
+	fn attributes(&self) -> CommunicationInterfaceContextAttributes
+	{
+		CommunicationInterfaceContextAttributes::query(self.iface())
+	}
+	
+	#[inline(always)]
+	fn transport_interface_operations(&self) -> &mut uct_iface_ops
+	{
+		&mut (unsafe { &mut * self.iface().as_ptr() }).ops
+	}
+	
+	#[inline(always)]
+	fn iface(&self) -> NonNull<uct_iface>
+	{
+		unsafe { NonNull::new_unchecked((&mut * self.ep()).iface) }
+	}
+	
+	#[inline(always)]
+	fn ep(&self) -> *mut uct_ep
+	{
+		self.0.get()
+	}
+	
+	#[inline(always)]
+	fn debug_interface_supports_feature(&self, required_to_support: InterfaceFeaturesSupported)
+	{
+		debug_assert!(self.attributes().supports_all_of(required_to_support), "Unsupported");
 	}
 }
