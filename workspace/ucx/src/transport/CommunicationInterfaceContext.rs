@@ -14,7 +14,7 @@ macro_rules! set_active_message_handler
         	{
 				let former_active_message_handler = self.[active_message_handler $_count].take();
 				self.[active_message_handler $_count] = Some(active_message_handler);
-				let callback_data = &mut self.[active_message_handler $_count] as *mut _;
+				let callback_data = self.[active_message_handler $_count].as_mut().unwrap() as *mut _;
 				let result = self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier($count), Self::[callback_on_active_message_receive $_count], callback_data, flags);
 				drop(former_active_message_handler);
 				result
@@ -27,7 +27,7 @@ macro_rules! set_active_message_handler
         		let raw_handler = NonNull::new_unchecked(arg as *mut $a_count);
         		let handler = raw_handler.as_ref();
         		
-        		debug_assert!(!data.is_null(), "arg is null");
+        		debug_assert!(!data.is_null(), "data is null");
         		let buffer = UcxAllocatedByteBuffer::new(data, length);
         		
         		match handler.invoke(buffer, uct_cb_param_flags(flags))
@@ -41,8 +41,9 @@ macro_rules! set_active_message_handler
 }
 
 #[derive(Debug)]
-pub(crate) struct CommunicationInterfaceContext<A0=DoNothingActiveMessageHandler, A1=DoNothingActiveMessageHandler, A2=DoNothingActiveMessageHandler, A3=DoNothingActiveMessageHandler, A4=DoNothingActiveMessageHandler, A5=DoNothingActiveMessageHandler, A6=DoNothingActiveMessageHandler, A7=DoNothingActiveMessageHandler, A8=DoNothingActiveMessageHandler, A9=DoNothingActiveMessageHandler, A10=DoNothingActiveMessageHandler, A11=DoNothingActiveMessageHandler, A12=DoNothingActiveMessageHandler, A13=DoNothingActiveMessageHandler, A14=DoNothingActiveMessageHandler, A15=DoNothingActiveMessageHandler, A16=DoNothingActiveMessageHandler, A17=DoNothingActiveMessageHandler, A18=DoNothingActiveMessageHandler, A19=DoNothingActiveMessageHandler, A20=DoNothingActiveMessageHandler, A21=DoNothingActiveMessageHandler, A22=DoNothingActiveMessageHandler, A23=DoNothingActiveMessageHandler, A24=DoNothingActiveMessageHandler, A25=DoNothingActiveMessageHandler, A26=DoNothingActiveMessageHandler, A27=DoNothingActiveMessageHandler, A28=DoNothingActiveMessageHandler, A29=DoNothingActiveMessageHandler, A30=DoNothingActiveMessageHandler, A31=DoNothingActiveMessageHandler>
+pub(crate) struct CommunicationInterfaceContext<AT=DoNothingActiveMessageTracer, A0=DoNothingActiveMessageHandler, A1=DoNothingActiveMessageHandler, A2=DoNothingActiveMessageHandler, A3=DoNothingActiveMessageHandler, A4=DoNothingActiveMessageHandler, A5=DoNothingActiveMessageHandler, A6=DoNothingActiveMessageHandler, A7=DoNothingActiveMessageHandler, A8=DoNothingActiveMessageHandler, A9=DoNothingActiveMessageHandler, A10=DoNothingActiveMessageHandler, A11=DoNothingActiveMessageHandler, A12=DoNothingActiveMessageHandler, A13=DoNothingActiveMessageHandler, A14=DoNothingActiveMessageHandler, A15=DoNothingActiveMessageHandler, A16=DoNothingActiveMessageHandler, A17=DoNothingActiveMessageHandler, A18=DoNothingActiveMessageHandler, A19=DoNothingActiveMessageHandler, A20=DoNothingActiveMessageHandler, A21=DoNothingActiveMessageHandler, A22=DoNothingActiveMessageHandler, A23=DoNothingActiveMessageHandler, A24=DoNothingActiveMessageHandler, A25=DoNothingActiveMessageHandler, A26=DoNothingActiveMessageHandler, A27=DoNothingActiveMessageHandler, A28=DoNothingActiveMessageHandler, A29=DoNothingActiveMessageHandler, A30=DoNothingActiveMessageHandler, A31=DoNothingActiveMessageHandler>
 where
+	AT: ActiveMessageTracer,
 	A0: ActiveMessageHandler,
 	A1: ActiveMessageHandler,
 	A2: ActiveMessageHandler,
@@ -77,6 +78,7 @@ where
 	A31: ActiveMessageHandler
 {
 	iface: UnsafeCell<uct_iface>,
+	active_message_tracer: Option<AT>,
 	active_message_handler_0: Option<A0>,
 	active_message_handler_1: Option<A1>,
 	active_message_handler_2: Option<A2>,
@@ -111,7 +113,7 @@ where
 	active_message_handler_31: Option<A31>,
 }
 
-impl<A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandler, A3: ActiveMessageHandler, A4: ActiveMessageHandler, A5: ActiveMessageHandler, A6: ActiveMessageHandler, A7: ActiveMessageHandler, A8: ActiveMessageHandler, A9: ActiveMessageHandler, A10: ActiveMessageHandler, A11: ActiveMessageHandler, A12: ActiveMessageHandler, A13: ActiveMessageHandler, A14: ActiveMessageHandler, A15: ActiveMessageHandler, A16: ActiveMessageHandler, A17: ActiveMessageHandler, A18: ActiveMessageHandler, A19: ActiveMessageHandler, A20: ActiveMessageHandler, A21: ActiveMessageHandler, A22: ActiveMessageHandler, A23: ActiveMessageHandler, A24: ActiveMessageHandler, A25: ActiveMessageHandler, A26: ActiveMessageHandler, A27: ActiveMessageHandler, A28: ActiveMessageHandler, A29: ActiveMessageHandler, A30: ActiveMessageHandler, A31: ActiveMessageHandler> HasAttributes for CommunicationInterfaceContext<A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28, A29, A30, A31>
+impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandler, A3: ActiveMessageHandler, A4: ActiveMessageHandler, A5: ActiveMessageHandler, A6: ActiveMessageHandler, A7: ActiveMessageHandler, A8: ActiveMessageHandler, A9: ActiveMessageHandler, A10: ActiveMessageHandler, A11: ActiveMessageHandler, A12: ActiveMessageHandler, A13: ActiveMessageHandler, A14: ActiveMessageHandler, A15: ActiveMessageHandler, A16: ActiveMessageHandler, A17: ActiveMessageHandler, A18: ActiveMessageHandler, A19: ActiveMessageHandler, A20: ActiveMessageHandler, A21: ActiveMessageHandler, A22: ActiveMessageHandler, A23: ActiveMessageHandler, A24: ActiveMessageHandler, A25: ActiveMessageHandler, A26: ActiveMessageHandler, A27: ActiveMessageHandler, A28: ActiveMessageHandler, A29: ActiveMessageHandler, A30: ActiveMessageHandler, A31: ActiveMessageHandler> HasAttributes for CommunicationInterfaceContext<AT, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28, A29, A30, A31>
 {
 	type Attributes = CommunicationInterfaceContextAttributes;
 	
@@ -132,6 +134,7 @@ impl CommunicationInterfaceContext<>
 			Self
 			{
 				iface: UnsafeCell::new(unsafe { uninitialized() }),
+				active_message_tracer: None,
 				active_message_handler_0: None,
 				active_message_handler_1: None,
 				active_message_handler_2: None,
@@ -169,14 +172,71 @@ impl CommunicationInterfaceContext<>
 	}
 }
 
-impl<A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandler, A3: ActiveMessageHandler, A4: ActiveMessageHandler, A5: ActiveMessageHandler, A6: ActiveMessageHandler, A7: ActiveMessageHandler, A8: ActiveMessageHandler, A9: ActiveMessageHandler, A10: ActiveMessageHandler, A11: ActiveMessageHandler, A12: ActiveMessageHandler, A13: ActiveMessageHandler, A14: ActiveMessageHandler, A15: ActiveMessageHandler, A16: ActiveMessageHandler, A17: ActiveMessageHandler, A18: ActiveMessageHandler, A19: ActiveMessageHandler, A20: ActiveMessageHandler, A21: ActiveMessageHandler, A22: ActiveMessageHandler, A23: ActiveMessageHandler, A24: ActiveMessageHandler, A25: ActiveMessageHandler, A26: ActiveMessageHandler, A27: ActiveMessageHandler, A28: ActiveMessageHandler, A29: ActiveMessageHandler, A30: ActiveMessageHandler, A31: ActiveMessageHandler> CommunicationInterfaceContext<A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28, A29, A30, A31>
+impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandler, A3: ActiveMessageHandler, A4: ActiveMessageHandler, A5: ActiveMessageHandler, A6: ActiveMessageHandler, A7: ActiveMessageHandler, A8: ActiveMessageHandler, A9: ActiveMessageHandler, A10: ActiveMessageHandler, A11: ActiveMessageHandler, A12: ActiveMessageHandler, A13: ActiveMessageHandler, A14: ActiveMessageHandler, A15: ActiveMessageHandler, A16: ActiveMessageHandler, A17: ActiveMessageHandler, A18: ActiveMessageHandler, A19: ActiveMessageHandler, A20: ActiveMessageHandler, A21: ActiveMessageHandler, A22: ActiveMessageHandler, A23: ActiveMessageHandler, A24: ActiveMessageHandler, A25: ActiveMessageHandler, A26: ActiveMessageHandler, A27: ActiveMessageHandler, A28: ActiveMessageHandler, A29: ActiveMessageHandler, A30: ActiveMessageHandler, A31: ActiveMessageHandler> CommunicationInterfaceContext<AT, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28, A29, A30, A31>
 {
 // Not wrappers:
 //pub fn uct_iface_open(md: uct_md_h, worker: uct_worker_h, params: *const uct_iface_params_t, config: *const uct_iface_config_t, iface_p: *mut uct_iface_h) -> ucs_status_t;
 //	#[link_name = "\u{1}_uct_iface_mem_alloc"] pub fn uct_iface_mem_alloc(iface: uct_iface_h, length: usize, flags: c_uint, name: *const c_char, mem: *mut uct_allocated_memory_t) -> ucs_status_t;
 //	#[link_name = "\u{1}_uct_iface_mem_free"] pub fn uct_iface_mem_free(mem: *const uct_allocated_memory_t);
 	
+	
+	/// Set an active message tracer.
+	#[inline(always)]
+	pub(crate) fn set_active_message_tracer(&mut self, active_message_tracer: AT) -> Result<(), ErrorCode>
+	{
+		let former_active_message_tracer = self.active_message_tracer.take();
+		self.active_message_tracer = Some(active_message_tracer);
+		let callback_data = self.active_message_tracer.as_mut().unwrap() as *mut _;
+		let result = self.set_active_message_tracer_ffi(Some(Self::callback_on_active_message_trace), callback_data);
+		drop(former_active_message_tracer);
+		result
+	}
+	
+	#[inline(always)]
+	unsafe extern "C" fn callback_on_active_message_trace(arg: *mut c_void, type_: uct_am_trace_type_t, id: u8, data: *const c_void, length: usize, buffer: *mut c_char, max: usize)
+	{
+		debug_assert!(!arg.is_null(), "arg is null");
+		let raw_handler = NonNull::new_unchecked(arg as *mut AT);
+		let handler = raw_handler.as_ref();
+		
+		debug_assert!(!data.is_null(), "data is null");
+		let read_only = UcxAllocatedByteBuffer::new(data as *mut c_void, length);
+		
+		handler.trace(type_, ActiveMessageIdentifier(id), read_only, from_raw_parts_mut(buffer, max))
+	}
+	
 	set_active_message_handler!(_0, A0, 0);
+	set_active_message_handler!(_1, A1, 1);
+	set_active_message_handler!(_2, A2, 2);
+	set_active_message_handler!(_3, A3, 3);
+	set_active_message_handler!(_4, A4, 4);
+	set_active_message_handler!(_5, A5, 5);
+	set_active_message_handler!(_6, A6, 6);
+	set_active_message_handler!(_7, A7, 7);
+	set_active_message_handler!(_8, A8, 8);
+	set_active_message_handler!(_9, A9, 9);
+	set_active_message_handler!(_10, A10, 10);
+	set_active_message_handler!(_11, A11, 11);
+	set_active_message_handler!(_12, A12, 12);
+	set_active_message_handler!(_13, A13, 13);
+	set_active_message_handler!(_14, A14, 14);
+	set_active_message_handler!(_15, A15, 15);
+	set_active_message_handler!(_16, A16, 16);
+	set_active_message_handler!(_17, A17, 17);
+	set_active_message_handler!(_18, A18, 18);
+	set_active_message_handler!(_19, A19, 19);
+	set_active_message_handler!(_20, A20, 20);
+	set_active_message_handler!(_21, A21, 21);
+	set_active_message_handler!(_22, A22, 22);
+	set_active_message_handler!(_23, A23, 23);
+	set_active_message_handler!(_24, A24, 24);
+	set_active_message_handler!(_25, A25, 25);
+	set_active_message_handler!(_26, A26, 26);
+	set_active_message_handler!(_27, A27, 27);
+	set_active_message_handler!(_28, A28, 28);
+	set_active_message_handler!(_29, A29, 29);
+	set_active_message_handler!(_30, A30, 30);
+	set_active_message_handler!(_31, A31, 31);
 	
 	/// Can active messages be received as duplicates?
 	///
@@ -226,7 +286,7 @@ impl<A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandle
 	///
 	/// Pass `None` to remove the tracer function.
 	#[inline(always)]
-	pub(crate) fn set_active_message_tracer<T>(&self, tracer_callback: uct_am_tracer_t, tracer_data: *mut T) -> Result<(), ErrorCode>
+	fn set_active_message_tracer_ffi<T>(&self, tracer_callback: uct_am_tracer_t, tracer_data: *mut T) -> Result<(), ErrorCode>
 	{
 		debug_assert!(self.interface_supports_feature(InterfaceFeaturesSupported::CB_SYNC) | self.interface_supports_feature(InterfaceFeaturesSupported::CB_ASYNC), "Interface must support CB_SYNC or CB_ASYNC");
 		

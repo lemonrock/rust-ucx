@@ -9,6 +9,7 @@ use super::ffi_helpers::ReservedForFutureUseFlags;
 use super::ffi_helpers::ToCBool;
 use super::status::*;
 use super::tagged_messages::TagMatcher;
+use ::libc::c_char;
 use ::libc::c_uint;
 use ::libc::c_void;
 use ::libc::size_t;
@@ -21,16 +22,19 @@ use ::std::os::unix::io::RawFd;
 use ::std::ptr::NonNull;
 use ::std::ptr::null;
 use ::std::ptr::null_mut;
+use ::std::slice::from_raw_parts_mut;
 use ::ucx_sys::*;
 
 
 include!("ActiveMessageHandler.rs");
+include!("ActiveMessageTracer.rs");
 include!("ActiveMessageIdentifier.rs");
 include!("CallbackQueue.rs");
 include!("CommunicationInterfaceContext.rs");
 include!("CompletionHandleHelper.rs");
 include!("DeviceAddress.rs");
 include!("DoNothingActiveMessageHandler.rs");
+include!("DoNothingActiveMessageTracer.rs");
 include!("InterfaceAddress.rs");
 include!("InterfaceFeaturesSupported.rs");
 include!("ReceiveDescriptor.rs");
