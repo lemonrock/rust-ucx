@@ -108,12 +108,16 @@ impl CallbackQueue for ucs_callbackq
 	#[inline(always)]
 	fn add_thread_unsafe<T>(&mut self, callback: ucs_callback_t, callback_data: *mut T, flags: ucs_callbackq_flags) -> CallbackUniqueIdentifier
 	{
+		debug_assert_ne!((flags & ucs_callbackq_flags::ONESHOT == ucs_callbackq_flags::ONESHOT) && (flags & ucs_callbackq_flags::FAST == ucs_callbackq_flags::FAST), true, "ONESHOT and FAST can not both be specified in flags");
+		
 		CallbackUniqueIdentifier(unsafe { ucs_callbackq_add(self, callback, callback_data as *mut _, flags.0) })
 	}
 	
 	#[inline(always)]
 	fn add_thread_safe<T>(&mut self, callback: ucs_callback_t, callback_data: *mut T, flags: ucs_callbackq_flags) -> CallbackUniqueIdentifier
 	{
+		debug_assert_ne!((flags & ucs_callbackq_flags::ONESHOT == ucs_callbackq_flags::ONESHOT) && (flags & ucs_callbackq_flags::FAST == ucs_callbackq_flags::FAST), true, "ONESHOT and FAST can not both be specified in flags");
+		
 		CallbackUniqueIdentifier(unsafe { ucs_callbackq_add_safe(self, callback, callback_data as *mut _, flags.0) })
 	}
 	
