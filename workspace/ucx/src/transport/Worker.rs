@@ -34,8 +34,8 @@ impl Worker
 	///
 	/// Returns `true` if communication progressed, `false` otherwise.
 	#[inline(always)]
-	pub(crate) fn progress(&self) -> bool
+	pub(crate) fn progress_thread_unsafe(&self) -> bool
 	{
-		unsafe { self.0.progress_q.dispatch().from_c_bool() }
+		unsafe { self.0.progress_q.dispatch_thread_unsafe().from_c_bool() }
 	}
 }
