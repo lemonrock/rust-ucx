@@ -18,6 +18,9 @@ readme = "README.md"
 publish = false
 version = "0.0.0"
 
+[dependencies]
+interpolate_idents = "0.2"
+
 [target.'cfg(target_os = "linux")'.dependencies]
 bit = "0.1"
 bitflags = "1.0"

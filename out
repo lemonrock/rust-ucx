@@ -1,0 +1,288 @@
+
+	/// Set an active message handler for active message identifier 0.
+	#[inline(always)]
+	fn set_active_message_handler_0(&mut self, active_message_handler: A0, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_0, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(0), A0::callback_on_receive, &mut self.active_message_handler_0 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 1.
+	#[inline(always)]
+	fn set_active_message_handler_1(&mut self, active_message_handler: A1, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_1, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(1), A1::callback_on_receive, &mut self.active_message_handler_1 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 2.
+	#[inline(always)]
+	fn set_active_message_handler_2(&mut self, active_message_handler: A2, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_2, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(2), A2::callback_on_receive, &mut self.active_message_handler_2 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 3.
+	#[inline(always)]
+	fn set_active_message_handler_3(&mut self, active_message_handler: A3, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_3, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(3), A3::callback_on_receive, &mut self.active_message_handler_3 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 4.
+	#[inline(always)]
+	fn set_active_message_handler_4(&mut self, active_message_handler: A4, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_4, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(4), A4::callback_on_receive, &mut self.active_message_handler_4 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 5.
+	#[inline(always)]
+	fn set_active_message_handler_5(&mut self, active_message_handler: A5, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_5, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(5), A5::callback_on_receive, &mut self.active_message_handler_5 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 6.
+	#[inline(always)]
+	fn set_active_message_handler_6(&mut self, active_message_handler: A6, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_6, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(6), A6::callback_on_receive, &mut self.active_message_handler_6 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 7.
+	#[inline(always)]
+	fn set_active_message_handler_7(&mut self, active_message_handler: A7, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_7, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(7), A7::callback_on_receive, &mut self.active_message_handler_7 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 8.
+	#[inline(always)]
+	fn set_active_message_handler_8(&mut self, active_message_handler: A8, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_8, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(8), A8::callback_on_receive, &mut self.active_message_handler_8 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 9.
+	#[inline(always)]
+	fn set_active_message_handler_9(&mut self, active_message_handler: A9, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_9, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(9), A9::callback_on_receive, &mut self.active_message_handler_9 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 10.
+	#[inline(always)]
+	fn set_active_message_handler_10(&mut self, active_message_handler: A10, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_10, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(10), A10::callback_on_receive, &mut self.active_message_handler_10 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 11.
+	#[inline(always)]
+	fn set_active_message_handler_11(&mut self, active_message_handler: A11, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_11, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(11), A11::callback_on_receive, &mut self.active_message_handler_11 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 12.
+	#[inline(always)]
+	fn set_active_message_handler_12(&mut self, active_message_handler: A12, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_12, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(12), A12::callback_on_receive, &mut self.active_message_handler_12 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 13.
+	#[inline(always)]
+	fn set_active_message_handler_13(&mut self, active_message_handler: A13, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_13, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(13), A13::callback_on_receive, &mut self.active_message_handler_13 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 14.
+	#[inline(always)]
+	fn set_active_message_handler_14(&mut self, active_message_handler: A14, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_14, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(14), A14::callback_on_receive, &mut self.active_message_handler_14 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 15.
+	#[inline(always)]
+	fn set_active_message_handler_15(&mut self, active_message_handler: A15, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_15, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(15), A15::callback_on_receive, &mut self.active_message_handler_15 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 16.
+	#[inline(always)]
+	fn set_active_message_handler_16(&mut self, active_message_handler: A16, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_16, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(16), A16::callback_on_receive, &mut self.active_message_handler_16 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 17.
+	#[inline(always)]
+	fn set_active_message_handler_17(&mut self, active_message_handler: A17, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_17, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(17), A17::callback_on_receive, &mut self.active_message_handler_17 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 18.
+	#[inline(always)]
+	fn set_active_message_handler_18(&mut self, active_message_handler: A18, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_18, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(18), A18::callback_on_receive, &mut self.active_message_handler_18 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 19.
+	#[inline(always)]
+	fn set_active_message_handler_19(&mut self, active_message_handler: A19, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_19, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(19), A19::callback_on_receive, &mut self.active_message_handler_19 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 20.
+	#[inline(always)]
+	fn set_active_message_handler_20(&mut self, active_message_handler: A20, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_20, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(20), A20::callback_on_receive, &mut self.active_message_handler_20 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 21.
+	#[inline(always)]
+	fn set_active_message_handler_21(&mut self, active_message_handler: A21, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_21, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(21), A21::callback_on_receive, &mut self.active_message_handler_21 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 22.
+	#[inline(always)]
+	fn set_active_message_handler_22(&mut self, active_message_handler: A22, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_22, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(22), A22::callback_on_receive, &mut self.active_message_handler_22 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 23.
+	#[inline(always)]
+	fn set_active_message_handler_23(&mut self, active_message_handler: A23, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_23, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(23), A23::callback_on_receive, &mut self.active_message_handler_23 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 24.
+	#[inline(always)]
+	fn set_active_message_handler_24(&mut self, active_message_handler: A24, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_24, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(24), A24::callback_on_receive, &mut self.active_message_handler_24 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 25.
+	#[inline(always)]
+	fn set_active_message_handler_25(&mut self, active_message_handler: A25, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_25, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(25), A25::callback_on_receive, &mut self.active_message_handler_25 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 26.
+	#[inline(always)]
+	fn set_active_message_handler_26(&mut self, active_message_handler: A26, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_26, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(26), A26::callback_on_receive, &mut self.active_message_handler_26 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 27.
+	#[inline(always)]
+	fn set_active_message_handler_27(&mut self, active_message_handler: A27, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_27, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(27), A27::callback_on_receive, &mut self.active_message_handler_27 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 28.
+	#[inline(always)]
+	fn set_active_message_handler_28(&mut self, active_message_handler: A28, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_28, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(28), A28::callback_on_receive, &mut self.active_message_handler_28 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 29.
+	#[inline(always)]
+	fn set_active_message_handler_29(&mut self, active_message_handler: A29, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_29, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(29), A29::callback_on_receive, &mut self.active_message_handler_29 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 30.
+	#[inline(always)]
+	fn set_active_message_handler_30(&mut self, active_message_handler: A30, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_30, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(30), A30::callback_on_receive, &mut self.active_message_handler_30 as *mut _, flags);
+		drop(former_active_message_handler)
+	}
+
+	/// Set an active message handler for active message identifier 31.
+	#[inline(always)]
+	fn set_active_message_handler_31(&mut self, active_message_handler: A31, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		let former_active_message_handler = replace(self.active_message_handler_31, active_message_handler);
+		self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier(31), A31::callback_on_receive, &mut self.active_message_handler_31 as *mut _, flags);
+		drop(former_active_message_handler)
+	}

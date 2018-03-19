@@ -7,4 +7,9 @@ pub(crate) struct DoNothingActiveMessageHandler;
 
 impl ActiveMessageHandler for DoNothingActiveMessageHandler
 {
+	#[inline(always)]
+	fn invoke(&self, _descriptor_or_part_thereof: UcxAllocatedByteBuffer, _flags: uct_cb_param_flags) -> bool
+	{
+		true
+	}
 }

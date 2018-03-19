@@ -2,6 +2,44 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+macro_rules! set_active_message_handler
+{
+	($_count: ident, $a_count: ident, $count: expr)  =>
+	{
+		interpolate_idents!
+		{
+			/// Set an active message handler for active message identifier [$count].
+			#[inline(always)]
+        	pub(crate) fn [set_active_message_handler $_count](&mut self, active_message_handler: [$a_count], flags: uct_cb_flags) -> Result<(), ErrorCode>
+        	{
+				let former_active_message_handler = self.[active_message_handler $_count].take();
+				self.[active_message_handler $_count] = Some(active_message_handler);
+				let callback_data = &mut self.[active_message_handler $_count] as *mut _;
+				let result = self.set_active_message_handler_for_active_messages_of_identifier(ActiveMessageIdentifier($count), Self::[callback_on_active_message_receive $_count], callback_data, flags);
+				drop(former_active_message_handler);
+				result
+        	}
+        	
+        	#[inline(always)]
+        	unsafe extern "C" fn [callback_on_active_message_receive $_count](arg: *mut c_void, data: *mut c_void, length: usize, flags: c_uint) -> ucs_status_t
+        	{
+        		debug_assert!(!arg.is_null(), "arg is null");
+        		let raw_handler = NonNull::new_unchecked(arg as *mut $a_count);
+        		let handler = raw_handler.as_ref();
+        		
+        		debug_assert!(!data.is_null(), "arg is null");
+        		let buffer = UcxAllocatedByteBuffer::new(data, length);
+        		
+        		match handler.invoke(buffer, uct_cb_param_flags(flags))
+        		{
+        			true => ucs_status_t::UCS_OK,
+        			false => ucs_status_t::UCS_INPROGRESS,
+        		}
+        	}
+    	}
+	}
+}
+
 #[derive(Debug)]
 pub(crate) struct CommunicationInterfaceContext<A0=DoNothingActiveMessageHandler, A1=DoNothingActiveMessageHandler, A2=DoNothingActiveMessageHandler, A3=DoNothingActiveMessageHandler, A4=DoNothingActiveMessageHandler, A5=DoNothingActiveMessageHandler, A6=DoNothingActiveMessageHandler, A7=DoNothingActiveMessageHandler, A8=DoNothingActiveMessageHandler, A9=DoNothingActiveMessageHandler, A10=DoNothingActiveMessageHandler, A11=DoNothingActiveMessageHandler, A12=DoNothingActiveMessageHandler, A13=DoNothingActiveMessageHandler, A14=DoNothingActiveMessageHandler, A15=DoNothingActiveMessageHandler, A16=DoNothingActiveMessageHandler, A17=DoNothingActiveMessageHandler, A18=DoNothingActiveMessageHandler, A19=DoNothingActiveMessageHandler, A20=DoNothingActiveMessageHandler, A21=DoNothingActiveMessageHandler, A22=DoNothingActiveMessageHandler, A23=DoNothingActiveMessageHandler, A24=DoNothingActiveMessageHandler, A25=DoNothingActiveMessageHandler, A26=DoNothingActiveMessageHandler, A27=DoNothingActiveMessageHandler, A28=DoNothingActiveMessageHandler, A29=DoNothingActiveMessageHandler, A30=DoNothingActiveMessageHandler, A31=DoNothingActiveMessageHandler>
 where
@@ -137,6 +175,8 @@ impl<A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandle
 //pub fn uct_iface_open(md: uct_md_h, worker: uct_worker_h, params: *const uct_iface_params_t, config: *const uct_iface_config_t, iface_p: *mut uct_iface_h) -> ucs_status_t;
 //	#[link_name = "\u{1}_uct_iface_mem_alloc"] pub fn uct_iface_mem_alloc(iface: uct_iface_h, length: usize, flags: c_uint, name: *const c_char, mem: *mut uct_allocated_memory_t) -> ucs_status_t;
 //	#[link_name = "\u{1}_uct_iface_mem_free"] pub fn uct_iface_mem_free(mem: *const uct_allocated_memory_t);
+	
+	set_active_message_handler!(_0, A0, 0);
 	
 	/// Can active messages be received as duplicates?
 	///
