@@ -5,6 +5,51 @@
 #[derive(Debug)]
 pub(crate) struct CommunicationInterfaceContext(UnsafeCell<uct_iface>);
 
+/// API methods
+impl CommunicationInterfaceContext
+{
+	/// Close interface.
+	///
+	/// Equivalent to `uct_iface_close`.
+	#[inline(always)]
+	pub(crate) fn close(&self)
+	{
+		unsafe { uct_iface_close(self.iface()) }
+	}
+	
+	/// Implement as HasAttributes.
+	#[inline(always)]
+	pub(crate) fn attributes(&self) -> Result<uct_iface_attr, ErrorCode>
+	{
+		let mut attributes = unsafe { uninitialized() };
+		
+		let status = unsafe { uct_iface_query(self.iface(), &mut attributes) };
+		
+		use self::Status::*;
+		
+		match status.parse()
+		{
+			IsOk => Ok(attributes),
+			
+			Error(error_code) => Err(error_code),
+			
+			_ => panic!("Unexpected status '{:?}'", status),
+		}
+	}
+
+// These functions seem to be just wrappers around callbacks, too.
+//pub fn uct_iface_open(md: uct_md_h, worker: uct_worker_h, params: *const uct_iface_params_t, config: *const uct_iface_config_t, iface_p: *mut uct_iface_h) -> ucs_status_t;
+//	#[link_name = "\u{1}_uct_iface_event_arm"] pub fn uct_iface_event_arm(iface: uct_iface_h, events: c_uint) -> ucs_status_t;
+//	#[link_name = "\u{1}_uct_iface_event_fd_get"] pub fn uct_iface_event_fd_get(iface: uct_iface_h, fd_p: *mut c_int) -> ucs_status_t;
+//	#[link_name = "\u{1}_uct_iface_get_address"] pub fn uct_iface_get_address(iface: uct_iface_h, addr: *mut uct_iface_addr_t) -> ucs_status_t;
+//	#[link_name = "\u{1}_uct_iface_get_device_address"] pub fn uct_iface_get_device_address(iface: uct_iface_h, addr: *mut uct_device_addr_t) -> ucs_status_t;
+//	#[link_name = "\u{1}_uct_iface_is_reachable"] pub fn uct_iface_is_reachable(iface: uct_iface_h, dev_addr: *const uct_device_addr_t, iface_addr: *const uct_iface_addr_t) -> c_int;
+//	#[link_name = "\u{1}_uct_iface_mem_alloc"] pub fn uct_iface_mem_alloc(iface: uct_iface_h, length: usize, flags: c_uint, name: *const c_char, mem: *mut uct_allocated_memory_t) -> ucs_status_t;
+//	#[link_name = "\u{1}_uct_iface_mem_free"] pub fn uct_iface_mem_free(mem: *const uct_allocated_memory_t);
+//	#[link_name = "\u{1}_uct_iface_set_am_handler"] pub fn uct_iface_set_am_handler(iface: uct_iface_h, id: u8, cb: uct_am_callback_t, arg: *mut c_void, flags: u32) -> ucs_status_t;
+//	#[link_name = "\u{1}_uct_iface_set_am_tracer"] pub fn uct_iface_set_am_tracer(iface: uct_iface_h, tracer: uct_am_tracer_t, arg: *mut c_void) -> ucs_status_t;
+}
+
 /// Tagged Messages (TM).
 impl CommunicationInterfaceContext
 {
@@ -32,7 +77,7 @@ impl CommunicationInterfaceContext
 		let tag = tag_matcher.value.0;
 		let tag_mask = tag_matcher.bit_mask.0;
 		
-		unsafe { self.transport_interface_operations().iface_tag_recv_zcopy.unwrap()(self.0.get(), tag, tag_mask, io_vec.as_ptr(), io_vec.len(), ctx) }
+		unsafe { (self.transport_interface_operations().iface_tag_recv_zcopy)(self.0.get(), tag, tag_mask, io_vec.as_ptr(), io_vec.len(), ctx) }
 	}
 	
 	/// Cancel a posted tag.
@@ -47,14 +92,14 @@ impl CommunicationInterfaceContext
 	/// The original completion callback of the tag would be called with the status if `force` is not set (`false`).
 	///
 	/// * `ctx`: Tag context which was used for posting the tag. If `force` is `false`, `ctx->completed_cb` will be called with either `UCS_OK` which means the tag was matched and data received despite the cancel request, or `UCS_ERR_CANCELED` which means the tag was successfully cancelled before it was matched.
-	/// * `force`: Whether to report completions to `ctx->completed_cb`.
+	/// * `force`: Whether to report completions to `ctx.completed_cb`.
 	///
 	/// Returns:-
 	/// * `UCS_OK`: If the tag is cancelled in the transport.
 	#[inline(always)]
 	pub(crate) fn tagged_message_receive_cancel(&self, ctx: &mut uct_tag_context, force: bool) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().iface_tag_recv_cancel.unwrap()(self.0.get(), ctx, force.to_c_bool()) }
+		unsafe { (self.transport_interface_operations().iface_tag_recv_cancel)(self.0.get(), ctx, force.to_c_bool()) }
 	}
 }
 
@@ -73,7 +118,7 @@ impl CommunicationInterfaceContext
 	#[inline(always)]
 	pub(crate) fn enable_progressing(&self, flags: uct_progress_types)
 	{
-		unsafe { self.transport_interface_operations().iface_progress_enable.unwrap()(self.iface(), flags.0) }
+		unsafe { (self.transport_interface_operations().iface_progress_enable)(self.iface(), flags.0) }
 	}
 	
 	/// Disable synchronous progress for the interface.
@@ -90,7 +135,7 @@ impl CommunicationInterfaceContext
 	#[inline(always)]
 	pub(crate) fn disable_progressing(&self, flags: uct_progress_types)
 	{
-		unsafe { self.transport_interface_operations().iface_progress_disable.unwrap()(self.iface(), flags.0) }
+		unsafe { (self.transport_interface_operations().iface_progress_disable)(self.iface(), flags.0) }
 	}
 	
 	/// Perform a progress on an interface.
@@ -101,7 +146,7 @@ impl CommunicationInterfaceContext
 	#[inline(always)]
 	pub(crate) fn progress(&self) -> u32
 	{
-		unsafe { self.transport_interface_operations().iface_progress.unwrap()(self.iface()) }
+		unsafe { (self.transport_interface_operations().iface_progress)(self.iface()) }
 	}
 	
 	/// Flush outstanding communication operations on an interface.
@@ -122,7 +167,7 @@ impl CommunicationInterfaceContext
 	{
 		debug_assert_eq!(flags, uct_flush_flags::LOCAL, "Only LOCAL is supported currently");
 		
-		unsafe { self.transport_interface_operations().iface_flush.unwrap()(self.iface(), flags.0, completion_handle.mutable_reference()) }
+		unsafe { (self.transport_interface_operations().iface_flush)(self.iface(), flags.0, completion_handle.mutable_reference()) }
 	}
 	
 	/// Ensures ordering of outstanding communications on the interface.
@@ -135,7 +180,7 @@ impl CommunicationInterfaceContext
 	#[inline(always)]
 	pub(crate) fn fence(&self) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().iface_fence.unwrap()(self.iface(), ReservedForFutureUseFlags) }
+		unsafe { (self.transport_interface_operations().iface_fence)(self.iface(), ReservedForFutureUseFlags) }
 	}
 }
 

@@ -51,7 +51,7 @@ impl MemoryEventConfiguration
 			events |= ucm_event_type_t::FLAG_NO_INSTALL
 		}
 		let priority = priority.to_priority();
-		let callback = Some(EventHandler::callback as unsafe extern "C" fn(event_type: ucm_event_type_t, event: *mut ucm_event_t, arg: *mut c_void));
+		let callback = EventHandler::callback as unsafe extern "C" fn(event_type: ucm_event_type_t, event: *mut ucm_event_t, arg: *mut c_void);
 		let arg = memory_event_handler as *const EventHandler as *mut EventHandler as *mut c_void;
 		
 		let status = unsafe { ucm_set_event_handler(events.0 as i32, priority, callback, arg) };
@@ -73,7 +73,7 @@ impl MemoryEventConfiguration
 	pub fn remove_memory_events_handlers<EventHandler: MemoryEventHandler>(&self, memory_event_handler: &'static EventHandler)
 	{
 		let events = ucm_event_type_t(self.bits);
-		let callback = Some(EventHandler::callback as unsafe extern "C" fn(event_type: ucm_event_type_t, event: *mut ucm_event_t, arg: *mut c_void));
+		let callback = EventHandler::callback as unsafe extern "C" fn(event_type: ucm_event_type_t, event: *mut ucm_event_t, arg: *mut c_void);
 		let arg = memory_event_handler as *const EventHandler as *mut EventHandler as *mut c_void;
 		
 		unsafe { ucm_unset_event_handler(events.0 as i32, callback, arg) };

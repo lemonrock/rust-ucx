@@ -92,7 +92,7 @@ impl TaggedMessageReceivingWorker
 			{
 				let message = message_provider.provide_uninitialized_message(&received_tagged_message_information);
 				
-				let status_pointer = unsafe { ucp_tag_msg_recv_nb(self.worker_handle(), message.address().as_ptr() as *mut u8 as *mut c_void, message.count(), message.data_type_descriptor(), message_handle.as_ptr(), Some(callback_when_finished_or_cancelled)) };
+				let status_pointer = unsafe { ucp_tag_msg_recv_nb(self.worker_handle(), message.address().as_ptr() as *mut u8 as *mut c_void, message.count(), message.data_type_descriptor(), message_handle.as_ptr(), callback_when_finished_or_cancelled) };
 				
 				let popped = match self.parent_worker.parse_status_pointer(status_pointer)
 				{
@@ -126,7 +126,7 @@ impl TaggedMessageReceivingWorker
 	#[inline(always)]
 	pub fn non_blocking_receive_tagged_message_ucx_allocated<'worker, M: Message>(&'worker self, message: M, tag_matcher: TagMatcher, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t, info: *mut ucp_tag_recv_info_t)) -> Result<NonBlockingRequestCompletedOrInProgress<M, ReceivingTaggedMessageNonBlockingRequest<'worker, M>>, ErrorCodeWithMessage<M>>
 	{
-		let status_pointer = unsafe { ucp_tag_recv_nb(self.worker_handle(), message.address().as_ptr() as *mut u8 as *mut c_void, message.count(), message.data_type_descriptor(), tag_matcher.value.0, tag_matcher.bit_mask.0, Some(callback_when_finished_or_cancelled)) };
+		let status_pointer = unsafe { ucp_tag_recv_nb(self.worker_handle(), message.address().as_ptr() as *mut u8 as *mut c_void, message.count(), message.data_type_descriptor(), tag_matcher.value.0, tag_matcher.bit_mask.0, callback_when_finished_or_cancelled) };
 		
 		match self.parent_worker.parse_status_pointer(status_pointer)
 		{

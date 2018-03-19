@@ -2,4 +2,4 @@
 // Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-pub type ucm_event_callback_t = Option<unsafe extern "C" fn(event_type: ucm_event_type_t, event: *mut ucm_event_t, arg: *mut c_void)>;
+pub type ucm_event_callback_t = unsafe extern "C" fn(event_type: ucm_event_type_t, event: *mut ucm_event_t, arg: *mut c_void);

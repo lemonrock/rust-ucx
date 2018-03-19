@@ -2,4 +2,4 @@
 // Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-pub type uct_pack_callback_t = Option<unsafe extern "C" fn(dest: *mut c_void, arg: *mut c_void) -> usize>;
+pub type uct_pack_callback_t = unsafe extern "C" fn(dest: *mut c_void, arg: *mut c_void) -> usize;

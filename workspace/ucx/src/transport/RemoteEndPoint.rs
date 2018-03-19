@@ -16,15 +16,6 @@ impl RemoteEndPoint
 		&mut iface.ops
 	}
 	
-//	//noinspection SpellCheckingInspection
-//	#[inline(always)]
-//	fn iface(&self) -> NonNull<uct_iface>
-//	{
-//		let iface = self.0.iface;
-//		debug_assert!(!iface.is_null(), "iface is null");
-//		unsafe { NonNull::new_unchecked(iface) }
-//	}
-	
 	#[inline(always)]
 	fn ep(&self) -> *mut uct_ep
 	{
@@ -35,124 +26,114 @@ impl RemoteEndPoint
 /// Resources (RESOURCE).
 impl RemoteEndPoint
 {
-	/// Add a pending request to an endpoint.
-	/// Add a pending request to the endpoint pending queue. The request will be
-	/// dispatched when the endpoint could potentially have additional send resources.
-	/// [in]  ep    Endpoint to add the pending request to.
-	/// [in]  req   request: Pending, which would be dispatched when more
-	/// resources become available. The user is expected to initialize
-	/// the "func" field.
-	/// After passed to function: the, the request is owned UCT: by,
-	/// until the callback is called and returns UCS_OK.
-	/// @return UCS_OK       - request added to pending queue
-	/// UCS_ERR_BUSY - request was not added to queue: pending, because send
-	/// resources are available now. The user is advised to
-	/// retry.
+	/// Add a pending request to the end point pending queue.
+	///
+	/// Equivalent to `uct_ep_pending_add`.
+	///
+	/// The request will be dispatched when the end point could potentially have additional send resources.
+	///
+	/// The `pending_request` will be dispatched when more resources become available.
+	/// The user is expected to initialize the `func` field.
+	///
+	/// After the `pending_request` is passed to the function, the request is owned by UCT until the callback is called and returns UCS_OK.
+	///
+	/// Returns:-
+	///
+	/// * `UCS_OK`: Request added to pending queue.
+	/// * `UCS_ERR_BUSY`: Send resources are not available; retry.
 	#[inline(always)]
-	fn uct_ep_pending_add(&self, req: *mut uct_pending_req_t) -> ucs_status_t
+	fn pending_add(&self, pending_request: Box<uct_pending_req>) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_pending_add.unwrap()(self.ep(), req) }
+		unsafe { (self.transport_interface_operations().ep_pending_add)(self.ep(), Box::into_raw(pending_request)) }
 	}
 	
-	/// Remove all pending requests from an endpoint.
-	/// Remove pending requests from the given endpoint and pass them to the provided
-	/// callback function. The callback return value is ignored.
-	/// [in]  ep  Endpoint to remove pending requests from.
-	/// [in]  cb  Callback to pass the removed requests to.
-	/// [in]  arg Argument to pass to the cb callback.
+	/// Remove all pending requests from an end point and pass them to the provided `purge_callback`.
+	///
+	/// Equivalent to `uct_ep_pending_purge`.
+	///
+	/// Remove pending requests from the given endpoint and pass them to the provided callback function.
+	/// The callback return value is ignored.
 	#[inline(always)]
-	fn uct_ep_pending_purge(&self, cb: uct_pending_purge_callback_t, arg: *mut c_void)
+	fn pending_purge(&self, callback_to_pass_removed_requests_to: unsafe extern "C" fn(removed_pending_request: *mut uct_pending_req_t, callback_context: *mut c_void), callback_context: *mut c_void)
 	{
-		unsafe { self.transport_interface_operations().ep_pending_purge.unwrap()(self.ep(), cb, arg) }
+		unsafe { (self.transport_interface_operations().ep_pending_purge)(self.ep(), callback_to_pass_removed_requests_to, callback_context) }
 	}
 	
-	/// Flush outstanding communication operations on an endpoint.
-	/// Flushes all outstanding communications issued on the endpoint prior to
-	/// this call. The operations are completed at the origin or at the target
-	/// as well. The exact completion semantic depends on flags parameter.
-	/// [in]    ep     Endpoint to flush communications from.
-	/// [in]    flags  Flags uct_flush_flags that control completion
-	/// semantic.
-	/// [inout] comp   Completion handle as defined by uct_completion_t.
-	/// Can NULL: be, which means that the call will return the
-	/// current state of the endpoint and no completion will
-	/// be generated in case of outstanding communications.
-	/// If it is not NULL completion counter is decremented
-	/// by 1 when the call completes. Completion callback is
-	/// called when the counter reaches 0.
-	/// @return UCS_OK              - No outstanding communications left.
-	/// UCS_ERR_NO_RESOURCE - Flush operation could not be initiated. A subsequent
-	/// call to uct_ep_pending_add would add a pending
-	/// operation, which provides an opportunity to retry
-	/// the flush.
-	/// UCS_INPROGRESS      - Some communication operations are still in progress.
-	/// If non-NULL 'comp' provided: is, it will be updated
-	/// upon completion of these operations.
+	/// Flush outstanding communication operations issued on this end prior to this call.
+	///
+	/// Equivalent to `uct_ep_flush`.
+	///
+	/// The operations are completed at the origin or at the target as well.
+	///
+	/// The exact completion semantic depends on the `flags` parameter.
+	///
+	///  * `flags`: See above.
+	///  * `completion_handle`: Modified by this call. It can be null (which means that the call will return the current state of the interface and no completion will be generated in case of outstanding communications). If not-null, then the completion counter is decremented by one (1) when this call completes. The completion callback is called when the completion counter reaches zero (0).
+	///
+	/// Returns:-
+	/// * `UCS_OK`: No outstanding communications left.
+	/// * `UCS_INPROGRESS`: Some communication operations are still in progress. If Some() was provided for `completion_handle`, it will be updated upon completion of these operations.
+	/// * `UCS_ERR_NO_RESOURCE`: Flush operation could not be initiated. A subsequent call to `pending_add` would add a pending/ operation, which provides an opportunity to retry/ the flush.
 	#[inline(always)]
-	fn uct_ep_flush(&self, flags: c_uint, comp: *mut uct_completion_t) -> ucs_status_t
+	fn flush(&self, flags: uct_flush_flags, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_flush.unwrap()(self.ep(), flags, comp) }
+		unsafe { (self.transport_interface_operations().ep_flush)(self.ep(), flags.0, completion_handle.mutable_reference()) }
 	}
 	
-	/// Ensures ordering of outstanding communications on the endpoint.
-	/// Operations issued on the endpoint prior to this call are guaranteed to
-	/// be completed before any subsequent communication operations to the same
-	/// endpoint which follow the call to fence.
-	/// [in]    ep     Endpoint to issue communications from.
-	/// [in]    flags  Flags that control ordering semantic (currently
-	/// unsupported - set to 0).
-	/// @return UCS_OK         - Ordering is inserted.
+	/// Ensures ordering of outstanding communications on the end point.
+	///
+	/// Equivalent to `uct_ep_fence`.
+	///
+	/// Returns `UCS_OK`.
 	#[inline(always)]
-	fn uct_ep_fence(&self, flags: c_uint) -> ucs_status_t
+	fn fence(&self) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_fence.unwrap()(self.ep(), flags) }
+		unsafe { (self.transport_interface_operations().ep_fence)(self.ep(), ReservedForFutureUseFlags) }
 	}
 }
 
 /// Active Messages (AM).
 impl RemoteEndPoint
 {
-	/// @brief
+	/// Send an immediate ('short') active message.
+	///
+	/// Equivalent to `uct_ep_am_short`.
+	///
+	/// `id` must be in the range `0 .. UCT_AM_ID_MAX-1`
 	#[inline(always)]
-	fn uct_ep_am_short(&self, id: u8, header: uint64_t, payload: *const c_void, length: c_uint) -> ucs_status_t
+	fn send_an_immediate_active_message(&self, id: ActiveMessageIdentifier, header: u64, payload: NonNull<u8>, length: u32) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_am_short.unwrap()(self.ep(), id, header, payload, length) }
+		unsafe { (self.transport_interface_operations().ep_am_short)(self.ep(), id.0, header, payload.as_ptr() as *const c_void, length) }
 	}
 	
-	/// @brief
+	/// Send a buffered copy-and-send ('bcopy') active message.
+	///
+	/// bcopy == buffered copy-and-send
+	///
+	/// Equivalent to `uct_ep_am_bcopy`.
+	///
+	/// `id` must be in the range `0 .. UCT_AM_ID_MAX-1`
 	#[inline(always)]
-	fn uct_ep_am_bcopy(&self, id: u8, pack_cb: uct_pack_callback_t, arg: *mut c_void, flags: c_uint) -> ssize_t
+	fn send_a_buffered_copy_and_send_active_message(&self, id: ActiveMessageIdentifier, pack_cb: uct_pack_callback_t, arg: *mut c_void, flags: c_uint) -> ssize_t
 	{
-		unsafe { self.transport_interface_operations().ep_am_bcopy.unwrap()(self.ep(), id, pack_cb, arg, flags) }
+		unsafe { (self.transport_interface_operations().ep_am_bcopy)(self.ep(), id.0, pack_cb, arg, flags) }
 	}
 	
-	/// Send active message while avoiding local memory copy
-	/// The input data in iov array of ::uct_iov_t structures sent to remote
-	/// side ("gather output"). Buffers in iov are processed in array order.
-	/// This means that the function complete iov[0] before proceeding to
-	/// iov[1], and so on.
-	/// /// [in] ep            Destination endpoint handle.
-	/// [in] id            Active message id. Must be in range 0..UCT_AM_ID_MAX-1.
-	/// [in] header        Active message header.
-	/// [in] header_length Active message header length in bytes.
-	/// [in] iov           Points to an array of ::uct_iov_t structures.
-	/// The iov pointer must be valid address of an array
-	/// of ::uct_iov_t structures. A particular structure
-	/// pointer must be valid address. NULL terminated pointer
-	/// is not required..
-	/// [in] iovcnt        Size of the iov data ::uct_iov_t structures
-	/// array. If iovcnt zero: is, the data is considered empty.
-	/// iovcnt is limited by uct_iface_attr_cap_am_max_iov
-	/// "uct_iface_attr::cap::am::max_iov"
-	/// [in] flags         Active flags: message, see uct_msg_flags.
-	/// [in] comp          Completion handle as defined by ::uct_completion_t.
-	/// @return UCS_INPROGRESS    Some communication operations are still in progress.
-	/// If non-NULL comp provided: is, it will be updated
-	/// upon completion of these operations.
+	/// Send an active message while avoiding local memory copy, ie by 'zero copy'.
+	///
+	/// Equivalent to `uct_ep_am_zcopy`.
+	///
+	/// * `header` may be no longer than `::std::u32::MAX` (ie 2^32 -1).
+	/// * `io_vec` maximum length is `uct_iface_attr_cap_am_max_iov`
+	///
+	/// Returns:-
+	/// * `UCS_INPROGRESS` Some communication operations are still in progress.
 	#[inline(always)]
-	fn uct_ep_am_zcopy(&self, id: u8, header: *const c_void, header_length: c_uint, iov: *const uct_iov_t, iovcnt: size_t, flags: c_uint, comp: *mut uct_completion_t) -> ucs_status_t
+	fn send_a_zero_copy_active_message(&self, id: ActiveMessageIdentifier, header: &[u8], io_vec: &[uct_iov_t], flags: uct_msg_flags, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_am_zcopy.unwrap()(self.ep(), id, header, header_length, iov, iovcnt, flags, comp) }
+		debug_assert!(header.len() < ::std::u32::MAX as usize, "header is too long");
+		
+		unsafe { (self.transport_interface_operations().ep_am_zcopy)(self.ep(), id.0, header.as_ptr() as *const c_void, header.len() as u32, io_vec.as_ptr(), io_vec.len(), flags.0, completion_handle.mutable_reference()) }
 	}
 }
 
@@ -163,14 +144,14 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_put_short(&self, buffer: *const c_void, length: c_uint, remote_addr: uint64_t, rkey: uct_rkey_t) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_put_short.unwrap()(self.ep(), buffer, length, remote_addr, rkey) }
+		unsafe { (self.transport_interface_operations().ep_put_short)(self.ep(), buffer, length, remote_addr, rkey) }
 	}
 	
 	/// @brief
 	#[inline(always)]
 	fn uct_ep_put_bcopy(&self, pack_cb: uct_pack_callback_t, arg: *mut c_void, remote_addr: uint64_t, rkey: uct_rkey_t) -> ssize_t
 	{
-		unsafe { self.transport_interface_operations().ep_put_bcopy.unwrap()(self.ep(), pack_cb, arg, remote_addr, rkey) }
+		unsafe { (self.transport_interface_operations().ep_put_bcopy)(self.ep(), pack_cb, arg, remote_addr, rkey) }
 	}
 	
 	/// Write data to remote memory while avoiding local memory copy
@@ -197,14 +178,14 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_put_zcopy(&self, iov: *const uct_iov_t, iovcnt: size_t, remote_addr: uint64_t, rkey: uct_rkey_t, comp: *mut uct_completion_t) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_put_zcopy.unwrap()(self.ep(), iov, iovcnt, remote_addr, rkey, comp) }
+		unsafe { (self.transport_interface_operations().ep_put_zcopy)(self.ep(), iov, iovcnt, remote_addr, rkey, comp) }
 	}
 	
 	/// @brief
 	#[inline(always)]
 	fn uct_ep_get_bcopy(&self, unpack_cb: uct_unpack_callback_t, arg: *mut c_void, length: size_t, remote_addr: uint64_t, rkey: uct_rkey_t, comp: *mut uct_completion_t) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_get_bcopy.unwrap()(self.ep(), unpack_cb, arg, length, remote_addr, rkey, comp) }
+		unsafe { (self.transport_interface_operations().ep_get_bcopy)(self.ep(), unpack_cb, arg, length, remote_addr, rkey, comp) }
 	}
 	
 	/// Read data from remote memory while avoiding local memory copy
@@ -231,7 +212,7 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_get_zcopy(&self, iov: *const uct_iov_t, iovcnt: size_t, remote_addr: uint64_t, rkey: uct_rkey_t, comp: *mut uct_completion_t) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_get_zcopy.unwrap()(self.ep(), iov, iovcnt, remote_addr, rkey, comp) }
+		unsafe { (self.transport_interface_operations().ep_get_zcopy)(self.ep(), iov, iovcnt, remote_addr, rkey, comp) }
 	}
 }
 
@@ -244,7 +225,7 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_add_u64(&self, add: u64, remote_addr: u64, rkey: uct_rkey_t) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_atomic_add64.unwrap()(self.ep(), add, remote_addr, rkey) }
+		unsafe { (self.transport_interface_operations().ep_atomic_add64)(self.ep(), add, remote_addr, rkey) }
 	}
 	
 	/// Atomic fetch-and-add.
@@ -259,7 +240,7 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_fetch_and_add_u64(&self, add: u64, remote_addr: u64, rkey: uct_rkey_t, result: &mut u64, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_atomic_fadd64.unwrap()(self.ep(), add, remote_addr, rkey, result, completion_handle.mutable_reference()) }
+		unsafe { (self.transport_interface_operations().ep_atomic_fadd64)(self.ep(), add, remote_addr, rkey, result, completion_handle.mutable_reference()) }
 	}
 	
 	/// Atomic swap.
@@ -274,7 +255,7 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_swap_u64(&self, swap: u64, remote_addr: u64, rkey: uct_rkey_t, result: &mut u64, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_atomic_swap64.unwrap()(self.ep(), swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
+		unsafe { (self.transport_interface_operations().ep_atomic_swap64)(self.ep(), swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
 	}
 	
 	/// Atomic compare_and_swap.
@@ -289,7 +270,7 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_compare_and_swap_u64(&self, compare: u64, swap: u64, remote_addr: u64, rkey: uct_rkey_t, result: &mut u64, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_atomic_cswap64.unwrap()(self.ep(), compare, swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
+		unsafe { (self.transport_interface_operations().ep_atomic_cswap64)(self.ep(), compare, swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
 	}
 	
 	/// Atomic add.
@@ -298,7 +279,7 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_add_u32(&self, add: u32, remote_addr: u64, rkey: uct_rkey_t) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_atomic_add32.unwrap()(self.ep(), add, remote_addr, rkey) }
+		unsafe { (self.transport_interface_operations().ep_atomic_add32)(self.ep(), add, remote_addr, rkey) }
 	}
 	
 	/// Atomic fetch-and-add.
@@ -313,7 +294,7 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_fetch_and_add_u32(&self, add: u32, remote_addr: u64, rkey: uct_rkey_t, result: &mut u32, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_atomic_fadd32.unwrap()(self.ep(), add, remote_addr, rkey, result, completion_handle.mutable_reference()) }
+		unsafe { (self.transport_interface_operations().ep_atomic_fadd32)(self.ep(), add, remote_addr, rkey, result, completion_handle.mutable_reference()) }
 	}
 	
 	/// Atomic swap.
@@ -328,7 +309,7 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_swap_u32(&self, swap: u32, remote_addr: u64, rkey: uct_rkey_t, result: &mut u32, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_atomic_swap32.unwrap()(self.ep(), swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
+		unsafe { (self.transport_interface_operations().ep_atomic_swap32)(self.ep(), swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
 	}
 	
 	/// Atomic compare_and_swap.
@@ -343,7 +324,7 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn atomic_compare_and_swap_u32(&self, compare: u32, swap: u32, remote_addr: u64, rkey: uct_rkey_t, result: &mut u32, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_atomic_cswap32.unwrap()(self.ep(), compare, swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
+		unsafe { (self.transport_interface_operations().ep_atomic_cswap32)(self.ep(), compare, swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
 	}
 }
 
@@ -369,7 +350,7 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_tag_eager_short(&self, tag: uct_tag_t, data: *const c_void, length: size_t) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_tag_eager_short.unwrap()(self.ep(), tag, data, length) }
+		unsafe { (self.transport_interface_operations().ep_tag_eager_short)(self.ep(), tag, data, length) }
 	}
 	
 	/// Bcopy eager tagged-send operation.
@@ -391,7 +372,7 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_tag_eager_bcopy(&self, tag: uct_tag_t, imm: uint64_t, pack_cb: uct_pack_callback_t, arg: *mut c_void, flags: c_uint) -> ssize_t
 	{
-		unsafe { self.transport_interface_operations().ep_tag_eager_bcopy.unwrap()(self.ep(), tag, imm, pack_cb, arg, flags) }
+		unsafe { (self.transport_interface_operations().ep_tag_eager_bcopy)(self.ep(), tag, imm, pack_cb, arg, flags) }
 	}
 	
 	/// Zcopy eager tagged-send operation.
@@ -427,7 +408,7 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_tag_eager_zcopy(&self, tag: uct_tag_t, imm: uint64_t, iov: *const uct_iov_t, iovcnt: size_t, flags: c_uint, comp: *mut uct_completion_t) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_tag_eager_zcopy.unwrap()(self.ep(), tag, imm, iov, iovcnt, flags, comp) }
+		unsafe { (self.transport_interface_operations().ep_tag_eager_zcopy)(self.ep(), tag, imm, iov, iovcnt, flags, comp) }
 	}
 	
 	/// Rendezvous tagged-send operation.
@@ -462,7 +443,7 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_tag_rndv_zcopy(&self, tag: uct_tag_t, header: *const c_void, header_length: c_uint, iov: *const uct_iov_t, iovcnt: size_t, flags: c_uint, comp: *mut uct_completion_t) -> ucs_status_ptr_t
 	{
-		unsafe { self.transport_interface_operations().ep_tag_rndv_zcopy.unwrap()(self.ep(), tag, header, header_length, iov, iovcnt, flags, comp) }
+		unsafe { (self.transport_interface_operations().ep_tag_rndv_zcopy)(self.ep(), tag, header, header_length, iov, iovcnt, flags, comp) }
 	}
 	
 	/// Cancel outstanding rendezvous operation.
@@ -479,7 +460,7 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_tag_rndv_cancel(&self, op: *mut c_void) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_tag_rndv_cancel.unwrap()(self.ep(), op) }
+		unsafe { (self.transport_interface_operations().ep_tag_rndv_cancel)(self.ep(), op) }
 	}
 	
 	/// Send software rendezvous request.
@@ -498,6 +479,6 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn uct_ep_tag_rndv_request(&self, tag: uct_tag_t, header: *const c_void, header_length: c_uint, flags: c_uint) -> ucs_status_t
 	{
-		unsafe { self.transport_interface_operations().ep_tag_rndv_request.unwrap()(self.ep(), tag, header, header_length, flags) }
+		unsafe { (self.transport_interface_operations().ep_tag_rndv_request)(self.ep(), tag, header, header_length, flags) }
 	}
 }

@@ -6,9 +6,9 @@
 #[derive(Hash)]
 pub struct uct_tag_context
 {
-	pub tag_consumed_cb: Option<unsafe extern "C" fn(self_: *mut uct_tag_context_t)>,
-	pub completed_cb: Option<unsafe extern "C" fn(self_: *mut uct_tag_context_t, stag: uct_tag_t, imm: u64, length: usize, status: ucs_status_t)>,
-	pub rndv_cb: Option<unsafe extern "C" fn(self_: *mut uct_tag_context_t, stag: uct_tag_t, header: *const c_void, header_length: c_uint, status: ucs_status_t)>,
+	pub tag_consumed_cb: unsafe extern "C" fn(self_: *mut uct_tag_context_t),
+	pub completed_cb: unsafe extern "C" fn(self_: *mut uct_tag_context_t, stag: uct_tag_t, imm: u64, length: usize, status: ucs_status_t),
+	pub rndv_cb: unsafe extern "C" fn(self_: *mut uct_tag_context_t, stag: uct_tag_t, header: *const c_void, header_length: c_uint, status: ucs_status_t),
 	pub priv_: [c_char; 32usize],
 }
 

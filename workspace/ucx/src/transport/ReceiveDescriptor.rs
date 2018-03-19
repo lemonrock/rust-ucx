@@ -12,7 +12,7 @@ impl ReceiveDescriptor
 	#[inline(always)]
 	pub(crate) fn release_callback(&self) -> unsafe extern "C" fn(this: *mut uct_recv_desc_t, desc: *mut c_void)
 	{
-		self.0.cb.unwrap()
+		self.0.cb
 	}
 }
 
@@ -36,7 +36,7 @@ impl ReceiveDescriptor
 		unsafe
 		{
 			let release_desc = uct_recv_desc(active_message_descriptor);
-			(&*release_desc).cb.unwrap()(release_desc, active_message_descriptor)
+			((&*release_desc).cb)(release_desc, active_message_descriptor)
 		}
 	}
 }

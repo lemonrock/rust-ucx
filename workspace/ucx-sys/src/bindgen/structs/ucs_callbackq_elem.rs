@@ -5,7 +5,7 @@
 #[repr(C)]
 pub struct ucs_callbackq_elem
 {
-	pub cb: ucs_callback_t,
+	pub cb: Option<ucs_callback_t>,
 	pub arg: *mut c_void,
 	pub flags: c_uint,
 	pub id: c_int,

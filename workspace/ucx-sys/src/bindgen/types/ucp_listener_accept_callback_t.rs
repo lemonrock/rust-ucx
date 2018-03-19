@@ -2,4 +2,4 @@
 // Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-pub type ucp_listener_accept_callback_t = Option<unsafe extern "C" fn(ep: ucp_ep_h, arg: *mut c_void)>;
+pub type ucp_listener_accept_callback_t = unsafe extern "C" fn(ep: ucp_ep_h, arg: *mut c_void);

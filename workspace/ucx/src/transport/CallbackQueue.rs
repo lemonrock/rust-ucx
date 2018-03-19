@@ -11,8 +11,6 @@ trait CallbackQueue
 	///
 	/// Must be called from single thread only.
 	///
-	/// @param  [in] cbq      Callback queue to dispatch callbacks from.
-	///
 	/// Returns sum of all return values from the dispatched callbacks.
 	#[inline(always)]
 	unsafe fn dispatch(&self) -> u32;
@@ -23,7 +21,7 @@ impl CallbackQueue for ucs_callbackq
 	#[inline(always)]
 	unsafe fn dispatch(&self) -> u32
 	{
-		// This loop works because the final array element in `fast_elems` is always None Sentinel (ie there are UCS_CALLBACKQ_FAST_COUNT - 1 elements).
+		// This loop works because the final array element's `cb` in `fast_elems` is always a None Sentinel (ie there are UCS_CALLBACKQ_FAST_COUNT - 1 elements).
 		let mut sum_of_all_return_values_from_dispatched_callbacks = 0;
 		let mut index = 0;
 		let mut element = self.fast_elems.get_unchecked(0);

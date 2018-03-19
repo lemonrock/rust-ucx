@@ -8,6 +8,7 @@
       <w>bindgen</w>
       <w>bitand</w>
       <w>bitor</w>
+      <w>callbackq</w>
       <w>calloc</w>
       <w>chunksize</w>
       <w>condvar</w>

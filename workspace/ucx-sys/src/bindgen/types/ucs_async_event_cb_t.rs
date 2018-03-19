@@ -2,4 +2,4 @@
 // Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-pub type ucs_async_event_cb_t = Option<unsafe extern "C" fn(id: c_int, arg: *mut c_void)>;
+pub type ucs_async_event_cb_t = unsafe extern "C" fn(id: c_int, arg: *mut c_void);

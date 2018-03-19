@@ -101,21 +101,75 @@ final_chance_to_tweak()
 
 	_fix_last_in_enum()
 	{
-		local enum="$1"
-
-		grep -v "^\t.*_LAST" "$outputFolderPath"/enums/"$enum".rs >"$outputFolderPath"/enums/"$enum".rs.tmp
-		rm "$outputFolderPath"/enums/"$enum".rs
-		mv "$outputFolderPath"/enums/"$enum".rs.tmp "$outputFolderPath"/enums/"$enum".rs
+		local enum
+		for enum in "$@"
+		do
+			grep -v "^\t.*_LAST" "$outputFolderPath"/enums/"$enum".rs >"$outputFolderPath"/enums/"$enum".rs.tmp
+			rm "$outputFolderPath"/enums/"$enum".rs
+			mv "$outputFolderPath"/enums/"$enum".rs.tmp "$outputFolderPath"/enums/"$enum".rs
+		done
 	}
 
-	_fix_last_in_enum ucp_atomic_fetch_op_t
-	_fix_last_in_enum ucs_async_mode_t
-	_fix_last_in_enum ucs_stats_formats_t
-	_fix_last_in_enum ucs_ternary_value
-	_fix_last_in_enum uct_am_trace_type
-	_fix_last_in_enum uct_device_type_t
-	_fix_last_in_enum ucs_log_level_t
-	_fix_last_in_enum ucs_thread_mode_t
-	_fix_last_in_enum ucp_atomic_post_op_t
-	_fix_last_in_enum uct_memory_type_t
+	_fix_last_in_enum \
+		ucp_atomic_fetch_op_t \
+		ucs_async_mode_t \
+		ucs_stats_formats_t \
+		ucs_ternary_value \
+		uct_am_trace_type \
+		uct_device_type_t \
+		ucs_log_level_t \
+		ucs_thread_mode_t \
+		ucp_atomic_post_op_t \
+		uct_memory_type_t
+
+
+	_fix_non_option_callback()
+	{
+		local callback
+		for callback in "$@"
+		do
+			sed -i -e "s/Option<unsafe/unsafe/g" -e 's/>;$/;/g' "$outputFolderPath"/types/"$callback".rs
+		done
+	}
+
+	# These callback types can be null:-
+	# ucp_err_handler_cb_t
+	# ucp_request_init_callback_t
+	# ucp_request_cleanup_callback_t
+
+	_fix_non_option_callback \
+		ucm_event_callback_t \
+		ucp_listener_accept_callback_t \
+		ucp_listener_accept_handler_t \
+		ucp_send_callback_t \
+		ucp_stream_recv_callback_t \
+		ucp_tag_recv_callback_t \
+		ucs_async_event_cb_t \
+		ucs_callback_t \
+		uct_am_callback_t \
+		uct_completion_callback_t \
+		uct_desc_release_callback_t \
+		uct_pack_callback_t \
+		uct_pending_callback_t \
+		uct_pending_purge_callback_t \
+		uct_sockaddr_conn_request_callback_t \
+		uct_tag_unexp_eager_cb_t \
+		uct_tag_unexp_rndv_cb_t \
+		uct_unpack_callback_t
+
+	# The above changes to `ucs_callback_t` affect the sentinel in `ucs_callbackq_elem`.
+	sed -i -e "s/pub cb: ucs_callback_t/pub cb: Option<ucs_callback_t>/g" "$outputFolderPath"/structs/ucs_callbackq_elem.rs
+
+	_fix_non_option_callback_on_struct()
+	{
+		local struct
+		for struct in "$@"
+		do
+			sed -i -e "s/Option<unsafe/unsafe/g" -e 's/>,$/,/g' "$outputFolderPath"/structs/"$struct".rs
+		done
+	}
+
+	_fix_non_option_callback_on_struct \
+		uct_tag_context \
+		uct_iface_ops
 }

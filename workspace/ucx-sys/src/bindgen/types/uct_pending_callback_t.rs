@@ -2,4 +2,4 @@
 // Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-pub type uct_pending_callback_t = Option<unsafe extern "C" fn(self_: *mut uct_pending_req_t) -> ucs_status_t>;
+pub type uct_pending_callback_t = unsafe extern "C" fn(self_: *mut uct_pending_req_t) -> ucs_status_t;

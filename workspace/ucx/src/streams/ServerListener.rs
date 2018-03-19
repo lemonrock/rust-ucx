@@ -54,7 +54,7 @@ impl<L: ServerListenerAcceptHandler> ServerListener<L>
 			},
 			accept_handler: ucp_listener_accept_handler_t
 			{
-				cb: Some(Self::accept_callback),
+				cb: Self::accept_callback,
 				arg: (&server_listener.server_listener_accept_handler) as *const _ as *mut _,
 			},
 		};

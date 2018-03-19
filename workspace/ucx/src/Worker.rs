@@ -174,7 +174,7 @@ impl Worker
 	#[inline(always)]
 	pub fn non_blocking_flush_all_end_points<'worker>(&'worker self, callback_when_finished_or_cancelled: unsafe extern "C" fn(request: *mut c_void, status: ucs_status_t)) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
 	{
-		let status_pointer = unsafe { ucp_worker_flush_nb(self.debug_assert_handle_is_valid(), ReservedForFutureUseFlags, Some(callback_when_finished_or_cancelled)) };
+		let status_pointer = unsafe { ucp_worker_flush_nb(self.debug_assert_handle_is_valid(), ReservedForFutureUseFlags, callback_when_finished_or_cancelled) };
 		
 		self.parse_status_pointer(status_pointer)
 	}
