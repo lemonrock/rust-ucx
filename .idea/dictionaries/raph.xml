@@ -102,6 +102,8 @@
       <w>prefault</w>
       <w>prio</w>
       <w>pthread</w>
+      <w>radeon</w>
+      <w>rdmacm</w>
       <w>rdrand</w>
       <w>rdrnd</w>
       <w>rdseed</w>
