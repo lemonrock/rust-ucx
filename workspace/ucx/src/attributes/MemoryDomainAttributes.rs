@@ -14,6 +14,13 @@ impl MemoryDomainAttributes
 		self.0.rkey_packed_size
 	}
 	
+	/// Is this feature supported?
+	#[inline(always)]
+	pub fn supports_feature(&self, feature: _bindgen_ty_1) -> bool
+	{
+		_bindgen_ty_1(self.0.cap.flags as u32) & feature == feature
+	}
+	
 	#[inline(always)]
 	pub(crate) fn query(memory_domain: NonNull<uct_md>) -> Self
 	{

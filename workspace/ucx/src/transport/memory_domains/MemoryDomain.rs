@@ -89,6 +89,8 @@ impl MemoryDomain
 	#[inline(always)]
 	pub fn is_socket_address_accessible(&self, socket_address: &SocketAddress, mode: uct_sockaddr_accessibility_t) -> bool
 	{
+		debug_assert!(self.attributes().supports_feature(_bindgen_ty_1::SOCKADDR), "Does not support socket addresses");
+		
 		let (addr, addrlen) = socket_address.suitable_for_ffi();
 		let ucs_socket_address = ucs_sock_addr
 		{
@@ -99,11 +101,19 @@ impl MemoryDomain
 		unsafe { uct_md_is_sockaddr_accessible(self.as_ptr(), &ucs_socket_address, mode) }.from_c_bool()
 	}
 	
-	// uct_md_mem_alloc
+	// ?UCT_MD_FLAG_SOCKADDR?
+	
+	// uct_mem_alloc   UCT_MD_MEM_FLAG_FIXED
+	// uct_mem_free
+	
+	// uct_md_mem_alloc   UCT_MD_FLAG_ALLOC
 	// uct_md_mem_free
-	// uct_md_mem_advise
+	// uct_md_mem_advise      UCT_MD_FLAG_ADVISE
 	// uct_md_mem_reg
 	// uct_md_mem_dereg
+	
+	// uct_iface_mem_alloc    uct_md_mem_flags
+	// uct_iface_mem_free
 	
 	/// Query.
 	#[inline(always)]

@@ -33,6 +33,15 @@ impl<SCR: ServerConnectionRequest> CommunicationInterfaceContextEndPointAddress<
 	#[inline(always)]
 	pub(crate) fn communication_interface_configuration(&self, memory_domain: &MemoryDomain) -> Result<CommunicationInterfaceConfiguration, ErrorCode>
 	{
+		use self::CommunicationInterfaceContextEndPointAddress::*;
+		
+		match *self
+		{
+			ClientSocket | ServerSocket { .. } => debug_assert!(memory_domain.attributes().supports_feature(_bindgen_ty_1::SOCKADDR), "Does not support socket addresses"),
+			
+			_ => (),
+		}
+		
 		let transport_layer_name = self.transport_layer_name_for_configuration(memory_domain.transport_layer());
 		
 		// Going forward, the safe way to do this is probably to use CString for environment variable names and values in JSON.
