@@ -2,13 +2,20 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use ::std::ptr::NonNull;
-use ::std::rc::Rc;
-use ::std::sync::Arc;
-use ::ucx_sys::*;
-
-
-include!("ApplicationContextHandleDropSafety.rs");
-include!("MemoryDomainDropSafety.rs");
-include!("OurRemotelyAccessibleMemoryHandleDropSafety.rs");
-include!("WorkerHandleDropSafety.rs");
+/// What kind of device provides this communication interface?
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[repr(u32)]
+pub enum DeviceKind
+{
+	/// Network.
+	Network = 1,
+	
+	/// Intra-node shared memory.
+	IntraNode = 2,
+	
+	/// An accelerator, such as GPU; effectively intra-node.
+	Accelerator = 3,
+	
+	/// Ourselves, aka 'self'. Similar to shared memory.
+	Loopback = 4,
+}

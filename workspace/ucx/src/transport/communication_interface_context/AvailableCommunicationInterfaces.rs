@@ -2,31 +2,39 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+/// Available communication interfaces.
 #[derive(Debug)]
-struct MemoryDomainComponentConfiguration(*mut uct_md_config);
+pub struct AvailableCommunicationInterfaces
+{
+	array: *mut uct_tl_resource_desc,
+	length: u32,
+}
 
-impl Drop for MemoryDomainComponentConfiguration
+impl Drop for AvailableCommunicationInterfaces
 {
 	#[inline(always)]
 	fn drop(&mut self)
 	{
-		if !self.0.is_null()
+		if !self.array.is_null()
 		{
-			unsafe { uct_config_release(self.0 as *mut c_void) }
+			unsafe { uct_release_tl_resource_list(self.array) }
 		}
 	}
 }
 
-impl MemoryDomainComponentConfiguration
+impl AvailableCommunicationInterfaces
 {
+	/// Query.
 	#[inline(always)]
-	fn read_from_environment(memory_domain_component_name: &CStr, environment_variable_prefix: &CStr) -> Result<Self, ErrorCode>
+	pub fn query(memory_domain: &MemoryDomain) -> Result<Self, ErrorCode>
 	{
-		let mut this = MemoryDomainComponentConfiguration(null_mut());
+		let mut this = Self
+		{
+			array: null_mut(),
+			length: 0
+		};
 		
-		let unsupported_file_name = null_mut();
-		
-		let status = unsafe { uct_md_config_read(memory_domain_component_name.as_ptr(), environment_variable_prefix.as_ptr(), unsupported_file_name, &mut this.0) };
+		let status = unsafe { uct_md_query_tl_resources(memory_domain.as_ptr(), &mut this.array, &mut this.length) };
 		
 		use self::Status::*;
 		
@@ -40,9 +48,11 @@ impl MemoryDomainComponentConfiguration
 		}
 	}
 	
+	/// As a slice.
 	#[inline(always)]
-	fn as_ptr(&self) -> *mut uct_md_config
+	pub fn as_slice<'a>(&'a self) -> &'a [AvailableCommunicationInterface]
 	{
-		self.0
+		let slice = unsafe { from_raw_parts(self.array as *const _, self.length as usize) };
+		unsafe { transmute(slice) }
 	}
 }

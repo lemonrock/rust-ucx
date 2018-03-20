@@ -9,6 +9,8 @@ pub struct AvailableMemoryDomainComponent(uct_md_resource_desc);
 impl AvailableMemoryDomainComponent
 {
 	/// Name.
+	///
+	/// No more than 16 characters long (excluding final `\0`).
 	#[inline(always)]
 	pub fn name(&self) -> Cow<CStr>
 	{

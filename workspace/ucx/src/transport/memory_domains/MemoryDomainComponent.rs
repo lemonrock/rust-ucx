@@ -75,6 +75,8 @@ impl MemoryDomainComponent
 	}
 	
 	/// UCT name for FFI.
+	///
+	/// No more than 16 characters long (excluding final `\0`).
 	#[inline(always)]
 	pub fn name(&self) -> &'static CStr
 	{

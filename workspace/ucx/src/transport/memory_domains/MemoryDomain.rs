@@ -7,21 +7,10 @@
 /// All communications and memory operations are performed in the context of a specific memory domain.
 ///
 /// Therefore one or more must be created before opening a `CommunicationInterfaceContext`.
-pub struct MemoryDomain(*mut uct_md);
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct MemoryDomain(NonNull<uct_md>, Arc<MemoryDomainDropSafety>);
 
 // TODO: Need to keep reference alive while CommIntContext is alive.
-
-impl Drop for MemoryDomain
-{
-	#[inline(always)]
-	fn drop(&mut self)
-	{
-		if !self.0.is_null()
-		{
-			unsafe { uct_md_close(self.0) }
-		}
-	}
-}
 
 impl MemoryDomain
 {
@@ -29,17 +18,22 @@ impl MemoryDomain
 	#[inline(always)]
 	pub fn open(memory_domain_component: MemoryDomainComponent) -> Result<Self, ErrorCode>
 	{
-		let mut this = MemoryDomain(null_mut());
+		let mut handle = unsafe { uninitialized() };
 		
 		let memory_domain_configuration = memory_domain_component.memory_domain_configuration()?;
 		
-		let status = unsafe { uct_md_open(memory_domain_component.name().as_ptr(), memory_domain_configuration.as_ptr(), &mut this.0) };
+		let status = unsafe { uct_md_open(memory_domain_component.name().as_ptr(), memory_domain_configuration.as_ptr(), &mut handle) };
 		
 		use self::Status::*;
 		
 		match status.parse()
 		{
-			IsOk => Ok(this),
+			IsOk =>
+			{
+				debug_assert!(!handle.is_null(), "handle is null");
+				let handle = unsafe { NonNull::new_unchecked(handle) };
+				Ok(MemoryDomain(handle, MemoryDomainDropSafety::new(handle)))
+			}
 			
 			Error(error_code) => Err(error_code),
 			
@@ -47,15 +41,33 @@ impl MemoryDomain
 		}
 	}
 	
+	/// Query.
+	#[inline(always)]
+	pub fn available_communication_interfaces(&self) -> Result<AvailableCommunicationInterfaces, ErrorCode>
+	{
+		AvailableCommunicationInterfaces::query(self)
+	}
 	
-	// uct_md_iface_config_read
+	#[inline(always)]
+	pub(crate) fn as_ptr(&self) -> *mut uct_md
+	{
+		self.0.as_ptr()
+	}
+	
+	#[inline(always)]
+	pub(crate) fn drop_safety(&self) -> Arc<MemoryDomainDropSafety>
+	{
+		self.1.clone()
+	}
+	
 	
 	// uct_md_is_mem_type_owned
 	// uct_md_is_sockaddr_accessible
 	// uct_md_mkey_pack
 	// uct_md_open
 	// uct_md_query
-	// uct_md_query_tl_resources
+	// uct_md_query_tl_resources  /   uct_release_tl_resource_list   uct_tl_resource_desc_t   uct_tl_resource_desc
+	
 	
 	// uct_md_mem_advise
 	// uct_md_mem_alloc
