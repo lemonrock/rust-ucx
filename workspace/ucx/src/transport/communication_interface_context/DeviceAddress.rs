@@ -6,17 +6,6 @@
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct DeviceAddress(Vec<u8>);
 
-impl DeviceAddress
-{
-	#[inline(always)]
-	pub(crate) fn new(length: usize) -> Self
-	{
-		let mut bytes = Vec::with_capacity(length);
-		unsafe { bytes.set_len(length) };
-		DeviceAddress(bytes)
-	}
-}
-
 impl ByteBuffer for DeviceAddress
 {
 	#[inline(always)]
@@ -34,6 +23,14 @@ impl ByteBuffer for DeviceAddress
 
 impl DeviceAddress
 {
+	#[inline(always)]
+	pub(crate) fn new(length: usize) -> Self
+	{
+		let mut bytes = Vec::with_capacity(length);
+		unsafe { bytes.set_len(length) };
+		DeviceAddress(bytes)
+	}
+	
 	#[inline(always)]
 	pub(crate) fn is_reachable_address(&self) -> *const uct_device_addr
 	{

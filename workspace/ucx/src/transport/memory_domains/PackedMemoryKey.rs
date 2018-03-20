@@ -2,11 +2,11 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// An interface address.
+/// A packed memory key.
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct InterfaceAddress(Vec<u8>);
+pub struct PackedMemoryKey(Vec<u8>);
 
-impl ByteBuffer for InterfaceAddress
+impl ByteBuffer for PackedMemoryKey
 {
 	#[inline(always)]
 	fn address(&self) -> NonNull<u8>
@@ -21,18 +21,18 @@ impl ByteBuffer for InterfaceAddress
 	}
 }
 
-impl InterfaceAddress
+impl PackedMemoryKey
 {
 	#[inline(always)]
 	pub(crate) fn new(length: usize) -> Self
 	{
 		let mut bytes = Vec::with_capacity(length);
 		unsafe { bytes.set_len(length) };
-		InterfaceAddress(bytes)
+		PackedMemoryKey(bytes)
 	}
 	
 	#[inline(always)]
-	pub(crate) fn is_reachable_address(&self) -> *const uct_iface_addr
+	pub(crate) fn is_reachable_address(&self) -> *const uct_device_addr
 	{
 		if self.0.is_empty()
 		{
@@ -40,7 +40,7 @@ impl InterfaceAddress
 		}
 		else
 		{
-			self.0.as_ptr() as *const uct_iface_addr
+			self.0.as_ptr() as *const _
 		}
 	}
 }

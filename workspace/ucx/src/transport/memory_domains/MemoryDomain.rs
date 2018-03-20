@@ -10,6 +10,17 @@
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct MemoryDomain(NonNull<uct_md>, Arc<MemoryDomainDropSafety>, MemoryDomainComponentAndTransportLayer);
 
+impl HasAttributes for MemoryDomain
+{
+	type Attributes = MemoryDomainAttributes;
+	
+	#[inline(always)]
+	fn attributes(&self) -> Self::Attributes
+	{
+		Self::Attributes::query(self.0)
+	}
+}
+
 impl MemoryDomain
 {
 	/// Creates and opens a new memory domain.
@@ -46,6 +57,54 @@ impl MemoryDomain
 		CommunicationInterfaceContext::open(hyper_thread_index, self, end_point_address, error_handler, unexpected_tagged_message_handler, worker)
 	}
 	
+	/// Obtains a packed memory key (rkey).
+	#[inline(always)]
+	pub fn packed_memory_key(&self, memory_handle: uct_mem_h) -> Result<PackedMemoryKey, ErrorCode>
+	{
+		let packed_memory_key = PackedMemoryKey::new(self.attributes().packed_memory_key_length());
+		
+		let status = unsafe { uct_md_mkey_pack(self.as_ptr(), memory_handle, packed_memory_key.address().as_ptr() as *mut c_void) };
+		
+		use self::Status::*;
+		
+		match status.parse()
+		{
+			IsOk => Ok(packed_memory_key),
+			
+			Error(error_code) => Err(error_code),
+			
+			_ => panic!("Unexpected status '{:?}'", status),
+		}
+	}
+	
+	/// Does this memory domain own this memory?
+	#[inline(always)]
+	pub fn owns_memory(&self, does_it_own_memory_at_address: NonNull<u8>, does_it_own_memory_length: usize) -> bool
+	{
+		unsafe { uct_md_is_mem_type_owned(self.as_ptr(), does_it_own_memory_at_address.as_ptr() as *mut c_void, does_it_own_memory_length) }.from_c_bool()
+	}
+	
+	//noinspection SpellCheckingInspection
+	/// Is this socket address accessible?
+	#[inline(always)]
+	pub fn is_socket_address_accessible(&self, socket_address: &SocketAddress, mode: uct_sockaddr_accessibility_t) -> bool
+	{
+		let (addr, addrlen) = socket_address.suitable_for_ffi();
+		let ucs_socket_address = ucs_sock_addr
+		{
+			addr,
+			addrlen
+		};
+		
+		unsafe { uct_md_is_sockaddr_accessible(self.as_ptr(), &ucs_socket_address, mode) }.from_c_bool()
+	}
+	
+	// uct_md_mem_alloc
+	// uct_md_mem_free
+	// uct_md_mem_advise
+	// uct_md_mem_reg
+	// uct_md_mem_dereg
+	
 	/// Query.
 	#[inline(always)]
 	pub fn available_communication_interfaces(&self) -> Result<AvailableCommunicationInterfaces, ErrorCode>
@@ -70,20 +129,5 @@ impl MemoryDomain
 	{
 		&self.2
 	}
-	
-	
-	// uct_md_is_mem_type_owned
-	// uct_md_is_sockaddr_accessible
-	// uct_md_mkey_pack
-	// uct_md_open
-	// uct_md_query
-	// uct_md_query_tl_resources  /   uct_release_tl_resource_list   uct_tl_resource_desc_t   uct_tl_resource_desc
-	
-	
-	// uct_md_mem_advise
-	// uct_md_mem_alloc
-	// uct_md_mem_dereg
-	// uct_md_mem_free
-	// uct_md_mem_reg
 }
 

@@ -24,6 +24,7 @@ pub mod constraints;
 include!("ApplicationContextAttributes.rs");
 include!("CommunicationInterfaceContextAttributes.rs");
 include!("HasAttributes.rs");
+include!("MemoryDomainAttributes.rs");
 include!("OurRemotelyAccessibleMemoryAttributes.rs");
 include!("WorkerAttributes.rs");
 include!("WorkerThreadMode.rs");
