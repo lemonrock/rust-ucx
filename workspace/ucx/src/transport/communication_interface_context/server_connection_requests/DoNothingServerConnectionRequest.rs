@@ -2,20 +2,22 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// Applies an offset.
+/// Does nothing (actually, always fails connection requests).
 #[derive(Default, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct OffsetLocalToRemoteAddressTranslation
-{
-	offset: i64,
-}
+pub struct DoNothingServerConnectionRequest;
 
-impl LocalToRemoteAddressTranslation for OffsetLocalToRemoteAddressTranslation
+impl ServerConnectionRequest for DoNothingServerConnectionRequest
 {
 	#[inline(always)]
-	fn from_local_address_to_remote_address(&self, local_address: NonNull<u8>) -> RemoteAddress
+	fn connection_request(&self, _connection_private_data_from_uct_ep_create_sockaddr: UcxAllocatedByteBuffer) -> bool
 	{
-		let pointer_as_usize = local_address.as_ptr() as usize;
-		debug_assert!(pointer_as_usize < ::std::i64::MAX as usize, "pointer is too high");
-		RemoteAddress(((pointer_as_usize as i64) + self.offset) as u64)
+		false
+	}
+	
+	/// SYNC, ASYNC or both?
+	#[inline(always)]
+	fn connection_callback_flags(&self) -> uct_cb_flags
+	{
+		uct_cb_flags::SYNC | uct_cb_flags::ASYNC
 	}
 }

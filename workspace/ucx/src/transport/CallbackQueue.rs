@@ -77,9 +77,6 @@ trait CallbackQueue
 	fn dispatch_thread_unsafe(&self) -> u32;
 }
 
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct CallbackUniqueIdentifier(pub i32);
-
 impl CallbackQueue for ucs_callbackq
 {
 	#[inline(always)]

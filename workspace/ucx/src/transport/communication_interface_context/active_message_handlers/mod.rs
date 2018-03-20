@@ -2,10 +2,9 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use ::std::ptr::NonNull;
+use super::super::super::UcxAllocatedByteBuffer;
+use ::ucx_sys::*;
 
 
-include!("DirectLocalToRemoteAddressTranslation.rs");
-include!("LocalToRemoteAddressTranslation.rs");
-include!("OffsetLocalToRemoteAddressTranslation.rs");
-include!("RemoteAddress.rs");
+include!("ActiveMessageHandler.rs");
+include!("DoNothingActiveMessageHandler.rs");

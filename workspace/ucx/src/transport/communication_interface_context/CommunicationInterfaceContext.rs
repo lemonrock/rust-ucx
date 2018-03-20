@@ -10,7 +10,7 @@ macro_rules! set_active_message_handler
 		{
 			/// Set an active message handler for active message identifier [$count].
 			#[inline(always)]
-        	pub(crate) fn [set_active_message_handler $_count](&mut self, active_message_handler: [$a_count], flags: uct_cb_flags) -> Result<(), ErrorCode>
+        	pub fn [set_active_message_handler $_count](&mut self, active_message_handler: [$a_count], flags: uct_cb_flags) -> Result<(), ErrorCode>
         	{
 				let former_active_message_handler = self.[active_message_handler $_count].take();
 				self.[active_message_handler $_count] = Some(active_message_handler);
@@ -40,9 +40,15 @@ macro_rules! set_active_message_handler
 	}
 }
 
+/// A communication interface context.
+///
+/// Simply, an interface; a means of talking to remote end points and receiving data from them.
 #[derive(Debug)]
-pub(crate) struct CommunicationInterfaceContext<AT=DoNothingActiveMessageTracer, A0=DoNothingActiveMessageHandler, A1=DoNothingActiveMessageHandler, A2=DoNothingActiveMessageHandler, A3=DoNothingActiveMessageHandler, A4=DoNothingActiveMessageHandler, A5=DoNothingActiveMessageHandler, A6=DoNothingActiveMessageHandler, A7=DoNothingActiveMessageHandler, A8=DoNothingActiveMessageHandler, A9=DoNothingActiveMessageHandler, A10=DoNothingActiveMessageHandler, A11=DoNothingActiveMessageHandler, A12=DoNothingActiveMessageHandler, A13=DoNothingActiveMessageHandler, A14=DoNothingActiveMessageHandler, A15=DoNothingActiveMessageHandler, A16=DoNothingActiveMessageHandler, A17=DoNothingActiveMessageHandler, A18=DoNothingActiveMessageHandler, A19=DoNothingActiveMessageHandler, A20=DoNothingActiveMessageHandler, A21=DoNothingActiveMessageHandler, A22=DoNothingActiveMessageHandler, A23=DoNothingActiveMessageHandler, A24=DoNothingActiveMessageHandler, A25=DoNothingActiveMessageHandler, A26=DoNothingActiveMessageHandler, A27=DoNothingActiveMessageHandler, A28=DoNothingActiveMessageHandler, A29=DoNothingActiveMessageHandler, A30=DoNothingActiveMessageHandler, A31=DoNothingActiveMessageHandler>
+pub struct CommunicationInterfaceContext<SCR=DoNothingServerConnectionRequest, E=DoNothingErrorHandler, UETM=DoNothingUnexpectedTaggedMessageHandler, AT=DoNothingActiveMessageTracer, A0=DoNothingActiveMessageHandler, A1=DoNothingActiveMessageHandler, A2=DoNothingActiveMessageHandler, A3=DoNothingActiveMessageHandler, A4=DoNothingActiveMessageHandler, A5=DoNothingActiveMessageHandler, A6=DoNothingActiveMessageHandler, A7=DoNothingActiveMessageHandler, A8=DoNothingActiveMessageHandler, A9=DoNothingActiveMessageHandler, A10=DoNothingActiveMessageHandler, A11=DoNothingActiveMessageHandler, A12=DoNothingActiveMessageHandler, A13=DoNothingActiveMessageHandler, A14=DoNothingActiveMessageHandler, A15=DoNothingActiveMessageHandler, A16=DoNothingActiveMessageHandler, A17=DoNothingActiveMessageHandler, A18=DoNothingActiveMessageHandler, A19=DoNothingActiveMessageHandler, A20=DoNothingActiveMessageHandler, A21=DoNothingActiveMessageHandler, A22=DoNothingActiveMessageHandler, A23=DoNothingActiveMessageHandler, A24=DoNothingActiveMessageHandler, A25=DoNothingActiveMessageHandler, A26=DoNothingActiveMessageHandler, A27=DoNothingActiveMessageHandler, A28=DoNothingActiveMessageHandler, A29=DoNothingActiveMessageHandler, A30=DoNothingActiveMessageHandler, A31=DoNothingActiveMessageHandler>
 where
+	SCR: ServerConnectionRequest,
+	E: ErrorHandler,
+	UETM: UnexpectedTaggedMessageHandler,
 	AT: ActiveMessageTracer,
 	A0: ActiveMessageHandler,
 	A1: ActiveMessageHandler,
@@ -77,7 +83,10 @@ where
 	A30: ActiveMessageHandler,
 	A31: ActiveMessageHandler
 {
-	iface: UnsafeCell<uct_iface>,
+	iface: *mut uct_iface,
+	end_point_address: CommunicationInterfaceContextEndPointAddress<SCR>,
+	error_handler: E,
+	unexpected_tagged_message_handler: UETM,
 	active_message_tracer: Option<AT>,
 	active_message_handler_0: Option<A0>,
 	active_message_handler_1: Option<A1>,
@@ -113,27 +122,50 @@ where
 	active_message_handler_31: Option<A31>,
 }
 
-impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandler, A3: ActiveMessageHandler, A4: ActiveMessageHandler, A5: ActiveMessageHandler, A6: ActiveMessageHandler, A7: ActiveMessageHandler, A8: ActiveMessageHandler, A9: ActiveMessageHandler, A10: ActiveMessageHandler, A11: ActiveMessageHandler, A12: ActiveMessageHandler, A13: ActiveMessageHandler, A14: ActiveMessageHandler, A15: ActiveMessageHandler, A16: ActiveMessageHandler, A17: ActiveMessageHandler, A18: ActiveMessageHandler, A19: ActiveMessageHandler, A20: ActiveMessageHandler, A21: ActiveMessageHandler, A22: ActiveMessageHandler, A23: ActiveMessageHandler, A24: ActiveMessageHandler, A25: ActiveMessageHandler, A26: ActiveMessageHandler, A27: ActiveMessageHandler, A28: ActiveMessageHandler, A29: ActiveMessageHandler, A30: ActiveMessageHandler, A31: ActiveMessageHandler> HasAttributes for CommunicationInterfaceContext<AT, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28, A29, A30, A31>
+impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessageHandler, AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandler, A3: ActiveMessageHandler, A4: ActiveMessageHandler, A5: ActiveMessageHandler, A6: ActiveMessageHandler, A7: ActiveMessageHandler, A8: ActiveMessageHandler, A9: ActiveMessageHandler, A10: ActiveMessageHandler, A11: ActiveMessageHandler, A12: ActiveMessageHandler, A13: ActiveMessageHandler, A14: ActiveMessageHandler, A15: ActiveMessageHandler, A16: ActiveMessageHandler, A17: ActiveMessageHandler, A18: ActiveMessageHandler, A19: ActiveMessageHandler, A20: ActiveMessageHandler, A21: ActiveMessageHandler, A22: ActiveMessageHandler, A23: ActiveMessageHandler, A24: ActiveMessageHandler, A25: ActiveMessageHandler, A26: ActiveMessageHandler, A27: ActiveMessageHandler, A28: ActiveMessageHandler, A29: ActiveMessageHandler, A30: ActiveMessageHandler, A31: ActiveMessageHandler> Drop for CommunicationInterfaceContext<SCR, E, UETM, AT, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28, A29, A30, A31>
+{
+	#[inline(always)]
+	fn drop(&mut self)
+	{
+		if !self.iface.is_null()
+		{
+			self.close_and_destroy()
+		}
+	}
+}
+
+impl<SCR: ServerConnectionRequest, E : ErrorHandler, UETM: UnexpectedTaggedMessageHandler, AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandler, A3: ActiveMessageHandler, A4: ActiveMessageHandler, A5: ActiveMessageHandler, A6: ActiveMessageHandler, A7: ActiveMessageHandler, A8: ActiveMessageHandler, A9: ActiveMessageHandler, A10: ActiveMessageHandler, A11: ActiveMessageHandler, A12: ActiveMessageHandler, A13: ActiveMessageHandler, A14: ActiveMessageHandler, A15: ActiveMessageHandler, A16: ActiveMessageHandler, A17: ActiveMessageHandler, A18: ActiveMessageHandler, A19: ActiveMessageHandler, A20: ActiveMessageHandler, A21: ActiveMessageHandler, A22: ActiveMessageHandler, A23: ActiveMessageHandler, A24: ActiveMessageHandler, A25: ActiveMessageHandler, A26: ActiveMessageHandler, A27: ActiveMessageHandler, A28: ActiveMessageHandler, A29: ActiveMessageHandler, A30: ActiveMessageHandler, A31: ActiveMessageHandler> HasAttributes for CommunicationInterfaceContext<SCR, E, UETM, AT, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28, A29, A30, A31>
 {
 	type Attributes = CommunicationInterfaceContextAttributes;
 	
 	#[inline(always)]
 	fn attributes(&self) -> Self::Attributes
 	{
-		CommunicationInterfaceContextAttributes::query(unsafe { NonNull::new_unchecked(self.iface()) })
+		CommunicationInterfaceContextAttributes::query(self.non_null_iface())
 	}
 }
 
-impl CommunicationInterfaceContext<>
+// uct_md_iface_config_read
+
+impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessageHandler, AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandler, A3: ActiveMessageHandler, A4: ActiveMessageHandler, A5: ActiveMessageHandler, A6: ActiveMessageHandler, A7: ActiveMessageHandler, A8: ActiveMessageHandler, A9: ActiveMessageHandler, A10: ActiveMessageHandler, A11: ActiveMessageHandler, A12: ActiveMessageHandler, A13: ActiveMessageHandler, A14: ActiveMessageHandler, A15: ActiveMessageHandler, A16: ActiveMessageHandler, A17: ActiveMessageHandler, A18: ActiveMessageHandler, A19: ActiveMessageHandler, A20: ActiveMessageHandler, A21: ActiveMessageHandler, A22: ActiveMessageHandler, A23: ActiveMessageHandler, A24: ActiveMessageHandler, A25: ActiveMessageHandler, A26: ActiveMessageHandler, A27: ActiveMessageHandler, A28: ActiveMessageHandler, A29: ActiveMessageHandler, A30: ActiveMessageHandler, A31: ActiveMessageHandler> CommunicationInterfaceContext<SCR, E, UETM, AT, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28, A29, A30, A31>
 {
+//	#[link_name = "\u{1}_uct_iface_mem_alloc"] pub fn uct_iface_mem_alloc(iface: uct_iface_h, length: usize, flags: c_uint, name: *const c_char, mem: *mut uct_allocated_memory_t) -> ucs_status_t;
+//	#[link_name = "\u{1}_uct_iface_mem_free"] pub fn uct_iface_mem_free(mem: *const uct_allocated_memory_t);
+
+	/// Open an interface.
+	///
+	/// Equivalent to `uct_iface_open`.
 	#[inline(always)]
-	pub fn new() -> Box<CommunicationInterfaceContext<>>
+	pub fn open(&self, hyper_thread_index: ZeroBasedHyperThreadIndex, end_point_address: CommunicationInterfaceContextEndPointAddress<SCR>, error_handler: E, unexpected_tagged_message_handler: UETM, memory_domain: *mut uct_md, worker: *mut uct_worker, configuration: *const uct_iface_config) -> Result<Box<Self>, ErrorCode>
 	{
-		Box::new
+		let mut this = Box::new
 		(
 			Self
 			{
-				iface: UnsafeCell::new(unsafe { uninitialized() }),
+				iface: null_mut(),
+				end_point_address,
+				error_handler,
+				unexpected_tagged_message_handler,
 				active_message_tracer: None,
 				active_message_handler_0: None,
 				active_message_handler_1: None,
@@ -168,21 +200,140 @@ impl CommunicationInterfaceContext<>
 				active_message_handler_30: None,
 				active_message_handler_31: None,
 			}
-		)
+		);
+		
+		let (uct_iface_open_mode(open_mode), mode) = this.end_point_address.open_mode();
+		let raw_unexpected_tagged_message_handler = (&this.unexpected_tagged_message_handler) as *const UETM as *mut UETM as *mut c_void;
+		let parameters = uct_iface_params
+		{
+			cpu_mask: ucs_cpu_set_t::create_for_hyper_thread(hyper_thread_index),
+			
+			open_mode: open_mode as u64,
+			mode,
+			
+			stats_root: null_mut(),
+			
+			rx_headroom: this.unexpected_tagged_message_handler.receive_headroom(),
+			
+			err_handler_arg: this.deref() as *const Self as *const c_void as *mut _,
+			err_handler: Self::error_handler,
+			
+			eager_arg: raw_unexpected_tagged_message_handler,
+			eager_cb: Self::unexpected_eager_tagged_message,
+			
+			rndv_arg: raw_unexpected_tagged_message_handler,
+			rndv_cb: Self::unexpected_rendezvous_tagged_message,
+		};
+		
+		let status = unsafe { uct_iface_open(memory_domain, worker, &parameters, configuration, &mut this.iface) };
+		
+		if let Err(error_code) = Self::parse_status(status, ())
+		{
+			return Err(error_code)
+		}
+		
+		Ok(this)
 	}
-}
-
-impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandler, A3: ActiveMessageHandler, A4: ActiveMessageHandler, A5: ActiveMessageHandler, A6: ActiveMessageHandler, A7: ActiveMessageHandler, A8: ActiveMessageHandler, A9: ActiveMessageHandler, A10: ActiveMessageHandler, A11: ActiveMessageHandler, A12: ActiveMessageHandler, A13: ActiveMessageHandler, A14: ActiveMessageHandler, A15: ActiveMessageHandler, A16: ActiveMessageHandler, A17: ActiveMessageHandler, A18: ActiveMessageHandler, A19: ActiveMessageHandler, A20: ActiveMessageHandler, A21: ActiveMessageHandler, A22: ActiveMessageHandler, A23: ActiveMessageHandler, A24: ActiveMessageHandler, A25: ActiveMessageHandler, A26: ActiveMessageHandler, A27: ActiveMessageHandler, A28: ActiveMessageHandler, A29: ActiveMessageHandler, A30: ActiveMessageHandler, A31: ActiveMessageHandler> CommunicationInterfaceContext<AT, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28, A29, A30, A31>
-{
-// Not wrappers:
-//pub fn uct_iface_open(md: uct_md_h, worker: uct_worker_h, params: *const uct_iface_params_t, config: *const uct_iface_config_t, iface_p: *mut uct_iface_h) -> ucs_status_t;
-//	#[link_name = "\u{1}_uct_iface_mem_alloc"] pub fn uct_iface_mem_alloc(iface: uct_iface_h, length: usize, flags: c_uint, name: *const c_char, mem: *mut uct_allocated_memory_t) -> ucs_status_t;
-//	#[link_name = "\u{1}_uct_iface_mem_free"] pub fn uct_iface_mem_free(mem: *const uct_allocated_memory_t);
 	
+	unsafe extern "C" fn error_handler(arg: *mut c_void, ep: *mut uct_ep, status: ucs_status_t) -> ucs_status_t
+	{
+		debug_assert!(!arg.is_null(), "arg is null");
+		debug_assert!(!ep.is_null(), "ep is null");
+		
+		use self::Status::*;
+		let status = status.parse();
+		if let Error(error_code) = status
+		{
+			let this = & * (arg as *mut Self as *const Self);
+			match this.error_handler.handle(NonNull::new_unchecked(ep), error_code)
+			{
+				Ok(()) => ucs_status_t::UCS_OK,
+				Err(error_code) => error_code.to_ucs_status_t(),
+			}
+		}
+		else
+		{
+			panic!("Invalid status '{:?}'", status)
+		}
+	}
+	
+	/// This callback is invoked when a tagged message sent by the eager protocol has arrived and no corresponding tag has been posted.
+	///
+	/// The callback is always invoked from the context (thread, process) that called `progress()`.
+	///
+	/// It is allowed to call other communication routines from the callback.
+	unsafe extern "C" fn unexpected_eager_tagged_message(arg: *mut c_void, data: *mut c_void, length: usize, flags: c_uint, stag: uct_tag_t, imm: u64) -> ucs_status_t
+	{
+		debug_assert!(!arg.is_null(), "arg is null");
+		debug_assert!(!data.is_null(), "data is null");
+		
+		let this = & * (arg as *mut UETM as *const UETM);
+		
+		let sender_tag = TagValue(stag);
+		let tagged_message_data = UcxAllocatedByteBuffer::new(data, length);
+		let immediate_data = imm;
+		
+		let callback_flags = uct_cb_param_flags(flags);
+		let has_descriptor_with_user_defined_receive_headroom = callback_flags & uct_cb_param_flags::DESC == uct_cb_param_flags::DESC;
+		if has_descriptor_with_user_defined_receive_headroom
+		{
+			match this.unexpected_eager_tagged_message_with_descriptor_with_user_defined_receive_headroom(sender_tag, tagged_message_data, immediate_data)
+			{
+				true => ucs_status_t::UCS_OK,
+				false => ucs_status_t::UCS_INPROGRESS,
+			}
+		}
+		else
+		{
+			this.unexpected_eager_tagged_message(sender_tag, tagged_message_data, immediate_data);
+			ucs_status_t::UCS_OK
+		}
+	}
+	
+	/// This callback is invoked when a tagged message send notifications by the rendezvous protocol has arrived and no corresponding tag has been posted.
+	unsafe extern "C" fn unexpected_rendezvous_tagged_message(arg: *mut c_void, flags: c_uint, stag: u64, header: *const c_void, header_length: c_uint, remote_addr: u64, length: usize, rkey_buf: *const c_void) -> ucs_status_t
+	{
+		debug_assert!(!arg.is_null(), "arg is null");
+		debug_assert!(!header.is_null(), "arg is null");
+		debug_assert!(!rkey_buf.is_null(), "rkey_buf is null");
+		
+		let this = & * (arg as *mut UETM as *const UETM);
+		
+		let sender_tag = TagValue(stag);
+		let header = UcxAllocatedByteBuffer::new(header as *mut _, header_length as usize);
+		let remote_memory_address = RemoteAddress(remote_addr);
+		let remote_length = length;
+		let remote_key = NonNull::new_unchecked(rkey_buf as *mut u8);
+		
+		let callback_flags = uct_cb_param_flags(flags);
+		let has_descriptor_with_user_defined_receive_headroom = callback_flags & uct_cb_param_flags::DESC == uct_cb_param_flags::DESC;
+		if has_descriptor_with_user_defined_receive_headroom
+		{
+			match this.unexpected_rendezvous_tagged_message_with_descriptor_with_user_defined_receive_headroom(sender_tag, header, remote_memory_address, remote_length, remote_key)
+			{
+				true => ucs_status_t::UCS_OK,
+				false => ucs_status_t::UCS_INPROGRESS,
+			}
+		}
+		else
+		{
+			this.unexpected_rendezvous_tagged_message(sender_tag, header, remote_memory_address, remote_length, remote_key);
+			ucs_status_t::UCS_OK
+		}
+	}
+	
+	/// Close and destroy an interface.
+	///
+	/// Equivalent to `uct_iface_close`.
+	#[inline(always)]
+	fn close_and_destroy(&self)
+	{
+		unsafe { (self.transport_interface_operations().iface_close)(self.debug_assert_non_null_iface()) }
+	}
 	
 	/// Set an active message tracer.
 	#[inline(always)]
-	pub(crate) fn set_active_message_tracer(&mut self, active_message_tracer: AT) -> Result<(), ErrorCode>
+	pub fn set_active_message_tracer(&mut self, active_message_tracer: AT) -> Result<(), ErrorCode>
 	{
 		let former_active_message_tracer = self.active_message_tracer.take();
 		self.active_message_tracer = Some(active_message_tracer);
@@ -244,55 +395,9 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 	///
 	/// Only true for the `CM` transport as of the time of writing.
 	#[inline(always)]
-	pub(crate) fn can_active_messages_be_received_as_duplicates(&self) -> bool
+	pub fn can_active_messages_be_received_as_duplicates(&self) -> bool
 	{
 		self.interface_supports_feature(InterfaceFeaturesSupported::AM_DUP)
-	}
-	
-	/// A callback which handler all incoming active messages which match the `active_message_identifier`.
-	///
-	/// Equivalent to `uct_iface_set_am_handler`.
-	///
-	/// `callback_on_receive`, when synchronous, is invoked from the same thread that called `self.progress()`.
-	#[inline(always)]
-	fn set_active_message_handler_for_active_messages_of_identifier<T>(&self, active_message_identifier: ActiveMessageIdentifier, callback_on_receive: uct_am_callback_t, callback_on_receive_data: *mut T, flags: uct_cb_flags) -> Result<(), ErrorCode>
-	{
-		if cfg!(debug_assertions)
-		{
-			let mut has_at_least_sync_or_async = false;
-			if flags & uct_cb_flags::SYNC == uct_cb_flags::SYNC
-			{
-				self.debug_interface_supports_feature(InterfaceFeaturesSupported::CB_SYNC);
-				has_at_least_sync_or_async = true;
-			}
-			if flags & uct_cb_flags::ASYNC == uct_cb_flags::ASYNC
-			{
-				self.debug_interface_supports_feature(InterfaceFeaturesSupported::CB_ASYNC);
-				has_at_least_sync_or_async = true;
-			}
-			debug_assert!(has_at_least_sync_or_async, "flags must contain either SYNC or ASYNC");
-		}
-		
-		let status = unsafe { uct_iface_set_am_handler(self.iface(), active_message_identifier.0, callback_on_receive, callback_on_receive_data as *mut _, flags.0) };
-		
-		Self::parse_status(status, ())
-	}
-	
-	/// A tracer of active messages.
-	///
-	/// Equivalent to `uct_iface_set_am_tracer`.
-	///
-	/// Sets a function which dumps active message debug information to a buffer, which is printed every time an active message is sent or received, when data tracing is on. Without the tracer, only transport-level information is printed.
-	///
-	/// Pass `None` to remove the tracer function.
-	#[inline(always)]
-	fn set_active_message_tracer_ffi<T>(&self, tracer_callback: uct_am_tracer_t, tracer_data: *mut T) -> Result<(), ErrorCode>
-	{
-		debug_assert!(self.interface_supports_feature(InterfaceFeaturesSupported::CB_SYNC) | self.interface_supports_feature(InterfaceFeaturesSupported::CB_ASYNC), "Interface must support CB_SYNC or CB_ASYNC");
-		
-		let status = unsafe { uct_iface_set_am_tracer(self.iface(), tracer_callback, tracer_data as *mut _) };
-		
-		Self::parse_status(status, ())
 	}
 	
 	/// Post a tag to a transport interface.
@@ -314,12 +419,14 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 	/// * `UCS_ERR_NO_RESOURCE`: Could not start the operation due to lack of resources.
 	/// * `UCS_ERR_EXCEEDS_LIMIT`: No more room for tags in the transport.
 	#[inline(always)]
-	pub(crate) fn tagged_message_receive_zero_copy(&self, tag_matcher: TagMatcher, io_vec: &[uct_iov_t], ctx: &mut uct_tag_context) -> Result<(), ErrorCode>
+	pub fn tagged_message_receive_zero_copy(&self, tag_matcher: TagMatcher, io_vec: &[uct_iov_t], ctx: &mut uct_tag_context) -> Result<(), ErrorCode>
 	{
+		debug_assert!(self.interface_supports_feature(InterfaceFeaturesSupported::TAG_EAGER_ZCOPY), "Tag matching not supported");
+		
 		let tag = tag_matcher.value.0;
 		let tag_mask = tag_matcher.bit_mask.0;
 		
-		let status = unsafe { (self.transport_interface_operations().iface_tag_recv_zcopy)(self.iface(), tag, tag_mask, io_vec.as_ptr(), io_vec.len(), ctx) };
+		let status = unsafe { (self.transport_interface_operations().iface_tag_recv_zcopy)(self.debug_assert_non_null_iface(), tag, tag_mask, io_vec.as_ptr(), io_vec.len(), ctx) };
 		
 		Self::parse_status(status, ())
 	}
@@ -341,20 +448,13 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 	/// Returns:-
 	/// * `UCS_OK`: If the tag is cancelled in the transport.
 	#[inline(always)]
-	pub(crate) fn tagged_message_receive_cancel(&self, ctx: &mut uct_tag_context, force: bool) -> Result<(), ErrorCode>
+	pub fn tagged_message_receive_cancel(&self, ctx: &mut uct_tag_context, force: bool) -> Result<(), ErrorCode>
 	{
-		let status = unsafe { (self.transport_interface_operations().iface_tag_recv_cancel)(self.iface(), ctx, force.to_c_bool()) };
+		debug_assert!(self.interface_supports_feature(InterfaceFeaturesSupported::TAG_EAGER_ZCOPY), "Tag matching not supported");
+		
+		let status = unsafe { (self.transport_interface_operations().iface_tag_recv_cancel)(self.debug_assert_non_null_iface(), ctx, force.to_c_bool()) };
 		
 		Self::parse_status(status, ())
-	}
-	
-	/// Close and destroy an interface.
-	///
-	/// Equivalent to `uct_iface_close`.
-	#[inline(always)]
-	pub(crate) fn close_and_destroy(&self)
-	{
-		unsafe { (self.transport_interface_operations().iface_close)(self.iface()) }
 	}
 	
 	/// Is interface reachable?
@@ -367,12 +467,12 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 	/// * `device_address` Device address to check if is reachable to. It is NULL if `iface_attr.dev_addr_len == 0`, and must be non-NULL otherwise.
 	/// * `interface_address`  Interface address to check if is reachable to. It is NULL if `iface_attr.iface_addr_len == 0`, and must be non-NULL otherwise.
 	#[inline(always)]
-	pub(crate) fn is_reachable_check(&self, device_address: &DeviceAddress, interface_address: &InterfaceAddress) -> bool
+	pub fn is_reachable_check(&self, device_address: &DeviceAddress, interface_address: &InterfaceAddress) -> bool
 	{
 		debug_assert_eq!(self.attributes().device_address_length(), device_address.length(), "device address length mismatch");
 		debug_assert_eq!(self.attributes().interface_address_length(), interface_address.length(), "interface address length mismatch");
 		
-		let result = unsafe { (self.transport_interface_operations().iface_is_reachable)(self.iface(), device_address.is_reachable_address(), interface_address.is_reachable_address()) };
+		let result = unsafe { (self.transport_interface_operations().iface_is_reachable)(self.debug_assert_non_null_iface(), device_address.is_reachable_address(), interface_address.is_reachable_address()) };
 		result.from_c_bool()
 	}
 	
@@ -380,13 +480,13 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 	///
 	/// Equivalent to `uct_iface_get_address`.
 	#[inline(always)]
-	pub(crate) fn get_interface_address(&self) -> Result<InterfaceAddress, ErrorCode>
+	pub fn get_interface_address(&self) -> Result<InterfaceAddress, ErrorCode>
 	{
 		self.debug_interface_supports_feature(InterfaceFeaturesSupported::CONNECT_TO_IFACE);
 		
 		let interface_address = InterfaceAddress::new(self.attributes().interface_address_length());
 		
-		let status = unsafe { (self.transport_interface_operations().iface_get_address)(self.iface(), interface_address.address().as_ptr() as *mut _) };
+		let status = unsafe { (self.transport_interface_operations().iface_get_address)(self.debug_assert_non_null_iface(), interface_address.address().as_ptr() as *mut _) };
 		
 		Self::parse_status(status, interface_address)
 	}
@@ -397,11 +497,11 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 	///
 	/// All interfaces using the same device would return the same address.
 	#[inline(always)]
-	pub(crate) fn get_device_address(&self) -> Result<DeviceAddress, ErrorCode>
+	pub fn get_device_address(&self) -> Result<DeviceAddress, ErrorCode>
 	{
 		let device_address = DeviceAddress::new(self.attributes().device_address_length());
 		
-		let status = unsafe { (self.transport_interface_operations().iface_get_device_address)(self.iface(), device_address.address().as_ptr() as *mut _) };
+		let status = unsafe { (self.transport_interface_operations().iface_get_device_address)(self.debug_assert_non_null_iface(), device_address.address().as_ptr() as *mut _) };
 		
 		Self::parse_status(status, device_address)
 	}
@@ -412,13 +512,13 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 	///
 	// Only interfaces supporting the flag `UCT_IFACE_FLAG_EVENT_FD` implement this function.
 	#[inline(always)]
-	pub(crate) fn get_events_file_descriptor(&self) -> Result<RawFd, ErrorCode>
+	pub fn get_events_file_descriptor(&self) -> Result<RawFd, ErrorCode>
 	{
 		self.debug_assert_interface_supports_events();
 		
 		let mut events_file_descriptor = unsafe { uninitialized() };
 		
-		let status = unsafe { (self.transport_interface_operations().iface_event_fd_get)(self.iface(), &mut events_file_descriptor) };
+		let status = unsafe { (self.transport_interface_operations().iface_event_fd_get)(self.debug_assert_non_null_iface(), &mut events_file_descriptor) };
 		
 		Self::parse_status(status, events_file_descriptor)
 	}
@@ -443,7 +543,7 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 	///
 	/// \* Message was sent with `uct_msg_flags::SIGNALED`.
 	#[inline(always)]
-	pub(crate) fn arm_events_file_descriptor(&self, event_types: uct_iface_event_types) -> Result<(), ErrorCode>
+	pub fn arm_events_file_descriptor(&self, event_types: uct_iface_event_types) -> Result<(), ErrorCode>
 	{
 		self.debug_assert_interface_supports_events();
 		
@@ -462,7 +562,7 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 		debug_assert!(is_supported(event_types, uct_iface_event_types::RECV, InterfaceFeaturesSupported::EVENT_RECV, &self.attributes()), "RECV is not supported");
 		debug_assert!(is_supported(event_types, uct_iface_event_types::RECV_SIG, InterfaceFeaturesSupported::EVENT_RECV_SIG, &self.attributes()), "RECV_SIG is not supported");
 		
-		let status = unsafe { (self.transport_interface_operations().iface_event_arm)(self.iface(), event_types.0) };
+		let status = unsafe { (self.transport_interface_operations().iface_event_arm)(self.debug_assert_non_null_iface(), event_types.0) };
 		
 		Self::parse_status(status, ())
 	}
@@ -477,9 +577,9 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 	///
 	/// NOTE: The initial state is for progressing to be disabled.
 	#[inline(always)]
-	pub(crate) fn enable_progressing(&self, flags: uct_progress_types)
+	pub fn enable_progressing(&self, flags: uct_progress_types)
 	{
-		unsafe { (self.transport_interface_operations().iface_progress_enable)(self.iface(), flags.0) }
+		unsafe { (self.transport_interface_operations().iface_progress_enable)(self.debug_assert_non_null_iface(), flags.0) }
 	}
 	
 	/// Disable synchronous progress for the interface.
@@ -494,20 +594,20 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 	///
 	/// NOTE: The initial state is for progressing to be disabled.
 	#[inline(always)]
-	pub(crate) fn disable_progressing(&self, flags: uct_progress_types)
+	pub fn disable_progressing(&self, flags: uct_progress_types)
 	{
-		unsafe { (self.transport_interface_operations().iface_progress_disable)(self.iface(), flags.0) }
+		unsafe { (self.transport_interface_operations().iface_progress_disable)(self.debug_assert_non_null_iface(), flags.0) }
 	}
 	
 	/// Perform a progress on an interface.
 	///
-	/// Returns a number of events.
+	/// Returns the number of events that occurred.
 	///
 	/// Equivalent to `uct_iface_progress`.
 	#[inline(always)]
-	pub(crate) fn progress(&self) -> u32
+	pub fn progress(&self) -> u32
 	{
-		unsafe { (self.transport_interface_operations().iface_progress)(self.iface()) }
+		unsafe { (self.transport_interface_operations().iface_progress)(self.debug_assert_non_null_iface()) }
 	}
 	
 	/// Flush outstanding communication operations on an interface.
@@ -515,7 +615,8 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 	/// Equivalent to `uct_iface_flush`.
 	///
 	/// Flushes all outstanding communications issued on the interface prior to this call.
-	/// The operations are completed at the origin or at the target as well. The exact completion semantic depends on flags parameter; currently, only `uct_flush_flags::LOCAL` is supported. This flag guarantees that the data transfer is completed but the target buffer may not be updated yet.
+	/// The operations are completed at the origin or at the target as well. The exact completion semantic depends on flags parameter; currently, only `uct_flush_flags::LOCAL` is supported.
+	/// This flag guarantees that the data transfer is completed but the target buffer may not be updated yet.
 	///
 	///  * `flags`: See above.
 	///  * `completion_handle`: Modified by this call. It can be null (which means that the call will return the current state of the interface and no completion will be generated in case of outstanding communications). If not-null, then the completion counter is decremented by one (1) when this call completes. The completion callback is called when the completion counter reaches zero (0).
@@ -524,11 +625,11 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 	/// * `UCS_OK`: No outstanding communications left.
 	/// * `UCS_INPROGRESS`: Some communication operations are still in progress. If Some() was provided for `completion_handle`, it will be updated upon completion of these operations.
 	#[inline(always)]
-	pub(crate) fn flush(&self, flags: uct_flush_flags, completion_handle: Option<&mut uct_completion>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
+	pub fn flush(&self, flags: uct_flush_flags, completion_handle: Option<&mut uct_completion>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
 	{
 		debug_assert_eq!(flags, uct_flush_flags::LOCAL, "Only LOCAL is supported currently");
 		
-		let status = unsafe { (self.transport_interface_operations().iface_flush)(self.iface(), flags.0, completion_handle.mutable_reference()) };
+		let status = unsafe { (self.transport_interface_operations().iface_flush)(self.debug_assert_non_null_iface(), flags.0, completion_handle.mutable_reference()) };
 		
 		Self::parse_status_with_in_progress(status, ())
 	}
@@ -541,9 +642,9 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 	///
 	/// Should only ever return `UCS_OK`.
 	#[inline(always)]
-	pub(crate) fn fence(&self) -> Result<(), ErrorCode>
+	pub fn fence(&self) -> Result<(), ErrorCode>
 	{
-		let status = unsafe { (self.transport_interface_operations().iface_fence)(self.iface(), ReservedForFutureUseFlags) };
+		let status = unsafe { (self.transport_interface_operations().iface_fence)(self.debug_assert_non_null_iface(), ReservedForFutureUseFlags) };
 		
 		Self::parse_status(status, ())
 	}
@@ -551,13 +652,21 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 	#[inline(always)]
 	pub(crate) fn transport_interface_operations(&self) -> &mut uct_iface_ops
 	{
-		&mut unsafe { &mut * self.iface() }.ops
+		&mut unsafe { &mut * self.debug_assert_non_null_iface() }.ops
 	}
 	
 	#[inline(always)]
-	fn iface(&self) -> *mut uct_iface
+	fn non_null_iface(&self) -> NonNull<uct_iface>
 	{
-		self.iface.get()
+		unsafe { NonNull::new_unchecked(self.debug_assert_non_null_iface()) }
+	}
+	
+	#[inline(always)]
+	fn debug_assert_non_null_iface(&self) -> *mut uct_iface
+	{
+		let iface = self.iface;
+		debug_assert!(!iface.is_null(), "iface is null");
+		iface
 	}
 	
 	#[inline(always)]
@@ -610,5 +719,51 @@ impl<AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler
 	fn interface_supports_feature(&self, required_to_support: InterfaceFeaturesSupported) -> bool
 	{
 		self.attributes().supports_all_of(required_to_support)
+	}
+	
+	/// A callback which handler all incoming active messages which match the `active_message_identifier`.
+	///
+	/// Equivalent to `uct_iface_set_am_handler`.
+	///
+	/// `callback_on_receive`, when synchronous, is invoked from the same thread that called `self.progress()`.
+	#[inline(always)]
+	fn set_active_message_handler_for_active_messages_of_identifier<T>(&self, active_message_identifier: ActiveMessageIdentifier, callback_on_receive: uct_am_callback_t, callback_on_receive_data: *mut T, flags: uct_cb_flags) -> Result<(), ErrorCode>
+	{
+		if cfg!(debug_assertions)
+		{
+			let mut has_at_least_sync_or_async = false;
+			if flags & uct_cb_flags::SYNC == uct_cb_flags::SYNC
+			{
+				self.debug_interface_supports_feature(InterfaceFeaturesSupported::CB_SYNC);
+				has_at_least_sync_or_async = true;
+			}
+			if flags & uct_cb_flags::ASYNC == uct_cb_flags::ASYNC
+			{
+				self.debug_interface_supports_feature(InterfaceFeaturesSupported::CB_ASYNC);
+				has_at_least_sync_or_async = true;
+			}
+			debug_assert!(has_at_least_sync_or_async, "flags must contain either SYNC or ASYNC");
+		}
+		
+		let status = unsafe { uct_iface_set_am_handler(self.debug_assert_non_null_iface(), active_message_identifier.0, callback_on_receive, callback_on_receive_data as *mut _, flags.0) };
+		
+		Self::parse_status(status, ())
+	}
+	
+	/// A tracer of active messages.
+	///
+	/// Equivalent to `uct_iface_set_am_tracer`.
+	///
+	/// Sets a function which dumps active message debug information to a buffer, which is printed every time an active message is sent or received, when data tracing is on. Without the tracer, only transport-level information is printed.
+	///
+	/// Pass `None` to remove the tracer function.
+	#[inline(always)]
+	fn set_active_message_tracer_ffi<T>(&self, tracer_callback: uct_am_tracer_t, tracer_data: *mut T) -> Result<(), ErrorCode>
+	{
+		debug_assert!(self.interface_supports_feature(InterfaceFeaturesSupported::CB_SYNC) | self.interface_supports_feature(InterfaceFeaturesSupported::CB_ASYNC), "Interface must support CB_SYNC or CB_ASYNC");
+		
+		let status = unsafe { uct_iface_set_am_tracer(self.debug_assert_non_null_iface(), tracer_callback, tracer_data as *mut _) };
+		
+		Self::parse_status(status, ())
 	}
 }

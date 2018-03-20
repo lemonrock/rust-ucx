@@ -2,20 +2,16 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// Applies an offset.
+/// Does almost nothing - ensures a valid debug string is created.
 #[derive(Default, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct OffsetLocalToRemoteAddressTranslation
-{
-	offset: i64,
-}
+pub struct DoNothingActiveMessageTracer;
 
-impl LocalToRemoteAddressTranslation for OffsetLocalToRemoteAddressTranslation
+impl ActiveMessageTracer for DoNothingActiveMessageTracer
 {
 	#[inline(always)]
-	fn from_local_address_to_remote_address(&self, local_address: NonNull<u8>) -> RemoteAddress
+	fn trace(&self, _active_message_trace_type: uct_am_trace_type_t, _active_message_identifier: ActiveMessageIdentifier, _read_only: UcxAllocatedByteBuffer, write_debug_c_string_to: &mut [c_char])
 	{
-		let pointer_as_usize = local_address.as_ptr() as usize;
-		debug_assert!(pointer_as_usize < ::std::i64::MAX as usize, "pointer is too high");
-		RemoteAddress(((pointer_as_usize as i64) + self.offset) as u64)
+		const CNul: i8 = 0;
+		unsafe { * write_debug_c_string_to.get_unchecked_mut(0) = CNul };
 	}
 }

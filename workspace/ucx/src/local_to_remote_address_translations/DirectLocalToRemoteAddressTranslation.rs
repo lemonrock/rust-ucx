@@ -9,8 +9,8 @@ pub struct DirectLocalToRemoteAddressTranslation;
 impl LocalToRemoteAddressTranslation for DirectLocalToRemoteAddressTranslation
 {
 	#[inline(always)]
-	fn from_local_address_to_remote_address(&self, local_address: NonNull<u8>) -> u64
+	fn from_local_address_to_remote_address(&self, local_address: NonNull<u8>) -> RemoteAddress
 	{
-		(local_address.as_ptr() as usize as u64)
+		RemoteAddress(local_address.as_ptr() as usize as u64)
 	}
 }

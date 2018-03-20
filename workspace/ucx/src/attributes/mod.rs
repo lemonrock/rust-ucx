@@ -4,7 +4,7 @@
 
 use self::constraints::*;
 use super::status::*;
-use super::transport::InterfaceFeaturesSupported;
+use super::transport::communication_interface_context::InterfaceFeaturesSupported;
 use ::std::cmp::Eq;
 use ::std::cmp::Ord;
 use ::std::cmp::Ordering;

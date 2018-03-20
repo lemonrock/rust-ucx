@@ -2,20 +2,10 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// Applies an offset.
-#[derive(Default, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct OffsetLocalToRemoteAddressTranslation
+/// Error handler.
+pub trait ErrorHandler
 {
-	offset: i64,
-}
-
-impl LocalToRemoteAddressTranslation for OffsetLocalToRemoteAddressTranslation
-{
+	/// Handle an error.
 	#[inline(always)]
-	fn from_local_address_to_remote_address(&self, local_address: NonNull<u8>) -> RemoteAddress
-	{
-		let pointer_as_usize = local_address.as_ptr() as usize;
-		debug_assert!(pointer_as_usize < ::std::i64::MAX as usize, "pointer is too high");
-		RemoteAddress(((pointer_as_usize as i64) + self.offset) as u64)
-	}
+	fn handle(&self, end_point: NonNull<uct_ep>, error_code: ErrorCode) -> Result<(), ErrorCode>;
 }

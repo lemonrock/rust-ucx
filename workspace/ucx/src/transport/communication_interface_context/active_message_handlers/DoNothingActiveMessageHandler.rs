@@ -2,8 +2,9 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+/// Does nothing.
 #[derive(Default, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub(crate) struct DoNothingActiveMessageHandler;
+pub struct DoNothingActiveMessageHandler;
 
 impl ActiveMessageHandler for DoNothingActiveMessageHandler
 {

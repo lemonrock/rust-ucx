@@ -18,7 +18,8 @@ bitflags!
 		/// Zero-copy active message.
 		const AM_ZCOPY = 1 << 2;
 		
-		/// Pending operations.
+		
+		// Pending operations.
 		/// Does not seem to be tested for.
 		const PENDING = 1 << 3;
 		

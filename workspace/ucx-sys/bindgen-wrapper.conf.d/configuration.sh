@@ -149,6 +149,7 @@ final_chance_to_tweak()
 		uct_am_callback_t \
 		uct_completion_callback_t \
 		uct_desc_release_callback_t \
+		uct_error_handler_t \
 		uct_pack_callback_t \
 		uct_pending_callback_t \
 		uct_pending_purge_callback_t \

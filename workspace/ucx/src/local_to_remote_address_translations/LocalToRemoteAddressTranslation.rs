@@ -7,5 +7,5 @@ pub trait LocalToRemoteAddressTranslation
 {
 	/// Convert from a local address to a remote address.
 	#[inline(always)]
-	fn from_local_address_to_remote_address(&self, local_address: NonNull<u8>) -> u64;
+	fn from_local_address_to_remote_address(&self, local_address: NonNull<u8>) -> RemoteAddress;
 }

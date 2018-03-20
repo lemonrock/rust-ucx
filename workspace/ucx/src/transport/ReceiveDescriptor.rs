@@ -2,7 +2,7 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// Receive descriptor
+/// Receive descriptor.
 #[derive(Debug)]
 pub(crate) struct ReceiveDescriptor(uct_recv_desc);
 

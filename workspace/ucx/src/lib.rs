@@ -131,7 +131,8 @@
 #[cfg(target_os = "linux")] pub mod tagged_messages;
 
 
-#[cfg(target_os = "linux")] mod transport;
+/// Low-level transport API.
+#[cfg(target_os = "linux")] pub mod transport;
 
 
 #[cfg(target_os = "linux")] include!("ApplicationContext.rs");

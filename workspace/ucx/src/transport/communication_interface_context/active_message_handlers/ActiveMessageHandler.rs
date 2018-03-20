@@ -2,7 +2,8 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-pub(crate) trait ActiveMessageHandler
+/// An active message receive handler.
+pub trait ActiveMessageHandler
 {
 	/// If flags contains `DESC`, then the `descriptor_or_part_thereof` is part of a descriptor  which must be released later by `uct_iface_release_desc` by the user if the callback returns `false`.
 	///

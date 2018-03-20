@@ -63,6 +63,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn pending_add(&self, pending_request: Box<uct_pending_req>) -> ucs_status_t
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::PENDING);
+		
 		unsafe { (self.transport_interface_operations().ep_pending_add)(self.ep(), Box::into_raw(pending_request)) }
 	}
 	
@@ -75,6 +77,8 @@ impl RemoteEndPoint
 	#[inline(always)]
 	fn pending_purge(&self, callback_to_pass_removed_requests_to: unsafe extern "C" fn(removed_pending_request: *mut uct_pending_req_t, callback_context: *mut c_void), callback_context: *mut c_void)
 	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::PENDING);
+		
 		unsafe { (self.transport_interface_operations().ep_pending_purge)(self.ep(), callback_to_pass_removed_requests_to, callback_context) }
 	}
 	

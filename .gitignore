@@ -1,2 +1,4 @@
 # IntelliJ related
 .idea/workspace.xml
+
+.DS_Store
