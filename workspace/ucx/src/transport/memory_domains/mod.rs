@@ -4,7 +4,13 @@
 
 use super::super::handle_drop_safeties::MemoryDomainDropSafety;
 use super::super::status::*;
-use super::communication_interface_context::AvailableCommunicationInterfaces;
+use super::super::ZeroBasedHyperThreadIndex;
+use super::communication_interface_context::*;
+use super::communication_interface_context::active_message_handlers::*;
+use super::communication_interface_context::active_message_tracers::*;
+use super::communication_interface_context::error_handlers::*;
+use super::communication_interface_context::server_connection_requests::*;
+use super::communication_interface_context::unexpected_tagged_message_handlers::*;
 use ::libc::c_char;
 use ::libc::c_void;
 use ::libc::strnlen;
@@ -23,6 +29,9 @@ use ::ucx_sys::*;
 
 include!("AvailableMemoryDomainComponent.rs");
 include!("AvailableMemoryDomainComponents.rs");
+include!("CrayUserspaceGenericNetworkInterfaceVariant.rs");
+include!("InfiniBandVariant.rs");
 include!("MemoryDomain.rs");
-include!("MemoryDomainComponent.rs");
+include!("MemoryDomainComponentAndTransportLayer.rs");
 include!("MemoryDomainComponentConfiguration.rs");
+include!("MemoryMappedVariant.rs");

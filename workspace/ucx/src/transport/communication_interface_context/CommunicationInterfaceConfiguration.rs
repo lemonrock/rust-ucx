@@ -17,14 +17,15 @@ impl Drop for CommunicationInterfaceConfiguration
 
 impl CommunicationInterfaceConfiguration
 {
+	// `transport_layer_name` can be null for a client or server socket.
 	#[inline(always)]
-	fn read_from_environment(transport_layer_name: &CStr, environment_variable_prefix: &CStr, memory_domain: &MemoryDomain) -> Result<Self, ErrorCode>
+	fn read_from_environment(transport_layer_name: *const c_char, environment_variable_prefix: &CStr, memory_domain: &MemoryDomain) -> Result<Self, ErrorCode>
 	{
 		let mut handle = unsafe { uninitialized() };
 		
 		let unsupported_file_name = null_mut();
 		
-		let status = unsafe { uct_md_iface_config_read(memory_domain.as_ptr(), transport_layer_name.as_ptr(), environment_variable_prefix.as_ptr(), unsupported_file_name, &mut handle) };
+		let status = unsafe { uct_md_iface_config_read(memory_domain.as_ptr(), transport_layer_name, environment_variable_prefix.as_ptr(), unsupported_file_name, &mut handle) };
 		
 		use self::Status::*;
 		

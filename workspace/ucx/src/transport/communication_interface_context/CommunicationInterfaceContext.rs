@@ -84,6 +84,7 @@ where
 	A31: ActiveMessageHandler
 {
 	iface: *mut uct_iface,
+	memory_domain_drop_safety: Arc<MemoryDomainDropSafety>,
 	end_point_address: CommunicationInterfaceContextEndPointAddress<SCR>,
 	error_handler: E,
 	unexpected_tagged_message_handler: UETM,
@@ -148,20 +149,18 @@ impl<SCR: ServerConnectionRequest, E : ErrorHandler, UETM: UnexpectedTaggedMessa
 
 impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessageHandler, AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandler, A3: ActiveMessageHandler, A4: ActiveMessageHandler, A5: ActiveMessageHandler, A6: ActiveMessageHandler, A7: ActiveMessageHandler, A8: ActiveMessageHandler, A9: ActiveMessageHandler, A10: ActiveMessageHandler, A11: ActiveMessageHandler, A12: ActiveMessageHandler, A13: ActiveMessageHandler, A14: ActiveMessageHandler, A15: ActiveMessageHandler, A16: ActiveMessageHandler, A17: ActiveMessageHandler, A18: ActiveMessageHandler, A19: ActiveMessageHandler, A20: ActiveMessageHandler, A21: ActiveMessageHandler, A22: ActiveMessageHandler, A23: ActiveMessageHandler, A24: ActiveMessageHandler, A25: ActiveMessageHandler, A26: ActiveMessageHandler, A27: ActiveMessageHandler, A28: ActiveMessageHandler, A29: ActiveMessageHandler, A30: ActiveMessageHandler, A31: ActiveMessageHandler> CommunicationInterfaceContext<SCR, E, UETM, AT, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28, A29, A30, A31>
 {
-//	#[link_name = "\u{1}_uct_iface_mem_alloc"] pub fn uct_iface_mem_alloc(iface: uct_iface_h, length: usize, flags: c_uint, name: *const c_char, mem: *mut uct_allocated_memory_t) -> ucs_status_t;
-//	#[link_name = "\u{1}_uct_iface_mem_free"] pub fn uct_iface_mem_free(mem: *const uct_allocated_memory_t);
-
 	/// Open an interface.
 	///
 	/// Equivalent to `uct_iface_open`.
 	#[inline(always)]
-	pub fn open(&self, hyper_thread_index: ZeroBasedHyperThreadIndex, end_point_address: CommunicationInterfaceContextEndPointAddress<SCR>, error_handler: E, unexpected_tagged_message_handler: UETM, memory_domain: *mut uct_md, worker: *mut uct_worker, configuration: *const uct_iface_config) -> Result<Box<Self>, ErrorCode>
+	pub fn open(hyper_thread_index: ZeroBasedHyperThreadIndex, memory_domain: &MemoryDomain, end_point_address: CommunicationInterfaceContextEndPointAddress<SCR>, error_handler: E, unexpected_tagged_message_handler: UETM, worker: *mut uct_worker) -> Result<Box<Self>, ErrorCode>
 	{
 		let mut this = Box::new
 		(
 			Self
 			{
 				iface: null_mut(),
+				memory_domain_drop_safety: memory_domain.drop_safety(),
 				end_point_address,
 				error_handler,
 				unexpected_tagged_message_handler,
@@ -201,7 +200,9 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 			}
 		);
 		
-		let (uct_iface_open_mode(open_mode), mode) = this.end_point_address.open_mode();
+		let communication_interface_configuration = this.end_point_address.communication_interface_configuration(memory_domain)?;
+		let (uct_iface_open_mode(open_mode), mode) = this.end_point_address.open_mode(memory_domain.transport_layer());
+		
 		let raw_unexpected_tagged_message_handler = (&this.unexpected_tagged_message_handler) as *const UETM as *mut UETM as *mut c_void;
 		let parameters = uct_iface_params
 		{
@@ -224,7 +225,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 			rndv_cb: Self::unexpected_rendezvous_tagged_message,
 		};
 		
-		let status = unsafe { uct_iface_open(memory_domain, worker, &parameters, configuration, &mut this.iface) };
+		let status = unsafe { uct_iface_open(memory_domain.as_ptr(), worker, &parameters, communication_interface_configuration.as_ptr(), &mut this.iface) };
 		
 		if let Err(error_code) = Self::parse_status(status, ())
 		{

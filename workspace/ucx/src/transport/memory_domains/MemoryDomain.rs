@@ -8,21 +8,19 @@
 ///
 /// Therefore one or more must be created before opening a `CommunicationInterfaceContext`.
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct MemoryDomain(NonNull<uct_md>, Arc<MemoryDomainDropSafety>);
-
-// TODO: Need to keep reference alive while CommIntContext is alive.
+pub struct MemoryDomain(NonNull<uct_md>, Arc<MemoryDomainDropSafety>, MemoryDomainComponentAndTransportLayer);
 
 impl MemoryDomain
 {
 	/// Creates and opens a new memory domain.
 	#[inline(always)]
-	pub fn open(memory_domain_component: MemoryDomainComponent) -> Result<Self, ErrorCode>
+	pub fn open(memory_domain_component: MemoryDomainComponentAndTransportLayer) -> Result<Self, ErrorCode>
 	{
 		let mut handle = unsafe { uninitialized() };
 		
 		let memory_domain_configuration = memory_domain_component.memory_domain_configuration()?;
 		
-		let status = unsafe { uct_md_open(memory_domain_component.name().as_ptr(), memory_domain_configuration.as_ptr(), &mut handle) };
+		let status = unsafe { uct_md_open(memory_domain_component.memory_domain_component_name().as_ptr(), memory_domain_configuration.as_ptr(), &mut handle) };
 		
 		use self::Status::*;
 		
@@ -32,13 +30,20 @@ impl MemoryDomain
 			{
 				debug_assert!(!handle.is_null(), "handle is null");
 				let handle = unsafe { NonNull::new_unchecked(handle) };
-				Ok(MemoryDomain(handle, MemoryDomainDropSafety::new(handle)))
+				Ok(MemoryDomain(handle, MemoryDomainDropSafety::new(handle), memory_domain_component))
 			}
 			
 			Error(error_code) => Err(error_code),
 			
 			_ => panic!("Unexpected status '{:?}'", status),
 		}
+	}
+	
+	/// Creates and opens a new communication interface context.
+	#[inline(always)]
+	pub fn open_communication_interface_context<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessageHandler, AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandler, A3: ActiveMessageHandler, A4: ActiveMessageHandler, A5: ActiveMessageHandler, A6: ActiveMessageHandler, A7: ActiveMessageHandler, A8: ActiveMessageHandler, A9: ActiveMessageHandler, A10: ActiveMessageHandler, A11: ActiveMessageHandler, A12: ActiveMessageHandler, A13: ActiveMessageHandler, A14: ActiveMessageHandler, A15: ActiveMessageHandler, A16: ActiveMessageHandler, A17: ActiveMessageHandler, A18: ActiveMessageHandler, A19: ActiveMessageHandler, A20: ActiveMessageHandler, A21: ActiveMessageHandler, A22: ActiveMessageHandler, A23: ActiveMessageHandler, A24: ActiveMessageHandler, A25: ActiveMessageHandler, A26: ActiveMessageHandler, A27: ActiveMessageHandler, A28: ActiveMessageHandler, A29: ActiveMessageHandler, A30: ActiveMessageHandler, A31: ActiveMessageHandler>(&self, hyper_thread_index: ZeroBasedHyperThreadIndex, end_point_address: CommunicationInterfaceContextEndPointAddress<SCR>, error_handler: E, unexpected_tagged_message_handler: UETM, worker: *mut uct_worker) -> Result<Box<CommunicationInterfaceContext<SCR, E, UETM, AT, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28, A29, A30, A31>>, ErrorCode>
+	{
+		CommunicationInterfaceContext::open(hyper_thread_index, self, end_point_address, error_handler, unexpected_tagged_message_handler, worker)
 	}
 	
 	/// Query.
@@ -58,6 +63,12 @@ impl MemoryDomain
 	pub(crate) fn drop_safety(&self) -> Arc<MemoryDomainDropSafety>
 	{
 		self.1.clone()
+	}
+	
+	#[inline(always)]
+	pub(crate) fn transport_layer(&self) -> &MemoryDomainComponentAndTransportLayer
+	{
+		&self.2
 	}
 	
 	

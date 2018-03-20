@@ -7,14 +7,11 @@
 pub enum CommunicationInterfaceContextEndPointAddress<SCR=DoNothingServerConnectionRequest>
 where SCR: ServerConnectionRequest
 {
-	/// Open a local device `device_name` on transport layer `transport_layer_name`.
+	/// Open a local device `device_name` belonging to transport layer.
 	Device
 	{
-		/// Local device name.
+		/// Local device name on a transport layer.
 		device_name: CString,
-		
-		/// Transport layer name.
-		transport_layer_name: CString,
 	},
 	
 	/// Open a client which will connect to a server listening socket.
@@ -34,13 +31,25 @@ where SCR: ServerConnectionRequest
 impl<SCR: ServerConnectionRequest> CommunicationInterfaceContextEndPointAddress<SCR>
 {
 	#[inline(always)]
-	fn transport_layer_name_for_configuration(&self) -> *const c_char
+	pub(crate) fn communication_interface_configuration(&self, memory_domain: &MemoryDomain) -> Result<CommunicationInterfaceConfiguration, ErrorCode>
+	{
+		let transport_layer_name = self.transport_layer_name_for_configuration(memory_domain.transport_layer());
+		
+		// Going forward, the safe way to do this is probably to use CString for environment variable names and values in JSON.
+		let environment_variable_prefix = unsafe { CStr::from_ptr(b"\0" as *const u8 as *const c_char) };
+		
+		CommunicationInterfaceConfiguration::read_from_environment(transport_layer_name, &environment_variable_prefix, memory_domain)
+	}
+	
+	// `transport_layer_name` can be null for a client or server socket.
+	#[inline(always)]
+	fn transport_layer_name_for_configuration(&self, transport_layer: &MemoryDomainComponentAndTransportLayer) -> *const c_char
 	{
 		use self::CommunicationInterfaceContextEndPointAddress::*;
 		
 		match *self
 		{
-			Device { ref transport_layer_name, .. } => transport_layer_name.as_ptr(),
+			Device { .. } => transport_layer.transport_layer_name().as_ptr(),
 			
 			_ => null(),
 		}
@@ -48,7 +57,7 @@ impl<SCR: ServerConnectionRequest> CommunicationInterfaceContextEndPointAddress<
 	
 	//noinspection SpellCheckingInspection
 	#[inline(always)]
-	fn open_mode(&self) -> (uct_iface_open_mode, uct_iface_params__bindgen_ty_1)
+	pub(crate) fn open_mode(&self, transport_layer: &MemoryDomainComponentAndTransportLayer) -> (uct_iface_open_mode, uct_iface_params__bindgen_ty_1)
 	{
 		use self::CommunicationInterfaceContextEndPointAddress::*;
 		
@@ -56,11 +65,11 @@ impl<SCR: ServerConnectionRequest> CommunicationInterfaceContextEndPointAddress<
 		
 		match *self
 		{
-			Device { ref transport_layer_name, ref device_name } =>
+			Device { ref device_name } =>
 			{
 				{
 					let mut device = unsafe { open.device.as_mut() };
-					device.tl_name = transport_layer_name.as_ptr();
+					device.tl_name = transport_layer.transport_layer_name().as_ptr();
 					device.dev_name = device_name.as_ptr();
 				}
 				(uct_iface_open_mode::DEVICE, open)
