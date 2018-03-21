@@ -38,7 +38,7 @@ impl Default for MemoryRegionAddressAllocationRequest
 impl MemoryRegionAddressAllocationRequest
 {
 	#[inline(always)]
-	fn for_allocate(&self, flags: uct_md_mem_flags) -> (*mut u8, uct_md_mem_flags)
+	fn for_allocate(&self, flags: uct_md_mem_flags) -> (*mut c_void, uct_md_mem_flags)
 	{
 		use self::MemoryRegionAddressAllocationRequest::*;
 		
@@ -46,20 +46,22 @@ impl MemoryRegionAddressAllocationRequest
 		{
 			Any => (null_mut(), flags),
 			
-			Hint { address } => (address.as_ptr(), flags),
+			Hint { address } => (address.as_ptr() as *mut _, flags),
 			
-			Fixed { address } => (address.as_ptr(), flags | uct_md_mem_flags::FIXED),
+			Fixed { address } => (address.as_ptr() as *mut _, flags | uct_md_mem_flags::FIXED),
 		}
 	}
 	
 	#[inline(always)]
 	fn is_fixed(&self) -> bool
 	{
+		use self::MemoryRegionAddressAllocationRequest::*;
+		
 		match *self
 		{
 			Fixed { .. } => true,
-			_/**/
-			_ => m,./false,
+			
+			_ => false,
 		}
 	}
 }

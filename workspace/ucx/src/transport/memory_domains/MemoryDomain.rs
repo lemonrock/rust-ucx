@@ -157,13 +157,13 @@ impl MemoryDomain
 		};
 		
 		// UCT_MD_FLAG_FIXED
-		let (address, flags) = address_allocation_request.for_allocate(flags);
+		let (mut address, flags) = address_allocation_request.for_allocate(flags);
 		
 		let mut memory_region = MemoryRegion
 		{
 			memory_domain_handle: self.0,
 			memory_domain_drop_safety: self.drop_safety(),
-			address,
+			address: NonNull::dangling(),
 			length: requested_length,
 			memory_region_handle: null_mut(),
 			name_for_debugging_and_memory_tracking: CString::new(name_for_debugging_and_memory_tracking).unwrap(),
@@ -171,13 +171,18 @@ impl MemoryDomain
 			#[cfg(debug_assertions)] memory_advice_is_supported: self.supports_feature(_bindgen_ty_1::ADVISE),
 		};
 		
-		let status = unsafe { uct_md_mem_alloc(self.as_ptr(), &mut memory_region.length, &mut memory_region.address as *mut *mut c_void, flags.0, memory_region.name_for_debugging_and_memory_tracking.as_ptr(), &mut memory_region.memory_region_handle) };
+		let status = unsafe { uct_md_mem_alloc(self.as_ptr(), &mut memory_region.length, &mut address, flags.0, memory_region.name_for_debugging_and_memory_tracking.as_ptr(), &mut memory_region.memory_region_handle) };
 		
 		use self::Status::*;
 		
 		match status.parse()
 		{
-			IsOk => Ok(memory_region),
+			IsOk =>
+			{
+				debug_assert!(!address.is_null());
+				memory_region.address = unsafe { NonNull::new_unchecked(address as *mut u8) };
+				Ok(memory_region)
+			},
 			
 			Error(error_code) => Err(error_code),
 			
@@ -185,14 +190,14 @@ impl MemoryDomain
 		}
 	}
 	
-	/// `length` can not be zero (0).
-	#[inline(always)]
-	pub fn register_memory_for_zero_copy_sends_and_remote_access(&self, address_allocation_request: MemoryRegionAddressAllocationRequest, length: usize, support_atomic_operations: bool, faster_registration_but_slower_access: bool) -> Result<MemoryRegion, ErrorCode>
-	{
-		self.debug_assert_supports_feature(_bindgen_ty_1::REG);
-		debug_assert_ne!(length, 0, "length can not be zero");
-		
-	}
+//	/// `length` can not be zero (0).
+//	#[inline(always)]
+//	pub fn register_memory_for_zero_copy_sends_and_remote_access(&self, address_allocation_request: MemoryRegionAddressAllocationRequest, length: usize, support_atomic_operations: bool, faster_registration_but_slower_access: bool) -> Result<MemoryRegion, ErrorCode>
+//	{
+//		self.debug_assert_supports_feature(_bindgen_ty_1::REG);
+//		debug_assert_ne!(length, 0, "length can not be zero");
+//
+//	}
 	
 	
 	

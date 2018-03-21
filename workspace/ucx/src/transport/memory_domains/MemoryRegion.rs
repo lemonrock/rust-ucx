@@ -8,7 +8,7 @@ pub struct MemoryRegion
 {
 	memory_domain_handle: NonNull<uct_md>,
 	memory_domain_drop_safety: Arc<MemoryDomainDropSafety>,
-	address: *mut u8,
+	address: NonNull<u8>,
 	length: usize,
 	memory_region_handle: uct_mem_h,
 	name_for_debugging_and_memory_tracking: CString,
@@ -37,7 +37,7 @@ impl ByteBuffer for MemoryRegion
 	#[inline(always)]
 	fn address(&self) -> NonNull<u8>
 	{
-		unsafe { NonNull::new_unchecked(self.address) }
+		self.address
 	}
 	
 	#[inline(always)]
@@ -74,6 +74,13 @@ impl MemoryRegion
 			}
 		}
 		
+		debug_assert_ne!(length, 0, "length is zero (0)");
+		debug_assert!(offset < self.length, "offset '{}' equals or exceeds length '{}'", offset, self.length);
+		
+		let address_as_usize = self.address.as_ptr() as usize;
+		let address = address_as_usize + offset;
+		debug_assert!(address < address_as_usize + self.length, "offset exceeds memory region addresses");
+		
 		let advice = if will_be_needed
 		{
 			uct_mem_advice_t::UCT_MADV_WILLNEED
@@ -83,7 +90,7 @@ impl MemoryRegion
 			uct_mem_advice_t::UCT_MADV_NORMAL
 		};
 		
-		let status = unsafe { uct_md_mem_advise(self.memory_domain_handle.as_ptr(), self.memory_region_handle, address, length, advice) };
+		let status = unsafe { uct_md_mem_advise(self.memory_domain_handle.as_ptr(), self.memory_region_handle, address as *mut c_void, length, advice) };
 		
 		use self::Status::*;
 		
