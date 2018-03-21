@@ -4,7 +4,21 @@
 
 /// Mapped memory attributes.
 #[derive(Debug)]
-pub struct OurRemotelyAccessibleMemoryAttributes(ucp_mem_attr_t);
+pub struct OurRemotelyAccessibleMemoryAttributes(ucp_mem_attr);
+
+impl Clone for OurRemotelyAccessibleMemoryAttributes
+{
+	#[inline(always)]
+	fn clone(&self) -> Self
+	{
+		unsafe
+		{
+			let mut clone = OurRemotelyAccessibleMemoryAttributes(uninitialized());
+			copy_nonoverlapping(&self.0, &mut clone.0, 1);
+			clone
+		}
+	}
+}
 
 impl PartialEq for OurRemotelyAccessibleMemoryAttributes
 {

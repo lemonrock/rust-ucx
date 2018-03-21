@@ -16,6 +16,7 @@ pub struct OurRemotelyAccessibleMemory
 	handle: ucp_mem_h,
 	our_remotely_accessible_memory_handle_drop_safety: Rc<OurRemotelyAccessibleMemoryHandleDropSafety>,
 	application_context_handle: ucp_context_h,
+	attributes: OurRemotelyAccessibleMemoryAttributes,
 }
 
 impl HasAttributes for OurRemotelyAccessibleMemory
@@ -23,9 +24,9 @@ impl HasAttributes for OurRemotelyAccessibleMemory
 	type Attributes = OurRemotelyAccessibleMemoryAttributes;
 	
 	#[inline(always)]
-	fn attributes(&self) -> Self::Attributes
+	fn attributes(&self) -> &Self::Attributes
 	{
-		Self::Attributes::query(self.handle)
+		&self.attributes
 	}
 }
 

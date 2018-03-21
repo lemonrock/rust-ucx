@@ -85,6 +85,7 @@ where
 {
 	iface: *mut uct_iface,
 	memory_domain_drop_safety: Arc<MemoryDomainDropSafety>,
+	attributes: CommunicationInterfaceContextAttributes,
 	end_point_address: CommunicationInterfaceContextEndPointAddress<SCR>,
 	error_handler: E,
 	unexpected_tagged_message_handler: UETM,
@@ -140,9 +141,9 @@ impl<SCR: ServerConnectionRequest, E : ErrorHandler, UETM: UnexpectedTaggedMessa
 	type Attributes = CommunicationInterfaceContextAttributes;
 	
 	#[inline(always)]
-	fn attributes(&self) -> Self::Attributes
+	fn attributes(&self) -> &Self::Attributes
 	{
-		CommunicationInterfaceContextAttributes::query(self.non_null_iface())
+		&self.attributes
 	}
 }
 
@@ -161,6 +162,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 			{
 				iface: null_mut(),
 				memory_domain_drop_safety: memory_domain.drop_safety(),
+				attributes: unsafe { uninitialized() },
 				end_point_address,
 				error_handler,
 				unexpected_tagged_message_handler,
@@ -229,9 +231,11 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 		
 		if let Err(error_code) = Self::parse_status(status, ())
 		{
+			unsafe { write(&mut this.attributes, zeroed()) };
 			return Err(error_code)
 		}
 		
+		unsafe { write(&mut this.attributes, CommunicationInterfaceContextAttributes::query(this.non_null_iface())) };
 		Ok(this)
 	}
 	

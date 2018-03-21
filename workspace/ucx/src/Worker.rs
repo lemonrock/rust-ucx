@@ -22,6 +22,7 @@ pub struct Worker
 {
 	handle: ucp_worker_h,
 	worker_handle_drop_safety: Rc<WorkerHandleDropSafety>,
+	attributes: WorkerAttributes,
 }
 
 impl Debug for Worker
@@ -56,11 +57,9 @@ impl HasAttributes for Worker
 	type Attributes = WorkerAttributes;
 	
 	#[inline(always)]
-	fn attributes(&self) -> Self::Attributes
+	fn attributes(&self) -> &Self::Attributes
 	{
-		self.debug_assert_handle_is_valid();
-		
-		Self::Attributes::query(self.debug_assert_handle_is_valid())
+		&self.attributes
 	}
 }
 

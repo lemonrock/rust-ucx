@@ -6,6 +6,20 @@
 #[derive(Debug)]
 pub struct ApplicationContextAttributes(pub(crate) ucp_context_attr);
 
+impl Clone for ApplicationContextAttributes
+{
+	#[inline(always)]
+	fn clone(&self) -> Self
+	{
+		unsafe
+		{
+			let mut clone = ApplicationContextAttributes(uninitialized());
+			copy_nonoverlapping(&self.0, &mut clone.0, 1);
+			clone
+		}
+	}
+}
+
 impl PartialEq for ApplicationContextAttributes
 {
 	#[inline(always)]

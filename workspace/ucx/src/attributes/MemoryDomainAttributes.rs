@@ -2,9 +2,23 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// Attributes of a `CommunicationInterfaceContext`.
+/// Attributes of a `MemoryDomain`.
 #[derive(Debug)]
 pub struct MemoryDomainAttributes(uct_md_attr);
+
+impl Clone for MemoryDomainAttributes
+{
+	#[inline(always)]
+	fn clone(&self) -> Self
+	{
+		unsafe
+		{
+			let mut clone = MemoryDomainAttributes(uninitialized());
+			copy_nonoverlapping(&self.0, &mut clone.0, 1);
+			clone
+		}
+	}
+}
 
 impl MemoryDomainAttributes
 {

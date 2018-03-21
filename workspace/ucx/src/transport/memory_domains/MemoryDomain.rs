@@ -7,17 +7,23 @@
 /// All communications and memory operations are performed in the context of a specific memory domain.
 ///
 /// Therefore one or more must be created before opening a `CommunicationInterfaceContext`.
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct MemoryDomain(NonNull<uct_md>, Arc<MemoryDomainDropSafety>, MemoryDomainComponentAndTransportLayer);
+#[derive(Debug, Clone)]
+pub struct MemoryDomain
+{
+	handle: NonNull<uct_md>,
+	drop_safety: Arc<MemoryDomainDropSafety>,
+	memory_domain_component_and_transport_layer: MemoryDomainComponentAndTransportLayer,
+	attributes: MemoryDomainAttributes,
+}
 
 impl HasAttributes for MemoryDomain
 {
 	type Attributes = MemoryDomainAttributes;
 	
 	#[inline(always)]
-	fn attributes(&self) -> Self::Attributes
+	fn attributes(&self) -> &Self::Attributes
 	{
-		Self::Attributes::query(self.0)
+		&self.attributes
 	}
 }
 
@@ -25,13 +31,13 @@ impl MemoryDomain
 {
 	/// Creates and opens a new memory domain.
 	#[inline(always)]
-	pub fn open(memory_domain_component: MemoryDomainComponentAndTransportLayer) -> Result<Self, ErrorCode>
+	pub fn open(memory_domain_component_and_transport_layer: MemoryDomainComponentAndTransportLayer) -> Result<Self, ErrorCode>
 	{
 		let mut handle = unsafe { uninitialized() };
 		
-		let memory_domain_configuration = memory_domain_component.memory_domain_configuration()?;
+		let memory_domain_configuration = memory_domain_component_and_transport_layer.memory_domain_configuration()?;
 		
-		let status = unsafe { uct_md_open(memory_domain_component.memory_domain_component_name().as_ptr(), memory_domain_configuration.as_ptr(), &mut handle) };
+		let status = unsafe { uct_md_open(memory_domain_component_and_transport_layer.memory_domain_component_name().as_ptr(), memory_domain_configuration.as_ptr(), &mut handle) };
 		
 		use self::Status::*;
 		
@@ -41,7 +47,16 @@ impl MemoryDomain
 			{
 				debug_assert!(!handle.is_null(), "handle is null");
 				let handle = unsafe { NonNull::new_unchecked(handle) };
-				Ok(MemoryDomain(handle, MemoryDomainDropSafety::new(handle), memory_domain_component))
+				Ok
+				(
+					MemoryDomain
+					{
+						handle,
+						drop_safety: MemoryDomainDropSafety::new(handle),
+						memory_domain_component_and_transport_layer,
+						attributes: MemoryDomainAttributes::query(handle),
+					}
+				)
 			}
 			
 			Error(error_code) => Err(error_code),
@@ -156,7 +171,7 @@ impl MemoryDomain
 		
 		let mut memory_region = MemoryRegion
 		{
-			memory_domain_handle: self.0,
+			memory_domain_handle: self.handle,
 			memory_domain_drop_safety: self.drop_safety(),
 			address: NonNull::dangling(),
 			length: requested_length,
@@ -221,19 +236,19 @@ impl MemoryDomain
 	#[inline(always)]
 	pub(crate) fn as_ptr(&self) -> *mut uct_md
 	{
-		self.0.as_ptr()
+		self.handle.as_ptr()
 	}
 	
 	#[inline(always)]
 	pub(crate) fn drop_safety(&self) -> Arc<MemoryDomainDropSafety>
 	{
-		self.1.clone()
+		self.drop_safety.clone()
 	}
 	
 	#[inline(always)]
 	pub(crate) fn transport_layer(&self) -> &MemoryDomainComponentAndTransportLayer
 	{
-		&self.2
+		&self.memory_domain_component_and_transport_layer
 	}
 	
 	#[inline(always)]

@@ -9,7 +9,7 @@ pub trait HasAttributes
 	/// The type of Attributes.
 	type Attributes: Sized;
 	
-	/// Query attributes.
+	/// Obtain attributes.
 	#[inline(always)]
-	fn attributes(&self) -> Self::Attributes;
+	fn attributes(&self) -> &Self::Attributes;
 }

@@ -57,6 +57,7 @@ impl ApplicationContextConfiguration
 					sealing_key,
 					opening_key,
 					master_their_remotely_accessible: Default::default(),
+					attributes: ApplicationContextAttributes::query(handle),
 					phantom_data: PhantomData,
 				}
 			),

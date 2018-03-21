@@ -13,6 +13,7 @@ use ::std::cmp::PartialOrd;
 use ::std::hash::Hash;
 use ::std::hash::Hasher;
 use ::std::mem::uninitialized;
+use ::std::ptr::copy_nonoverlapping;
 use ::std::ptr::NonNull;
 use ::ucx_sys::*;
 

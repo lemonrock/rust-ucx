@@ -3,13 +3,19 @@
 
 
 /// An application context holds an UCP communication instance's global information.
+///
 /// It represents a single UCP communication instance.
+///
 /// The communication instance could be an OS process (an application) that uses UCP library.
+///
 /// This global information includes communication resources, endpoints, memory, temporary file storage, and other communication information directly associated with a specific UCP instance.
+///
 /// The context also acts as an isolation mechanism, allowing resources associated with the context to manage multiple concurrent communication instances.
 /// For example, users using both MPI and OpenSHMEM sessions simultaneously can isolate their communication by allocating and using separate contexts for each of them.
 /// Alternatively, users can share the communication resources (memory, network resource context, etc) between them by using the same application context.
 /// A message sent or a RMA operation performed in one application context cannot be received in any other application context.
+///
+/// Created using `Configuration.new_application_context()`.
 pub struct ApplicationContext<MemoryCustomization = NoNonBlockingRequestMemoryCustomization>
 {
 	handle: ucp_context_h,
@@ -18,6 +24,7 @@ pub struct ApplicationContext<MemoryCustomization = NoNonBlockingRequestMemoryCu
 	sealing_key: SealingKey,
 	opening_key: OpeningKey,
 	master_their_remotely_accessible: MasterTheirRemotelyAccessible,
+	attributes: ApplicationContextAttributes,
 	phantom_data: PhantomData<MemoryCustomization>,
 }
 
@@ -46,9 +53,9 @@ impl<MemoryCustomization: NonBlockingRequestMemoryCustomization> HasAttributes f
 	type Attributes = ApplicationContextAttributes;
 	
 	#[inline(always)]
-	fn attributes(&self) -> Self::Attributes
+	fn attributes(&self) -> &Self::Attributes
 	{
-		Self::Attributes::query(self.handle)
+		&self.attributes
 	}
 }
 
@@ -88,6 +95,7 @@ impl<MemoryCustomization: NonBlockingRequestMemoryCustomization> ApplicationCont
 			handle,
 			our_remotely_accessible_memory_handle_drop_safety: Rc::new(OurRemotelyAccessibleMemoryHandleDropSafety(handle, self.application_context_handle_drop_safety.clone())),
 			application_context_handle: self.handle,
+			attributes: OurRemotelyAccessibleMemoryAttributes::query(handle),
 		}
 	}
 	
@@ -107,11 +115,12 @@ impl<MemoryCustomization: NonBlockingRequestMemoryCustomization> ApplicationCont
 
 		let mut handle = unsafe { uninitialized() };
 		panic_on_error!(ucp_worker_create, self.handle, &parameters, &mut handle);
-
+		
 		Worker
 		{
 			handle,
 			worker_handle_drop_safety: Rc::new(WorkerHandleDropSafety(handle, self.application_context_handle_drop_safety.clone())),
+			attributes: WorkerAttributes::query(handle),
 		}
 	}
 	

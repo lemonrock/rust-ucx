@@ -4,7 +4,21 @@
 
 /// Worker attributes.
 #[derive(Debug)]
-pub struct WorkerAttributes(ucp_worker_attr_t);
+pub struct WorkerAttributes(ucp_worker_attr);
+
+impl Clone for WorkerAttributes
+{
+	#[inline(always)]
+	fn clone(&self) -> Self
+	{
+		unsafe
+		{
+			let mut clone = WorkerAttributes(uninitialized());
+			copy_nonoverlapping(&self.0, &mut clone.0, 1);
+			clone
+		}
+	}
+}
 
 impl PartialEq for WorkerAttributes
 {

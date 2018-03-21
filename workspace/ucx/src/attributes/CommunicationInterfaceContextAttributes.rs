@@ -6,6 +6,20 @@
 #[derive(Debug)]
 pub struct CommunicationInterfaceContextAttributes(pub(crate) uct_iface_attr);
 
+impl Clone for CommunicationInterfaceContextAttributes
+{
+	#[inline(always)]
+	fn clone(&self) -> Self
+	{
+		unsafe
+		{
+			let mut clone = CommunicationInterfaceContextAttributes(uninitialized());
+			copy_nonoverlapping(&self.0, &mut clone.0, 1);
+			clone
+		}
+	}
+}
+
 impl CommunicationInterfaceContextAttributes
 {
 	/// Device address length.
