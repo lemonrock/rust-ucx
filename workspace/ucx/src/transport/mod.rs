@@ -36,5 +36,4 @@ pub mod progress_engine;
 include!("ActiveMessageIdentifier.rs");
 include!("AsynchronousContext.rs");
 include!("CompletionHandleHelper.rs");
-include!("ReceiveDescriptor.rs");
 include!("RemoteEndPoint.rs");

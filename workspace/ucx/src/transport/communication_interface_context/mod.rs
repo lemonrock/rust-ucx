@@ -75,3 +75,4 @@ include!("DeviceAddress.rs");
 include!("DeviceKind.rs");
 include!("InterfaceAddress.rs");
 include!("InterfaceFeaturesSupported.rs");
+include!("ReceiveDescriptor.rs");

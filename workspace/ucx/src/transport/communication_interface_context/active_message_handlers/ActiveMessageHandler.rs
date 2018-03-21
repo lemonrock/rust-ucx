@@ -5,7 +5,7 @@
 /// An active message receive handler.
 pub trait ActiveMessageHandler
 {
-	/// If flags contains `DESC`, then the `descriptor_or_part_thereof` is part of a descriptor  which must be released later by `uct_iface_release_desc` by the user if the callback returns `false`.
+	/// If flags contains `DESC`, then the `descriptor_or_part_thereof` is part of a descriptor which must be released later by `ReceiveDescriptor::release_message_descriptor` (`uct_iface_release_desc`) by the user if the callback returns `false`.
 	///
 	/// * Returns `true` if completed and the descriptor was consumed, and can be released by the caller.
 	/// * Returns `false` if in progress and if descriptor is owned by the callee, and would be released later. Supported only if `DESC` is in `flags`. Otherwise an error.

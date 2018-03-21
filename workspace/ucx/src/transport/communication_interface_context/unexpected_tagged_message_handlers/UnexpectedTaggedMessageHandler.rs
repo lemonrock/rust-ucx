@@ -25,6 +25,8 @@ pub trait UnexpectedTaggedMessageHandler
 	/// All message data is supplied to the call.
 	///
 	/// Return `true` if the message is processed, or `false` if the descriptor has been used; see definitions of `UCT_CB_PARAM_FLAG_DESC` in `uct_def.h`.
+	///
+	/// If false is returned then the callee must, at some point, call `ReceiveDescriptor::release_message_descriptor` (`uct_iface_release_desc`).
 	#[inline(always)]
 	fn unexpected_eager_tagged_message_with_descriptor_with_user_defined_receive_headroom(&self, sender_tag: TagValue, descriptor_with_receive_headroom_and_tagged_message_data: UcxAllocatedByteBuffer, immediate_data: u64) -> bool;
 	
@@ -36,7 +38,7 @@ pub trait UnexpectedTaggedMessageHandler
 	///
 	/// The remote data can probably be received by a non-blocking `get` remote memory operation (RMO) or by an active message (AM).
 	///
-	/// `sender_buffer_packed_remote_key` can be passed to uct_rkey_unpack() to create an instance of `uct_rkey_t`.
+	/// `sender_buffer_packed_remote_key` can be passed to `UnpackedMemoryKey::from_tagged_message_rendezvous_sender_buffer_packed_remote_key()`.
 	#[inline(always)]
 	fn unexpected_rendezvous_tagged_message(&self, sender_tag: TagValue, header: UcxAllocatedByteBuffer, remote_memory_address: RemoteAddress, remote_length: usize, sender_buffer_packed_remote_key: NonNull<u8>);
 	
@@ -50,7 +52,9 @@ pub trait UnexpectedTaggedMessageHandler
 	///
 	/// Return `true` if the message is processed, or `false` if the descriptor has been used; see definitions of `UCT_CB_PARAM_FLAG_DESC` in `uct_def.h`.
 	///
-	/// `sender_buffer_packed_remote_key` can be passed to uct_rkey_unpack() to create an instance of `uct_rkey_t`.
+	/// If false is returned then the callee must, at some point, call `ReceiveDescriptor::release_message_descriptor` (`uct_iface_release_desc`).
+	///
+	/// `sender_buffer_packed_remote_key` can be passed to `UnpackedMemoryKey::from_tagged_message_rendezvous_sender_buffer_packed_remote_key()`.
 	#[inline(always)]
 	fn unexpected_rendezvous_tagged_message_with_descriptor_with_user_defined_receive_headroom(&self, sender_tag: TagValue, header: UcxAllocatedByteBuffer, remote_memory_address: RemoteAddress, remote_length: usize, sender_buffer_packed_remote_key: NonNull<u8>) -> bool;
 }
