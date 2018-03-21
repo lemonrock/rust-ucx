@@ -144,12 +144,6 @@ impl MemoryDomain
 			}
 		}
 		
-		// Also: OurLocalMemoryAddressToMakeRemotelyAccessible
-		
-		// flags are not simple
-		
-		// non-block - resultant memory can be advised.
-		
 		// Of the RMA / ATOMIC flags, only InfiniBand takes any notice of atomic; everything else is ignored.
 		// So everything essentially assumes RMA.
 		// Additionally, internally, uct checks that ACCESS_REMOTE_PUT, ACCESS_REMOTE_GET and ACCESS_REMOTE_ATOMIC are set.
@@ -166,7 +160,6 @@ impl MemoryDomain
 			false
 		};
 		
-		// UCT_MD_FLAG_FIXED
 		let (mut address, flags) = address_allocation_request.for_allocate(flags);
 		
 		let mut memory_region = MemoryRegion
@@ -200,30 +193,56 @@ impl MemoryDomain
 		}
 	}
 	
-//	/// `length` can not be zero (0).
-//	#[inline(always)]
-//	pub fn register_memory_for_zero_copy_sends_and_remote_access(&self, address: NonNull<u8>, length: usize, support_atomic_operations: bool, faster_registration_but_slower_access: bool) -> Result<MemoryRegion, ErrorCode>
-//	{
-//		self.debug_assert_supports_feature(_bindgen_ty_1::REG);
-//		debug_assert_ne!(length, 0, "length can not be zero");
-//
-//		// flags: uct_md_mem_flags: UCT_MD_MEM_ACCESS_ALL
-//		// ucs_status_t uct_md_mem_reg(uct_md_h md, void *address, size_t length, unsigned flags, uct_mem_h *memh_p);
-//	}
+	/// Register memory allocated externally to UCT for zero-copy sends and remote access.
+	///
+	/// Equivalent to `uct_md_mem_reg`.
+	///
+	/// Memory domains needs to support registrations.
+	///
+	/// `length` can not be zero (0).
+	#[inline(always)]
+	pub fn register_memory_for_zero_copy_sends_and_remote_access(&self, address: NonNull<u8>, length: usize, support_atomic_operations: bool, faster_registration_but_slower_access: bool) -> Result<MemoryRegistration, ErrorCode>
+	{
+		self.debug_assert_supports_feature(_bindgen_ty_1::REG);
+		debug_assert_ne!(length, 0, "length can not be zero");
+		
+		use self::Status::*;
+		
+		let mut memory_registration = MemoryRegistration
+		{
+			memory_domain_handle: self.handle,
+			memory_domain_drop_safety: self.drop_safety(),
+			address,
+			length,
+			memory_region_handle: null_mut(),
+		};
+		
+		// Of the RMA / ATOMIC flags, only InfiniBand takes any notice of atomic; everything else is ignored.
+		// So everything essentially assumes RMA.
+		// Additionally, internally, uct checks that ACCESS_REMOTE_PUT, ACCESS_REMOTE_GET and ACCESS_REMOTE_ATOMIC are set.
+		let flags = uct_md_mem_flags::ACCESS_ALL;
+		
+		let status = unsafe { uct_md_mem_reg(self.as_ptr(), address.as_ptr() as *mut c_void, length, flags.0, &mut memory_registration.memory_region_handle) };
+		
+		match status.parse()
+		{
+			IsOk =>
+			{
+				debug_assert!(!memory_registration.memory_region_handle.is_null(), "memory_registration.memory_region_handle is null");
+				Ok(memory_registration)
+			},
+			
+			Error(error_code) => Err(error_code),
+			
+			unexpected_status @ _ => panic!("Unexpected status '{:?}'", unexpected_status)
+		}
+	}
 	
 	// UCT_MD_FLAG_NEED_MEMH  UCT_MD_FLAG_NEED_RKEY  UCT_MD_FLAG_RKEY_PTR
 	
-	
-	// uct_md_mem_advise      UCT_MD_FLAG_ADVISE
-	// uct_md_mem_reg		UCT_MD_FLAG_REG
-	// uct_md_mem_dereg		UCT_MD_FLAG_REG
-	
-	// uct_iface_mem_alloc    uct_md_mem_flags
+	// uct_iface_mem_alloc
 	// uct_iface_mem_free
-	
-	
-	
-	// uct_mem_alloc   UCT_MD_MEM_FLAG_FIXED
+	// uct_mem_alloc
 	// uct_mem_free
 	
 	/// Query.

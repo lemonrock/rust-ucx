@@ -42,4 +42,5 @@ include!("MemoryDomainComponentConfiguration.rs");
 include!("MemoryMappedVariant.rs");
 include!("MemoryRegion.rs");
 include!("MemoryRegionAddressAllocationRequest.rs");
+include!("MemoryRegistration.rs");
 include!("PackedMemoryKey.rs");
