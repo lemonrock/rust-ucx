@@ -89,7 +89,7 @@ impl MemoryDomain
 	#[inline(always)]
 	pub fn is_socket_address_accessible(&self, socket_address: &SocketAddress, mode: uct_sockaddr_accessibility_t) -> bool
 	{
-		debug_assert!(self.attributes().supports_feature(_bindgen_ty_1::SOCKADDR), "Does not support socket addresses");
+		self.debug_assert_supports_feature(_bindgen_ty_1::SOCKADDR);
 		
 		let (addr, addrlen) = socket_address.suitable_for_ffi();
 		let ucs_socket_address = ucs_sock_addr
@@ -101,19 +101,112 @@ impl MemoryDomain
 		unsafe { uct_md_is_sockaddr_accessible(self.as_ptr(), &ucs_socket_address, mode) }.from_c_bool()
 	}
 	
-	// ?UCT_MD_FLAG_SOCKADDR?
+	/// Allocate a memory region for RMA and (optionally, `support_atomic_operations`) atomic operations.
+	///
+	/// Equivalent to `uct_md_mem_alloc`.
+	///
+	/// Allocated length may exceed `requested_length`.
+	///
+	/// If `faster_registration_but_slower_access` is specified, then memory mapping will be deferred until it is accessed by the CPU or device, and memory locking will not occur.
+	/// This is useful if using a memory allocation for a short period of time.
+	///
+	/// `requested_length` can not be zero (0).
+	///
+	/// `FIXED` allocations may not be supported by the underlying memory domain.
+	///
+	/// The underlying memory domain must support allocations (`ALLOC`).
+	#[inline(always)]
+	pub fn allocate_memory_region(&self, address_allocation_request: MemoryRegionAddressAllocationRequest, requested_length: usize, support_atomic_operations: bool, faster_registration_but_slower_access: bool, name_for_debugging_and_memory_tracking: &str) -> Result<MemoryRegion, ErrorCode>
+	{
+		self.debug_assert_supports_feature(_bindgen_ty_1::ALLOC);
+		debug_assert_ne!(requested_length, 0, "request_length can not be zero");
+		
+		#[cfg(debug_assertions)]
+		{
+			if address_allocation_request.is_fixed()
+			{
+				self.debug_assert_supports_feature(_bindgen_ty_1::FIXED);
+			}
+		}
+		
+		// Also: OurLocalMemoryAddressToMakeRemotelyAccessible
+		
+		// flags are not simple
+		
+		// non-block - resultant memory can be advised.
+		
+		// Of the RMA / ATOMIC flags, only InfiniBand takes any notice of atomic; everything else is ignored.
+		// So everything essentially assumes RMA.
+		let mut flags = uct_md_mem_flags::RMA;
+		
+		if support_atomic_operations
+		{
+			flags |= uct_md_mem_flags::REMOTE_ATOMIC;
+		}
+		
+		
+		let was_allocated_non_blocking = if faster_registration_but_slower_access
+		{
+			flags |= uct_md_mem_flags::NONBLOCK;
+			true
+		}
+		else
+		{
+			flags |= uct_md_mem_flags::LOCK;
+			false
+		};
+		
+		// UCT_MD_FLAG_FIXED
+		let (address, flags) = address_allocation_request.for_allocate(flags);
+		
+		let mut memory_region = MemoryRegion
+		{
+			memory_domain_handle: self.0,
+			memory_domain_drop_safety: self.drop_safety(),
+			address,
+			length: requested_length,
+			memory_region_handle: null_mut(),
+			name_for_debugging_and_memory_tracking: CString::new(name_for_debugging_and_memory_tracking).unwrap(),
+			#[cfg(debug_assertions)] was_allocated_non_blocking,
+			#[cfg(debug_assertions)] memory_advice_is_supported: self.supports_feature(_bindgen_ty_1::ADVISE),
+		};
+		
+		let status = unsafe { uct_md_mem_alloc(self.as_ptr(), &mut memory_region.length, &mut memory_region.address as *mut *mut c_void, flags.0, memory_region.name_for_debugging_and_memory_tracking.as_ptr(), &mut memory_region.memory_region_handle) };
+		
+		use self::Status::*;
+		
+		match status.parse()
+		{
+			IsOk => Ok(memory_region),
+			
+			Error(error_code) => Err(error_code),
+			
+			unexpected_status @ _ => panic!("Unexpected status '{:?}'", unexpected_status)
+		}
+	}
 	
-	// uct_mem_alloc   UCT_MD_MEM_FLAG_FIXED
-	// uct_mem_free
+	/// `length` can not be zero (0).
+	#[inline(always)]
+	pub fn register_memory_for_zero_copy_sends_and_remote_access(&self, address_allocation_request: MemoryRegionAddressAllocationRequest, length: usize, support_atomic_operations: bool, faster_registration_but_slower_access: bool) -> Result<MemoryRegion, ErrorCode>
+	{
+		self.debug_assert_supports_feature(_bindgen_ty_1::REG);
+		debug_assert_ne!(length, 0, "length can not be zero");
+		
+	}
 	
-	// uct_md_mem_alloc   UCT_MD_FLAG_ALLOC
-	// uct_md_mem_free
+	
+	
 	// uct_md_mem_advise      UCT_MD_FLAG_ADVISE
-	// uct_md_mem_reg
-	// uct_md_mem_dereg
+	// uct_md_mem_reg		UCT_MD_FLAG_REG
+	// uct_md_mem_dereg		UCT_MD_FLAG_REG
 	
 	// uct_iface_mem_alloc    uct_md_mem_flags
 	// uct_iface_mem_free
+	
+	
+	
+	// uct_mem_alloc   UCT_MD_MEM_FLAG_FIXED
+	// uct_mem_free
 	
 	/// Query.
 	#[inline(always)]
@@ -138,6 +231,18 @@ impl MemoryDomain
 	pub(crate) fn transport_layer(&self) -> &MemoryDomainComponentAndTransportLayer
 	{
 		&self.2
+	}
+	
+	#[inline(always)]
+	fn debug_assert_supports_feature(&self, feature: _bindgen_ty_1)
+	{
+		debug_assert!(self.supports_feature(feature), "Does not support feature");
+	}
+	
+	#[inline(always)]
+	fn supports_feature(&self, feature: _bindgen_ty_1) -> bool
+	{
+		self.attributes().supports_feature(feature)
 	}
 }
 
