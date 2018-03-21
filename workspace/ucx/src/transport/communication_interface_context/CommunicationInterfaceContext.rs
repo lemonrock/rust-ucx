@@ -83,10 +83,10 @@ where
 	A30: ActiveMessageHandler,
 	A31: ActiveMessageHandler
 {
-	iface: *mut uct_iface,
-	memory_domain_handle_drop_safety: Arc<MemoryDomainHandleDropSafety>,
+	handle: NonNull<uct_iface>, // Only dangling during construction
+	handle_drop_safety: Option<Arc<CommunicationInterfaceContextHandleDropSafety>>, // Only None during construction.
+	attributes: CommunicationInterfaceContextAttributes, // Invalid during construction.
 	progress_engine: ProgressEngine,
-	attributes: CommunicationInterfaceContextAttributes,
 	end_point_address: CommunicationInterfaceContextEndPointAddress<SCR>,
 	error_handler: E,
 	unexpected_tagged_message_handler: UETM,
@@ -125,18 +125,6 @@ where
 	active_message_handler_31: Option<A31>,
 }
 
-impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessageHandler, AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandler, A3: ActiveMessageHandler, A4: ActiveMessageHandler, A5: ActiveMessageHandler, A6: ActiveMessageHandler, A7: ActiveMessageHandler, A8: ActiveMessageHandler, A9: ActiveMessageHandler, A10: ActiveMessageHandler, A11: ActiveMessageHandler, A12: ActiveMessageHandler, A13: ActiveMessageHandler, A14: ActiveMessageHandler, A15: ActiveMessageHandler, A16: ActiveMessageHandler, A17: ActiveMessageHandler, A18: ActiveMessageHandler, A19: ActiveMessageHandler, A20: ActiveMessageHandler, A21: ActiveMessageHandler, A22: ActiveMessageHandler, A23: ActiveMessageHandler, A24: ActiveMessageHandler, A25: ActiveMessageHandler, A26: ActiveMessageHandler, A27: ActiveMessageHandler, A28: ActiveMessageHandler, A29: ActiveMessageHandler, A30: ActiveMessageHandler, A31: ActiveMessageHandler> Drop for CommunicationInterfaceContext<SCR, E, UETM, AT, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28, A29, A30, A31>
-{
-	#[inline(always)]
-	fn drop(&mut self)
-	{
-		if !self.iface.is_null()
-		{
-			self.close_and_destroy()
-		}
-	}
-}
-
 impl<SCR: ServerConnectionRequest, E : ErrorHandler, UETM: UnexpectedTaggedMessageHandler, AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandler, A3: ActiveMessageHandler, A4: ActiveMessageHandler, A5: ActiveMessageHandler, A6: ActiveMessageHandler, A7: ActiveMessageHandler, A8: ActiveMessageHandler, A9: ActiveMessageHandler, A10: ActiveMessageHandler, A11: ActiveMessageHandler, A12: ActiveMessageHandler, A13: ActiveMessageHandler, A14: ActiveMessageHandler, A15: ActiveMessageHandler, A16: ActiveMessageHandler, A17: ActiveMessageHandler, A18: ActiveMessageHandler, A19: ActiveMessageHandler, A20: ActiveMessageHandler, A21: ActiveMessageHandler, A22: ActiveMessageHandler, A23: ActiveMessageHandler, A24: ActiveMessageHandler, A25: ActiveMessageHandler, A26: ActiveMessageHandler, A27: ActiveMessageHandler, A28: ActiveMessageHandler, A29: ActiveMessageHandler, A30: ActiveMessageHandler, A31: ActiveMessageHandler> HasAttributes for CommunicationInterfaceContext<SCR, E, UETM, AT, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28, A29, A30, A31>
 {
 	type Attributes = CommunicationInterfaceContextAttributes;
@@ -161,10 +149,10 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 		(
 			Self
 			{
-				iface: null_mut(),
-				memory_domain_handle_drop_safety: memory_domain.handle_drop_safety(),
-				progress_engine: progress_engine.clone(),
+				handle: NonNull::dangling(),
+				handle_drop_safety: None,
 				attributes: unsafe { uninitialized() },
+				progress_engine: progress_engine.clone(),
 				end_point_address,
 				error_handler,
 				unexpected_tagged_message_handler,
@@ -229,16 +217,21 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 			rndv_cb: Self::unexpected_rendezvous_tagged_message,
 		};
 		
-		let status = unsafe { uct_iface_open(memory_domain.as_ptr(), progress_engine.as_ptr(), &parameters, communication_interface_configuration.as_ptr(), &mut this.iface) };
+		let mut handle = unsafe { uninitialized() };
+		let status = unsafe { uct_iface_open(memory_domain.as_ptr(), progress_engine.as_ptr(), &parameters, communication_interface_configuration.as_ptr(), &mut handle) };
 		
 		if let Err(error_code) = Self::parse_status(status, ())
 		{
-			unsafe { write(&mut this.attributes, zeroed()) };
-			return Err(error_code)
+			Err(error_code)
 		}
-		
-		unsafe { write(&mut this.attributes, CommunicationInterfaceContextAttributes::query(this.non_null_iface())) };
-		Ok(this)
+		else
+		{
+			let handle = unsafe { NonNull::new_unchecked(handle) };
+			this.handle = handle;
+			this.handle_drop_safety = Some(CommunicationInterfaceContextHandleDropSafety::new(handle, memory_domain.handle_drop_safety()));
+			this.attributes = CommunicationInterfaceContextAttributes::query(handle);
+			Ok(this)
+		}
 	}
 	
 	unsafe extern "C" fn error_handler(arg: *mut c_void, ep: *mut uct_ep, status: ucs_status_t) -> ucs_status_t
@@ -326,15 +319,6 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 			this.unexpected_rendezvous_tagged_message(sender_tag, header, remote_memory_address, remote_length, remote_key);
 			ucs_status_t::UCS_OK
 		}
-	}
-	
-	/// Close and destroy an interface.
-	///
-	/// Equivalent to `uct_iface_close`.
-	#[inline(always)]
-	fn close_and_destroy(&self)
-	{
-		unsafe { (self.transport_interface_operations().iface_close)(self.debug_assert_non_null_iface()) }
 	}
 	
 	/// Explicit progress.
@@ -458,7 +442,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 		let tag = tag_matcher.value.0;
 		let tag_mask = tag_matcher.bit_mask.0;
 		
-		let status = unsafe { (self.transport_interface_operations().iface_tag_recv_zcopy)(self.debug_assert_non_null_iface(), tag, tag_mask, io_vec.as_ptr(), io_vec.len(), ctx) };
+		let status = unsafe { (self.transport_interface_operations().iface_tag_recv_zcopy)(self.as_ptr(), tag, tag_mask, io_vec.as_ptr(), io_vec.len(), ctx) };
 		
 		Self::parse_status(status, ())
 	}
@@ -484,7 +468,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 	{
 		debug_assert!(self.interface_supports_feature(InterfaceFeaturesSupported::TAG_EAGER_ZCOPY), "Tag matching not supported");
 		
-		let status = unsafe { (self.transport_interface_operations().iface_tag_recv_cancel)(self.debug_assert_non_null_iface(), ctx, force.to_c_bool()) };
+		let status = unsafe { (self.transport_interface_operations().iface_tag_recv_cancel)(self.as_ptr(), ctx, force.to_c_bool()) };
 		
 		Self::parse_status(status, ())
 	}
@@ -504,7 +488,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 		debug_assert_eq!(self.attributes().device_address_length(), device_address.length(), "device address length mismatch");
 		debug_assert_eq!(self.attributes().interface_address_length(), interface_address.length(), "interface address length mismatch");
 		
-		let result = unsafe { (self.transport_interface_operations().iface_is_reachable)(self.debug_assert_non_null_iface(), device_address.is_reachable_address(), interface_address.is_reachable_address()) };
+		let result = unsafe { (self.transport_interface_operations().iface_is_reachable)(self.as_ptr(), device_address.is_reachable_address(), interface_address.is_reachable_address()) };
 		result.from_c_bool()
 	}
 	
@@ -518,7 +502,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 		
 		let interface_address = InterfaceAddress::new(self.attributes().interface_address_length());
 		
-		let status = unsafe { (self.transport_interface_operations().iface_get_address)(self.debug_assert_non_null_iface(), interface_address.address().as_ptr() as *mut _) };
+		let status = unsafe { (self.transport_interface_operations().iface_get_address)(self.as_ptr(), interface_address.address().as_ptr() as *mut _) };
 		
 		Self::parse_status(status, interface_address)
 	}
@@ -533,7 +517,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 	{
 		let device_address = DeviceAddress::new(self.attributes().device_address_length());
 		
-		let status = unsafe { (self.transport_interface_operations().iface_get_device_address)(self.debug_assert_non_null_iface(), device_address.address().as_ptr() as *mut _) };
+		let status = unsafe { (self.transport_interface_operations().iface_get_device_address)(self.as_ptr(), device_address.address().as_ptr() as *mut _) };
 		
 		Self::parse_status(status, device_address)
 	}
@@ -550,7 +534,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 		
 		let mut events_file_descriptor = unsafe { uninitialized() };
 		
-		let status = unsafe { (self.transport_interface_operations().iface_event_fd_get)(self.debug_assert_non_null_iface(), &mut events_file_descriptor) };
+		let status = unsafe { (self.transport_interface_operations().iface_event_fd_get)(self.as_ptr(), &mut events_file_descriptor) };
 		
 		Self::parse_status(status, events_file_descriptor)
 	}
@@ -594,7 +578,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 		debug_assert!(is_supported(event_types, uct_iface_event_types::RECV, InterfaceFeaturesSupported::EVENT_RECV, &self.attributes()), "RECV is not supported");
 		debug_assert!(is_supported(event_types, uct_iface_event_types::RECV_SIG, InterfaceFeaturesSupported::EVENT_RECV_SIG, &self.attributes()), "RECV_SIG is not supported");
 		
-		let status = unsafe { (self.transport_interface_operations().iface_event_arm)(self.debug_assert_non_null_iface(), event_types.0) };
+		let status = unsafe { (self.transport_interface_operations().iface_event_arm)(self.as_ptr(), event_types.0) };
 		
 		Self::parse_status(status, ())
 	}
@@ -611,7 +595,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 	#[inline(always)]
 	pub fn enable_progressing(&self, flags: uct_progress_types)
 	{
-		unsafe { (self.transport_interface_operations().iface_progress_enable)(self.debug_assert_non_null_iface(), flags.0) }
+		unsafe { (self.transport_interface_operations().iface_progress_enable)(self.as_ptr(), flags.0) }
 	}
 	
 	/// Disable synchronous progress for the interface.
@@ -628,7 +612,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 	#[inline(always)]
 	pub fn disable_progressing(&self, flags: uct_progress_types)
 	{
-		unsafe { (self.transport_interface_operations().iface_progress_disable)(self.debug_assert_non_null_iface(), flags.0) }
+		unsafe { (self.transport_interface_operations().iface_progress_disable)(self.as_ptr(), flags.0) }
 	}
 	
 	/// Perform a progress on an interface.
@@ -639,7 +623,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 	#[inline(always)]
 	pub fn progress(&self) -> u32
 	{
-		unsafe { (self.transport_interface_operations().iface_progress)(self.debug_assert_non_null_iface()) }
+		unsafe { (self.transport_interface_operations().iface_progress)(self.as_ptr()) }
 	}
 	
 	/// Flush outstanding communication operations on an interface.
@@ -661,7 +645,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 	{
 		debug_assert_eq!(flags, uct_flush_flags::LOCAL, "Only LOCAL is supported currently");
 		
-		let status = unsafe { (self.transport_interface_operations().iface_flush)(self.debug_assert_non_null_iface(), flags.0, completion_handle.mutable_reference()) };
+		let status = unsafe { (self.transport_interface_operations().iface_flush)(self.as_ptr(), flags.0, completion_handle.mutable_reference()) };
 		
 		Self::parse_status_with_in_progress(status, ())
 	}
@@ -676,29 +660,9 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 	#[inline(always)]
 	pub fn fence(&self) -> Result<(), ErrorCode>
 	{
-		let status = unsafe { (self.transport_interface_operations().iface_fence)(self.debug_assert_non_null_iface(), ReservedForFutureUseFlags) };
+		let status = unsafe { (self.transport_interface_operations().iface_fence)(self.as_ptr(), ReservedForFutureUseFlags) };
 		
 		Self::parse_status(status, ())
-	}
-	
-	#[inline(always)]
-	pub(crate) fn transport_interface_operations(&self) -> &mut uct_iface_ops
-	{
-		&mut unsafe { &mut * self.debug_assert_non_null_iface() }.ops
-	}
-	
-	#[inline(always)]
-	fn non_null_iface(&self) -> NonNull<uct_iface>
-	{
-		unsafe { NonNull::new_unchecked(self.debug_assert_non_null_iface()) }
-	}
-	
-	#[inline(always)]
-	fn debug_assert_non_null_iface(&self) -> *mut uct_iface
-	{
-		let iface = self.iface;
-		debug_assert!(!iface.is_null(), "iface is null");
-		iface
 	}
 	
 	#[inline(always)]
@@ -733,6 +697,24 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 			
 			_ => panic!("Unexpected status '{:?}'", status),
 		}
+	}
+	
+	#[inline(always)]
+	pub(crate) fn transport_interface_operations(&self) -> &mut uct_iface_ops
+	{
+		&mut unsafe { &mut * self.handle.as_ptr() }.ops
+	}
+	
+	#[inline(always)]
+	pub(crate) fn handle_drop_safety(&self) -> Arc<CommunicationInterfaceContextHandleDropSafety>
+	{
+		self.handle_drop_safety.as_ref().unwrap().clone()
+	}
+	
+	#[inline(always)]
+	pub(crate) fn as_ptr(&self) -> *mut uct_iface
+	{
+		self.handle.as_ptr()
 	}
 	
 	#[inline(always)]
@@ -777,7 +759,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 			debug_assert!(has_at_least_sync_or_async, "flags must contain either SYNC or ASYNC");
 		}
 		
-		let status = unsafe { uct_iface_set_am_handler(self.debug_assert_non_null_iface(), active_message_identifier.0, callback_on_receive, callback_on_receive_data as *mut _, flags.0) };
+		let status = unsafe { uct_iface_set_am_handler(self.as_ptr(), active_message_identifier.0, callback_on_receive, callback_on_receive_data as *mut _, flags.0) };
 		
 		Self::parse_status(status, ())
 	}
@@ -794,7 +776,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 	{
 		debug_assert!(self.interface_supports_feature(InterfaceFeaturesSupported::CB_SYNC) | self.interface_supports_feature(InterfaceFeaturesSupported::CB_ASYNC), "Interface must support CB_SYNC or CB_ASYNC");
 		
-		let status = unsafe { uct_iface_set_am_tracer(self.debug_assert_non_null_iface(), tracer_callback, tracer_data as *mut _) };
+		let status = unsafe { uct_iface_set_am_tracer(self.as_ptr(), tracer_callback, tracer_data as *mut _) };
 		
 		Self::parse_status(status, ())
 	}

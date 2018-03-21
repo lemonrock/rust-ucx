@@ -3,11 +3,63 @@
 
 
 #[derive(Debug)]
-pub(crate) struct RemoteEndPoint(UnsafeCell<uct_ep>);
+pub(crate) struct RemoteEndPoint
+{
+	handle: NonNull<uct_ep>,
+	communication_interface_context_handle_drop_safety: Arc<CommunicationInterfaceContextHandleDropSafety>,
+	attributes: CommunicationInterfaceContextAttributes,
+}
 
-/// ?
+impl Drop for RemoteEndPoint
+{
+	/// Destroys this remote end point.
+	///
+	/// Equivalent to `uct_ep_destroy`.
+	#[inline(always)]
+	fn drop(&mut self)
+	{
+		unsafe { (self.transport_interface_operations().ep_destroy)(self.ep()) }
+	}
+}
+
 impl RemoteEndPoint
 {
+	/// Create but do not connect to anything.
+	///
+	/// Equivalent to `uct_ep_create`.
+	#[inline(always)]
+	pub fn create(communication_interface_context: &CommunicationInterfaceContext) -> Result<Self, ErrorCode>
+	{
+		let mut handle = unsafe { uninitialized() };
+		
+		let status = unsafe { uct_ep_create(communication_interface_context.as_ptr(), &mut handle) };
+		
+		use self::Status::*;
+		
+		match status.parse()
+		{
+			IsOk =>
+			{
+				debug_assert!(!handle.is_null(), "handle is null");
+				let handle = unsafe { NonNull::new_unchecked(handle) };
+				
+				Ok
+				(
+					Self
+					{
+						handle,
+						communication_interface_context_handle_drop_safety: communication_interface_context.handle_drop_safety(),
+						attributes: communication_interface_context.attributes().clone(),
+					}
+				)
+			}
+			
+			Error(error_code) => Err(error_code),
+			
+			unexpected_status @ _ => panic!("Unexpected status '{:?}'", unexpected_status),
+		}
+	}
+	
 	/// Check if the remote end point is alive with respect to the UCT library.
 	///
 	/// Equivalent to `uct_ep_check`.
@@ -19,15 +71,6 @@ impl RemoteEndPoint
 		self.debug_interface_supports_feature(InterfaceFeaturesSupported::EP_CHECK);
 		
 		unsafe { (self.transport_interface_operations().ep_check)(self.ep(), ReservedForFutureUseFlags, completion_handle.mutable_reference()) }
-	}
-	
-	/// Destroys this remote end point.
-	///
-	/// Equivalent to `uct_ep_destroy`.
-	#[inline(always)]
-	pub fn destroy(&self)
-	{
-		unsafe { (self.transport_interface_operations().ep_destroy)(self.ep()) }
 	}
 	
 //#[link_name = "\u{1}_uct_ep_connect_to_ep"] pub fn uct_ep_connect_to_ep(ep: uct_ep_h, dev_addr: *const uct_device_addr_t, ep_addr: *const uct_ep_addr_t) -> ucs_status_t;
@@ -126,7 +169,7 @@ impl RemoteEndPoint
 	{
 		self.debug_interface_supports_feature(InterfaceFeaturesSupported::AM_SHORT);
 		debug_assert!(payload.len() < ::std::u32::MAX as usize, "payload is too long");
-		debug_assert!(size_of_val(&header) + payload.len() <= self.attributes().active_message_constraints().max_short, "header length + payload length exceeds maximum for interface");
+		debug_assert!(size_of_val(&header) + payload.len() <= self.attributes.active_message_constraints().max_short, "header length + payload length exceeds maximum for interface");
 		
 		unsafe { (self.transport_interface_operations().ep_am_short)(self.ep(), id.0, header, payload.as_ptr() as *const c_void, payload.len() as u32) }
 	}
@@ -150,7 +193,7 @@ impl RemoteEndPoint
 	///
 	/// Equivalent to `uct_ep_am_zcopy`.
 	///
-	/// * `header` may be no longer than `self.attributes().cap.am.max_hdr`.
+	/// * `header` may be no longer than `self.attributes.cap.am.max_hdr`.
 	/// * `io_vec` maximum length is `uct_iface_attr_cap_am_max_iov`
 	/// * `flags`: Specify `uct_msg_flags::SIGNALED` to trigger `uct_iface_event_types::RECV_SIG` on the receiver. May not be supported by the interface (in which case it will be ignored). Triggering `uct_iface_event_types::RECV_SIG` may not happen on the receiver in some cases and `uct_iface_event_types::RECV` will occur instead.
 	///
@@ -168,7 +211,7 @@ impl RemoteEndPoint
 	{
 		self.debug_interface_supports_feature(InterfaceFeaturesSupported::AM_ZCOPY);
 		debug_assert!(header.len() < ::std::u32::MAX as usize, "header is too long");
-		debug_assert!(header.len() <= self.attributes().active_message_constraints().max_hdr, "header exceeds maximum for interface");
+		debug_assert!(header.len() <= self.attributes.active_message_constraints().max_hdr, "header exceeds maximum for interface");
 		
 		if cfg!(debug_assertions)
 		{
@@ -178,15 +221,13 @@ impl RemoteEndPoint
 				total_length += entry.length;
 			}
 			
-			let attributes = self.attributes();
-			
-			let min_zcopy = attributes.active_message_constraints().min_zcopy;
+			let min_zcopy = self.attributes.active_message_constraints().min_zcopy;
 			if total_length < min_zcopy
 			{
 				panic!("total_length '{}' is less than min_zcopy '{}'", total_length, min_zcopy)
 			}
 			
-			let max_zcopy = attributes.active_message_constraints().max_zcopy;
+			let max_zcopy = self.attributes.active_message_constraints().max_zcopy;
 			if total_length > max_zcopy
 			{
 				panic!("total_length '{}' exceeds max_zcopy '{}'", total_length, max_zcopy)
@@ -586,32 +627,22 @@ impl RemoteEndPoint
 impl RemoteEndPoint
 {
 	#[inline(always)]
-	fn attributes(&self) -> CommunicationInterfaceContextAttributes
-	{
-		CommunicationInterfaceContextAttributes::query(self.iface())
-	}
-	
-	#[inline(always)]
 	fn transport_interface_operations(&self) -> &mut uct_iface_ops
 	{
-		&mut (unsafe { &mut * self.iface().as_ptr() }).ops
-	}
-	
-	#[inline(always)]
-	fn iface(&self) -> NonNull<uct_iface>
-	{
-		unsafe { NonNull::new_unchecked((&mut * self.ep()).iface) }
+		let ep = unsafe { self.handle.as_ref() };
+		let iface = unsafe { &mut * ep.iface };
+		&mut iface.ops
 	}
 	
 	#[inline(always)]
 	fn ep(&self) -> *mut uct_ep
 	{
-		self.0.get()
+		self.handle.as_ptr()
 	}
 	
 	#[inline(always)]
 	fn debug_interface_supports_feature(&self, required_to_support: InterfaceFeaturesSupported)
 	{
-		debug_assert!(self.attributes().supports_all_of(required_to_support), "Unsupported");
+		debug_assert!(self.attributes.supports_all_of(required_to_support), "Unsupported");
 	}
 }

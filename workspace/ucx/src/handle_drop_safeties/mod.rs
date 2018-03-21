@@ -10,6 +10,7 @@ use ::ucx_sys::*;
 
 include!("ApplicationContextHandleDropSafety.rs");
 include!("AsynchronousContextHandleDropSafety.rs");
+include!("CommunicationInterfaceContextHandleDropSafety.rs");
 include!("MemoryDomainHandleDropSafety.rs");
 include!("OurRemotelyAccessibleMemoryHandleDropSafety.rs");
 include!("ProgressEngineHandleDropSafety.rs");

@@ -36,9 +36,9 @@ pub trait UnexpectedTaggedMessageHandler
 	///
 	/// The remote location of the message data, and the remote end point to which it relates is supplied to the call.
 	///
-	/// The remote data can probably be received by a non-blocking `get` remote memory operation (RMO) or by an active message (AM).
+	/// The remote data can probably be received by a non-blocking `get` remote memory operation (RMO).
 	///
-	/// `sender_buffer_packed_remote_key` can be passed to `UnpackedMemoryKey::from_tagged_message_rendezvous_sender_buffer_packed_remote_key()`.
+	/// `sender_buffer_packed_remote_key` can be passed to `UnpackedMemoryKey::from_tagged_message_rendezvous_sender_buffer_packed_remote_key(sender_buffer_packed_remote_key).remote_key_descriptor()`.
 	#[inline(always)]
 	fn unexpected_rendezvous_tagged_message(&self, sender_tag: TagValue, header: UcxAllocatedByteBuffer, remote_memory_address: RemoteAddress, remote_length: usize, sender_buffer_packed_remote_key: NonNull<u8>);
 	
@@ -48,13 +48,13 @@ pub trait UnexpectedTaggedMessageHandler
 	///
 	/// The remote location of the message data, and the remote end point to which it relates is supplied to the call.
 	///
-	/// The remote data can probably be received by a non-blocking `get` remote memory operation (RMO) or by an active message (AM).
+	/// The remote data can probably be received by a non-blocking `get` remote memory operation (RMO).
 	///
 	/// Return `true` if the message is processed, or `false` if the descriptor has been used; see definitions of `UCT_CB_PARAM_FLAG_DESC` in `uct_def.h`.
 	///
 	/// If false is returned then the callee must, at some point, call `ReceiveDescriptor::release_message_descriptor` (`uct_iface_release_desc`).
 	///
-	/// `sender_buffer_packed_remote_key` can be passed to `UnpackedMemoryKey::from_tagged_message_rendezvous_sender_buffer_packed_remote_key()`.
+	/// `sender_buffer_packed_remote_key` can be passed to `UnpackedMemoryKey::from_tagged_message_rendezvous_sender_buffer_packed_remote_key(sender_buffer_packed_remote_key).remote_key_descriptor()`.
 	#[inline(always)]
 	fn unexpected_rendezvous_tagged_message_with_descriptor_with_user_defined_receive_headroom(&self, sender_tag: TagValue, header: UcxAllocatedByteBuffer, remote_memory_address: RemoteAddress, remote_length: usize, sender_buffer_packed_remote_key: NonNull<u8>) -> bool;
 }

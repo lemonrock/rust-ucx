@@ -2,7 +2,7 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use self::communication_interface_context::InterfaceFeaturesSupported;
+use self::communication_interface_context::*;
 use super::attributes::*;
 use super::ffi_helpers::*;
 use super::handle_drop_safeties::*;
@@ -12,7 +12,6 @@ use ::libc::c_void;
 use ::libc::size_t;
 use ::libc::ssize_t;
 use ::libc::uint64_t;
-use ::std::cell::UnsafeCell;
 use ::std::mem::size_of_val;
 use ::std::mem::uninitialized;
 use ::std::ptr::NonNull;
