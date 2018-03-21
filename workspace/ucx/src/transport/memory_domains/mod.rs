@@ -9,6 +9,7 @@ use super::super::handle_drop_safeties::*;
 use super::super::sockets::*;
 use super::super::status::*;
 use super::super::ZeroBasedHyperThreadIndex;
+use super::progress_engine::ProgressEngine;
 use super::communication_interface_context::*;
 use super::communication_interface_context::active_message_handlers::*;
 use super::communication_interface_context::active_message_tracers::*;

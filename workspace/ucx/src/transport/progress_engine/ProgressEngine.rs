@@ -7,11 +7,11 @@
 /// Also known as a worker.
 ///
 /// Different workers are progressed independently.
-#[derive(Debug)]
-pub(crate) struct ProgressEngine
+#[derive(Debug, Clone)]
+pub struct ProgressEngine
 {
 	handle: NonNull<uct_worker>,
-	asynchronous_context_handle_drop_safety: Option<Arc<AsynchronousContextHandleDropSafety>>,
+	handle_drop_safety: Arc<ProgressEngineHandleDropSafety>,
 }
 
 impl Drop for ProgressEngine
@@ -52,12 +52,13 @@ impl ProgressEngine
 			IsOk =>
 			{
 				debug_assert!(!handle.is_null(), "handle is null");
+				let handle = unsafe { NonNull::new_unchecked(handle) };
 				Ok
 				(
 					Self
 					{
-						handle: unsafe { NonNull::new_unchecked(handle) },
-						asynchronous_context_handle_drop_safety,
+						handle,
+						handle_drop_safety: ProgressEngineHandleDropSafety::new(handle, asynchronous_context_handle_drop_safety),
 					}
 				)
 			}
@@ -84,7 +85,7 @@ impl ProgressEngine
 		// ucp_worker then does ucs_async_check_miss(&worker->async);
 	}
 	
-	/// Add a callback function.
+	/// Add a progress callback function.
 	///
 	/// Equivalent to `uct_worker_progress_register_safe`.
 	///

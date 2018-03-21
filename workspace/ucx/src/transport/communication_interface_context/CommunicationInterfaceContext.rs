@@ -85,6 +85,7 @@ where
 {
 	iface: *mut uct_iface,
 	memory_domain_handle_drop_safety: Arc<MemoryDomainHandleDropSafety>,
+	progress_engine: ProgressEngine,
 	attributes: CommunicationInterfaceContextAttributes,
 	end_point_address: CommunicationInterfaceContextEndPointAddress<SCR>,
 	error_handler: E,
@@ -154,7 +155,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 	///
 	/// Equivalent to `uct_iface_open`.
 	#[inline(always)]
-	pub fn open(hyper_thread_index: ZeroBasedHyperThreadIndex, memory_domain: &MemoryDomain, end_point_address: CommunicationInterfaceContextEndPointAddress<SCR>, error_handler: E, unexpected_tagged_message_handler: UETM, worker: *mut uct_worker) -> Result<Box<Self>, ErrorCode>
+	pub fn open(hyper_thread_index: ZeroBasedHyperThreadIndex, memory_domain: &MemoryDomain, end_point_address: CommunicationInterfaceContextEndPointAddress<SCR>, error_handler: E, unexpected_tagged_message_handler: UETM, progress_engine: &ProgressEngine) -> Result<Box<Self>, ErrorCode>
 	{
 		let mut this = Box::new
 		(
@@ -162,6 +163,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 			{
 				iface: null_mut(),
 				memory_domain_handle_drop_safety: memory_domain.handle_drop_safety(),
+				progress_engine: progress_engine.clone(),
 				attributes: unsafe { uninitialized() },
 				end_point_address,
 				error_handler,
@@ -227,7 +229,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 			rndv_cb: Self::unexpected_rendezvous_tagged_message,
 		};
 		
-		let status = unsafe { uct_iface_open(memory_domain.as_ptr(), worker, &parameters, communication_interface_configuration.as_ptr(), &mut this.iface) };
+		let status = unsafe { uct_iface_open(memory_domain.as_ptr(), progress_engine.as_ptr(), &parameters, communication_interface_configuration.as_ptr(), &mut this.iface) };
 		
 		if let Err(error_code) = Self::parse_status(status, ())
 		{
@@ -333,6 +335,32 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 	fn close_and_destroy(&self)
 	{
 		unsafe { (self.transport_interface_operations().iface_close)(self.debug_assert_non_null_iface()) }
+	}
+	
+	/// Explicit progress.
+	///
+	/// Equivalent to `ProgressEngine.progress()` and `uct_worker_progress`.
+	///
+	/// Not thread safe.
+	///
+	/// This routine explicitly progresses any outstanding communication operations and active message requests.
+	///
+	/// Returns `true` if communication progressed, `false` otherwise.
+	#[inline(always)]
+	pub fn progress_thread_unsafe(&self) -> bool
+	{
+		self.progress_engine.progress_thread_unsafe()
+	}
+	
+	/// Add a progress callback function.
+	///
+	/// Equivalent to `ProgressEngine.progress_register_thread_safe()` and `uct_worker_progress_register_safe`.
+	///
+	/// The `CallbackQueueIdentifier` can be used to remove this callback if necessary.
+	#[inline(always)]
+	pub fn progress_register_thread_safe<'progress_engine, PC: ProgressCallback>(&'progress_engine self, progress_callback: Box<PC>) -> ProgressCallbackCancel<'progress_engine, PC>
+	{
+		self.progress_engine.progress_register_thread_safe(progress_callback)
 	}
 	
 	/// Set an active message tracer.

@@ -2,15 +2,22 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// An unique identifier for a callback.
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct CallbackQueueIdentifier(i32);
+use super::AsynchronousContext;
+use super::super::attributes::*;
+use super::super::ffi_helpers::*;
+use super::super::handle_drop_safeties::*;
+use super::super::status::*;
+use ::libc::c_void;
+use ::std::mem::uninitialized;
+use ::std::ptr::NonNull;
+use ::std::ptr::null_mut;
+use ::std::sync::Arc;
+use ::ucx_sys::*;
 
-impl CallbackQueueIdentifier
-{
-	pub(crate) fn new(identifier: i32) -> Self
-	{
-		debug_assert_ne!(identifier, UCS_CALLBACKQ_ID_NULL, "identifier can not be UCS_CALLBACKQ_ID_NULL");
-		CallbackQueueIdentifier(identifier)
-	}
-}
+
+include!("CallbackQueue.rs");
+include!("CallbackQueueIdentifier.rs");
+include!("ProgressCallback.rs");
+include!("ProgressCallbackCancel.rs");
+include!("ProgressCallbackKind.rs");
+include!("ProgressEngine.rs");

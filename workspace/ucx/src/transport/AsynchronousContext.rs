@@ -3,7 +3,7 @@
 
 
 /// An asynchronous context encapsulates how timer and input-output events are managed.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AsynchronousContext
 {
 	handle: NonNull<ucs_async_context>,

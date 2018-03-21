@@ -29,14 +29,12 @@ pub mod communication_interface_context;
 pub mod memory_domains;
 
 
+/// A progress engine is used to progress non-blocking operations.
+pub mod progress_engine;
+
+
 include!("ActiveMessageIdentifier.rs");
 include!("AsynchronousContext.rs");
-include!("CallbackQueue.rs");
-include!("CallbackQueueIdentifier.rs");
 include!("CompletionHandleHelper.rs");
-include!("ProgressCallback.rs");
-include!("ProgressCallbackCancel.rs");
-include!("ProgressCallbackKind.rs");
-include!("ProgressEngine.rs");
 include!("ReceiveDescriptor.rs");
 include!("RemoteEndPoint.rs");
