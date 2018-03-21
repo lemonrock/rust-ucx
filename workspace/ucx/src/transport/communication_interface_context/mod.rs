@@ -17,7 +17,7 @@ use super::super::tagged_messages::*;
 use super::progress_engine::ProgressEngine;
 use super::progress_engine::ProgressCallback;
 use super::progress_engine::ProgressCallbackCancel;
-use super::memory_domains::*;
+use super::memory_domain::*;
 use self::active_message_handlers::*;
 use self::active_message_tracers::*;
 use self::error_handlers::*;

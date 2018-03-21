@@ -26,7 +26,7 @@ pub mod communication_interface_context;
 
 
 /// Memory domains needed to create communication interface contexts.
-pub mod memory_domains;
+pub mod memory_domain;
 
 
 /// A progress engine is used to progress non-blocking operations.
