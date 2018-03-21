@@ -84,7 +84,7 @@ where
 	A31: ActiveMessageHandler
 {
 	iface: *mut uct_iface,
-	memory_domain_drop_safety: Arc<MemoryDomainDropSafety>,
+	memory_domain_handle_drop_safety: Arc<MemoryDomainHandleDropSafety>,
 	attributes: CommunicationInterfaceContextAttributes,
 	end_point_address: CommunicationInterfaceContextEndPointAddress<SCR>,
 	error_handler: E,
@@ -161,7 +161,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 			Self
 			{
 				iface: null_mut(),
-				memory_domain_drop_safety: memory_domain.drop_safety(),
+				memory_domain_handle_drop_safety: memory_domain.handle_drop_safety(),
 				attributes: unsafe { uninitialized() },
 				end_point_address,
 				error_handler,

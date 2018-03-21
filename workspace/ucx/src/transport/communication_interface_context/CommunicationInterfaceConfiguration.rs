@@ -4,7 +4,7 @@
 
 // Holds a reference to the memory domain to prevent it being closed.
 #[derive(Debug)]
-pub(crate) struct CommunicationInterfaceConfiguration(NonNull<uct_iface_config>, Arc<MemoryDomainDropSafety>);
+pub(crate) struct CommunicationInterfaceConfiguration(NonNull<uct_iface_config>, Arc<MemoryDomainHandleDropSafety>);
 
 impl Drop for CommunicationInterfaceConfiguration
 {
@@ -36,7 +36,7 @@ impl CommunicationInterfaceConfiguration
 				debug_assert!(!handle.is_null(), "handle is null");
 				let handle = unsafe { NonNull::new_unchecked(handle) };
 				
-				Ok(CommunicationInterfaceConfiguration(handle, memory_domain.drop_safety()))
+				Ok(CommunicationInterfaceConfiguration(handle, memory_domain.handle_drop_safety()))
 			}
 			
 			Error(error_code) => Err(error_code),

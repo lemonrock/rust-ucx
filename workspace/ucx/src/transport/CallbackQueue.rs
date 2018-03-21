@@ -23,17 +23,17 @@ trait CallbackQueue
 	/// This is *not* safe to call while another thread might be dispatching callbacks.
 	/// However, it can be used from the dispatch context (eg a callback may use this function to add another callback).
 	#[inline(always)]
-	fn add_thread_unsafe<T>(&mut self, callback: ucs_callback_t, callback_data: *mut T, flags: ucs_callbackq_flags) -> CallbackUniqueIdentifier;
+	fn add_thread_unsafe<T>(&mut self, callback: ucs_callback_t, callback_data: *mut T, flags: ucs_callbackq_flags) -> CallbackQueueIdentifier;
 	
 	/// Add a callback to the queue (thread-safe).
 	///
-	/// Equivalent to `ucs_callbackq_add-safe`.
+	/// Equivalent to `ucs_callbackq_add_safe`.
 	///
 	/// This can be used from any context and any thread, including but not limited to:-
 	/// * A callback can add another callback.
 	/// * A thread can add a callback while another thread is dispatching callbacks (`dispatch_thread_unsafe`).
 	#[inline(always)]
-	fn add_thread_safe<T>(&mut self, callback: ucs_callback_t, callback_data: *mut T, flags: ucs_callbackq_flags) -> CallbackUniqueIdentifier;
+	fn add_thread_safe<T>(&mut self, callback: ucs_callback_t, callback_data: *mut T, flags: ucs_callbackq_flags) -> CallbackQueueIdentifier;
 	
 	/// Remove a callback from the queue immediately.
 	///
@@ -43,7 +43,7 @@ trait CallbackQueue
 	/// However, it can be used from the dispatch context (eg a callback may use this function to remove itself or another callback).
 	/// In this case, the callback may still be dispatched once after this function returned.
 	#[inline(always)]
-	fn remove_thread_unsafe<T>(&mut self, identifier: CallbackUniqueIdentifier);
+	fn remove_thread_unsafe<T>(&mut self, identifier: CallbackQueueIdentifier);
 	
 	/// Remove a callback from the queue lazily and thread safely.
 	///
@@ -53,7 +53,7 @@ trait CallbackQueue
 	/// * A callback can remove another callback or itself.
 	/// * A thread can't remove a callback while another thread is dispatching callbacks (`dispatch_thread_unsafe`).
 	#[inline(always)]
-	fn remove_thread_safe<T>(&mut self, identifier: CallbackUniqueIdentifier);
+	fn remove_thread_safe<T>(&mut self, identifier: CallbackQueueIdentifier);
 	
 	/// Remove all callbacks from the queue for which the given predicate returns a non-zero ('true') value.
 	///
@@ -103,29 +103,29 @@ impl CallbackQueue for ucs_callbackq
 	}
 	
 	#[inline(always)]
-	fn add_thread_unsafe<T>(&mut self, callback: ucs_callback_t, callback_data: *mut T, flags: ucs_callbackq_flags) -> CallbackUniqueIdentifier
+	fn add_thread_unsafe<T>(&mut self, callback: ucs_callback_t, callback_data: *mut T, flags: ucs_callbackq_flags) -> CallbackQueueIdentifier
 	{
 		debug_assert_ne!((flags & ucs_callbackq_flags::ONESHOT == ucs_callbackq_flags::ONESHOT) && (flags & ucs_callbackq_flags::FAST == ucs_callbackq_flags::FAST), true, "ONESHOT and FAST can not both be specified in flags");
 		
-		CallbackUniqueIdentifier(unsafe { ucs_callbackq_add(self, callback, callback_data as *mut _, flags.0) })
+		CallbackQueueIdentifier::new(unsafe { ucs_callbackq_add(self, callback, callback_data as *mut _, flags.0) })
 	}
 	
 	#[inline(always)]
-	fn add_thread_safe<T>(&mut self, callback: ucs_callback_t, callback_data: *mut T, flags: ucs_callbackq_flags) -> CallbackUniqueIdentifier
+	fn add_thread_safe<T>(&mut self, callback: ucs_callback_t, callback_data: *mut T, flags: ucs_callbackq_flags) -> CallbackQueueIdentifier
 	{
 		debug_assert_ne!((flags & ucs_callbackq_flags::ONESHOT == ucs_callbackq_flags::ONESHOT) && (flags & ucs_callbackq_flags::FAST == ucs_callbackq_flags::FAST), true, "ONESHOT and FAST can not both be specified in flags");
 		
-		CallbackUniqueIdentifier(unsafe { ucs_callbackq_add_safe(self, callback, callback_data as *mut _, flags.0) })
+		CallbackQueueIdentifier::new(unsafe { ucs_callbackq_add_safe(self, callback, callback_data as *mut _, flags.0) })
 	}
 	
 	#[inline(always)]
-	fn remove_thread_unsafe<T>(&mut self, identifier: CallbackUniqueIdentifier)
+	fn remove_thread_unsafe<T>(&mut self, identifier: CallbackQueueIdentifier)
 	{
 		unsafe { ucs_callbackq_remove(self, identifier.0) }
 	}
 	
 	#[inline(always)]
-	fn remove_thread_safe<T>(&mut self, identifier: CallbackUniqueIdentifier)
+	fn remove_thread_safe<T>(&mut self, identifier: CallbackQueueIdentifier)
 	{
 		unsafe { ucs_callbackq_remove_safe(self, identifier.0) }
 	}

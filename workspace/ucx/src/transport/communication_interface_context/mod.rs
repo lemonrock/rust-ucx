@@ -9,7 +9,7 @@ use super::super::attributes::*;
 use super::super::buffers::*;
 use super::super::cpu_set::*;
 use super::super::ffi_helpers::*;
-use super::super::handle_drop_safeties::MemoryDomainDropSafety;
+use super::super::handle_drop_safeties::*;
 use super::super::local_to_remote_address_translations::*;
 use super::super::status::*;
 use super::super::sockets::*;

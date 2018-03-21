@@ -5,7 +5,7 @@
 use super::super::attributes::*;
 use super::super::buffers::*;
 use super::super::ffi_helpers::*;
-use super::super::handle_drop_safeties::MemoryDomainDropSafety;
+use super::super::handle_drop_safeties::*;
 use super::super::sockets::*;
 use super::super::status::*;
 use super::super::ZeroBasedHyperThreadIndex;

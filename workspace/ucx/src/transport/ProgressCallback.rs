@@ -2,23 +2,16 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub(crate) struct MemoryDomainDropSafety(NonNull<uct_md>);
-
-impl Drop for MemoryDomainDropSafety
+/// Progress callback.
+pub trait ProgressCallback
 {
+	/// What kind of callback?
 	#[inline(always)]
-	fn drop(&mut self)
-	{
-		unsafe { uct_md_close(self.0.as_ptr()) }
-	}
-}
-
-impl MemoryDomainDropSafety
-{
+	fn kind(&self) -> ProgressCallbackKind;
+	
+	/// Called back.
+	///
+	/// Returns `true` if actually caused progress.
 	#[inline(always)]
-	pub(crate) fn new(value: NonNull<uct_md>) -> Arc<Self>
-	{
-		Arc::new(MemoryDomainDropSafety(value))
-	}
+	fn invoke(&mut self) -> bool;
 }

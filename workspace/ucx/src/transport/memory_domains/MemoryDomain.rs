@@ -11,7 +11,7 @@
 pub struct MemoryDomain
 {
 	handle: NonNull<uct_md>,
-	drop_safety: Arc<MemoryDomainDropSafety>,
+	handle_drop_safety: Arc<MemoryDomainHandleDropSafety>,
 	memory_domain_component_and_transport_layer: MemoryDomainComponentAndTransportLayer,
 	attributes: MemoryDomainAttributes,
 }
@@ -52,7 +52,7 @@ impl MemoryDomain
 					MemoryDomain
 					{
 						handle,
-						drop_safety: MemoryDomainDropSafety::new(handle),
+						handle_drop_safety: MemoryDomainHandleDropSafety::new(handle),
 						memory_domain_component_and_transport_layer,
 						attributes: MemoryDomainAttributes::query(handle),
 					}
@@ -122,7 +122,7 @@ impl MemoryDomain
 	///
 	/// Allocated length may exceed `requested_length`.
 	///
-	/// If `faster_registration_but_slower_access` is specified, then memory mapping will be deferred until it is accessed by the CPU or device, and memory locking will not occur.
+	/// If `faster_allocation_but_slower_access` is specified, then memory mapping will be deferred until it is accessed by the CPU or device, and memory locking will not occur.
 	/// This is useful if using a memory allocation for a short period of time.
 	///
 	/// `requested_length` can not be zero (0).
@@ -131,7 +131,7 @@ impl MemoryDomain
 	///
 	/// The underlying memory domain must support allocations (`ALLOC`).
 	#[inline(always)]
-	pub fn allocate_memory_region(&self, address_allocation_request: MemoryRegionAddressAllocationRequest, requested_length: usize, faster_registration_but_slower_access: bool, name_for_debugging_and_memory_tracking: &str) -> Result<MemoryRegion, ErrorCode>
+	pub fn allocate_memory_region(&self, address_allocation_request: MemoryRegionAddressAllocationRequest, requested_length: usize, faster_allocation_but_slower_access: bool, name_for_debugging_and_memory_tracking: &str) -> Result<MemoryRegion, ErrorCode>
 	{
 		self.debug_assert_supports_feature(_bindgen_ty_1::ALLOC);
 		debug_assert_ne!(requested_length, 0, "request_length can not be zero");
@@ -149,7 +149,7 @@ impl MemoryDomain
 		// Additionally, internally, uct checks that ACCESS_REMOTE_PUT, ACCESS_REMOTE_GET and ACCESS_REMOTE_ATOMIC are set.
 		let mut flags = uct_md_mem_flags::ACCESS_ALL;
 		
-		let was_allocated_non_blocking = if faster_registration_but_slower_access
+		let was_allocated_non_blocking = if faster_allocation_but_slower_access
 		{
 			flags |= uct_md_mem_flags::FLAG_NONBLOCK;
 			true
@@ -165,7 +165,7 @@ impl MemoryDomain
 		let mut memory_region = MemoryRegion
 		{
 			memory_domain_handle: self.handle,
-			memory_domain_drop_safety: self.drop_safety(),
+			memory_domain_handle_drop_safety: self.handle_drop_safety(),
 			address: NonNull::dangling(),
 			length: requested_length,
 			memory_region_handle: null_mut(),
@@ -201,7 +201,7 @@ impl MemoryDomain
 	///
 	/// `length` can not be zero (0).
 	#[inline(always)]
-	pub fn register_memory_for_zero_copy_sends_and_remote_access(&self, address: NonNull<u8>, length: usize, support_atomic_operations: bool, faster_registration_but_slower_access: bool) -> Result<MemoryRegistration, ErrorCode>
+	pub fn register_memory_for_zero_copy_sends_and_remote_access(&self, address: NonNull<u8>, length: usize) -> Result<MemoryRegistration, ErrorCode>
 	{
 		self.debug_assert_supports_feature(_bindgen_ty_1::REG);
 		debug_assert_ne!(length, 0, "length can not be zero");
@@ -211,7 +211,7 @@ impl MemoryDomain
 		let mut memory_registration = MemoryRegistration
 		{
 			memory_domain_handle: self.handle,
-			memory_domain_drop_safety: self.drop_safety(),
+			memory_domain_handle_drop_safety: self.handle_drop_safety(),
 			address,
 			length,
 			memory_region_handle: null_mut(),
@@ -230,20 +230,13 @@ impl MemoryDomain
 			{
 				debug_assert!(!memory_registration.memory_region_handle.is_null(), "memory_registration.memory_region_handle is null");
 				Ok(memory_registration)
-			},
+			}
 			
 			Error(error_code) => Err(error_code),
 			
 			unexpected_status @ _ => panic!("Unexpected status '{:?}'", unexpected_status)
 		}
 	}
-	
-	// UCT_MD_FLAG_NEED_MEMH  UCT_MD_FLAG_NEED_RKEY  UCT_MD_FLAG_RKEY_PTR
-	
-	// uct_iface_mem_alloc
-	// uct_iface_mem_free
-	// uct_mem_alloc
-	// uct_mem_free
 	
 	/// Query.
 	#[inline(always)]
@@ -259,9 +252,9 @@ impl MemoryDomain
 	}
 	
 	#[inline(always)]
-	pub(crate) fn drop_safety(&self) -> Arc<MemoryDomainDropSafety>
+	pub(crate) fn handle_drop_safety(&self) -> Arc<MemoryDomainHandleDropSafety>
 	{
-		self.drop_safety.clone()
+		self.handle_drop_safety.clone()
 	}
 	
 	#[inline(always)]

@@ -4,8 +4,8 @@
 
 use self::communication_interface_context::InterfaceFeaturesSupported;
 use super::attributes::*;
-use super::ffi_helpers::FromCBool;
-use super::ffi_helpers::ReservedForFutureUseFlags;
+use super::ffi_helpers::*;
+use super::handle_drop_safeties::*;
 use super::status::*;
 use ::libc::c_uint;
 use ::libc::c_void;
@@ -14,8 +14,10 @@ use ::libc::ssize_t;
 use ::libc::uint64_t;
 use ::std::cell::UnsafeCell;
 use ::std::mem::size_of_val;
+use ::std::mem::uninitialized;
 use ::std::ptr::NonNull;
 use ::std::ptr::null_mut;
+use ::std::sync::Arc;
 use ::ucx_sys::*;
 
 
@@ -28,9 +30,13 @@ pub mod memory_domains;
 
 
 include!("ActiveMessageIdentifier.rs");
+include!("AsynchronousContext.rs");
 include!("CallbackQueue.rs");
-include!("CallbackUniqueIdentifier.rs");
+include!("CallbackQueueIdentifier.rs");
 include!("CompletionHandleHelper.rs");
+include!("ProgressCallback.rs");
+include!("ProgressCallbackCancel.rs");
+include!("ProgressCallbackKind.rs");
+include!("ProgressEngine.rs");
 include!("ReceiveDescriptor.rs");
 include!("RemoteEndPoint.rs");
-include!("Worker.rs");

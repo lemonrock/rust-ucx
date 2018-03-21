@@ -2,14 +2,23 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use ::std::ptr::NonNull;
-use ::std::rc::Rc;
-use ::std::sync::Arc;
-use ::ucx_sys::*;
+#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub(crate) struct MemoryDomainHandleDropSafety(NonNull<uct_md>);
 
+impl Drop for MemoryDomainHandleDropSafety
+{
+	#[inline(always)]
+	fn drop(&mut self)
+	{
+		unsafe { uct_md_close(self.0.as_ptr()) }
+	}
+}
 
-include!("ApplicationContextHandleDropSafety.rs");
-include!("MemoryDomainHandleDropSafety.rs");
-include!("OurRemotelyAccessibleMemoryHandleDropSafety.rs");
-include!("AsynchronousContextHandleDropSafety.rs");
-include!("WorkerHandleDropSafety.rs");
+impl MemoryDomainHandleDropSafety
+{
+	#[inline(always)]
+	pub(crate) fn new(value: NonNull<uct_md>) -> Arc<Self>
+	{
+		Arc::new(MemoryDomainHandleDropSafety(value))
+	}
+}

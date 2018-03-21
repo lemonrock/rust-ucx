@@ -7,7 +7,7 @@
 pub struct MemoryRegistration
 {
 	memory_domain_handle: NonNull<uct_md>,
-	memory_domain_drop_safety: Arc<MemoryDomainDropSafety>,
+	memory_domain_handle_drop_safety: Arc<MemoryDomainHandleDropSafety>,
 	address: NonNull<u8>,
 	length: usize,
 	memory_region_handle: uct_mem_h,

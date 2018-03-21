@@ -6,13 +6,13 @@
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum WorkerThreadMode
 {
-	#[allow(missing_docs)]
+	/// Single-threaded.
 	OnlyEverUsedFromThisThread,
 	
-	#[allow(missing_docs)]
+	/// Not supported by UCX yet.
 	SerializedOneThreadAtATime,
 	
-	#[allow(missing_docs)]
+	/// Multi-threaded.
 	UsedSimultaneouslyAcrossMoreThanOneThread,
 }
 
@@ -46,5 +46,21 @@ impl WorkerThreadMode
 			UCS_THREAD_MODE_SERIALIZED => SerializedOneThreadAtATime,
 			UCS_THREAD_MODE_MULTI => UsedSimultaneouslyAcrossMoreThanOneThread,
 		}
+	}
+	
+	#[inline(always)]
+	pub(crate) fn thread_sharing_mode(no_thread_synchronization: bool) -> ucs_thread_mode_t
+	{
+		use self::WorkerThreadMode::*;
+		
+		let thread_sharing_mode = if no_thread_synchronization
+		{
+			OnlyEverUsedFromThisThread
+		}
+		else
+		{
+			UsedSimultaneouslyAcrossMoreThanOneThread
+		};
+		thread_sharing_mode.as_ucs_thread_mode_t()
 	}
 }
