@@ -71,6 +71,7 @@ include!("CommunicationInterfaceContext.rs");
 include!("CommunicationInterfaceContextEndPointAddress.rs");
 include!("DeviceAddress.rs");
 include!("DeviceKind.rs");
+include!("EndPointAddress.rs");
 include!("InterfaceAddress.rs");
 include!("InterfaceFeaturesSupported.rs");
 include!("ReceiveDescriptor.rs");

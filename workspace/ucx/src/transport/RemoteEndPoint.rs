@@ -60,6 +60,155 @@ impl RemoteEndPoint
 		}
 	}
 	
+	/// Create and connect to remote communication interface context.
+	///
+	/// Equivalent to `uct_ep_create_connected`.
+	///
+	/// `remote_device_address` should be obtained from the remote `CommunicationInterfaceContext.get_device_address()`.
+	///
+	/// `remote_interface_address` should be obtained from the remote `CommunicationInterfaceContext.get_interface_address()`.
+	///
+	/// In a debug build the interface must support the `CONNECT_TO_IFACE` feature.
+	#[inline(always)]
+	pub fn create_connected(communication_interface_context: &CommunicationInterfaceContext, remote_device_address: &DeviceAddress, remote_interface_address: &InterfaceAddress) -> Result<Self, ErrorCode>
+	{
+		communication_interface_context.debug_interface_supports_feature(InterfaceFeaturesSupported::CONNECT_TO_IFACE);
+		
+		let mut handle = unsafe { uninitialized() };
+		
+		let status = unsafe { uct_ep_create_connected(communication_interface_context.as_ptr(), remote_device_address.is_reachable_address(), remote_interface_address.is_reachable_address(), &mut handle) };
+		
+		use self::Status::*;
+		
+		match status.parse()
+		{
+			IsOk =>
+			{
+				debug_assert!(!handle.is_null(), "handle is null");
+				let handle = unsafe { NonNull::new_unchecked(handle) };
+				
+				Ok
+				(
+					Self
+					{
+						handle,
+						communication_interface_context_handle_drop_safety: communication_interface_context.handle_drop_safety(),
+						attributes: communication_interface_context.attributes().clone(),
+					}
+				)
+			}
+			
+			Error(error_code) => Err(error_code),
+			
+			unexpected_status @ _ => panic!("Unexpected status '{:?}'", unexpected_status),
+		}
+	}
+	
+	//noinspection SpellCheckingInspection
+	/// Connect this as a client to a remote server (end point).
+	///
+	/// Equivalent to `uct_ep_create_sockaddr`.
+	///
+	/// The user may provide private data to be sent on a connection request to the remote server.
+	///
+	/// Connection failures are ***not*** reported in the error code; instead, they will be initially successful and then reports to the ***CommunicationInterfaceContext*** error handler.
+	///
+	/// In a debug build the interface must support the `CONNECT_TO_SOCKADDR` feature.
+	///
+	/// The `private_data_in_connection_request` has a maximum length (check `communication_interface_context.attributes().maximum_client_connection_request_private_data()`);
+	#[inline(always)]
+	pub fn create_client_connected_to_server(communication_interface_context: &CommunicationInterfaceContext, socket_address: &SocketAddress, private_data_in_connection_request: &[u8]) -> Result<Self, ErrorCode>
+	{
+		communication_interface_context.debug_interface_supports_feature(InterfaceFeaturesSupported::CONNECT_TO_SOCKADDR);
+		debug_assert!(private_data_in_connection_request.len() <= communication_interface_context.attributes().maximum_client_connection_request_private_data(), "private_data_in_connection_request is longer than '{:?}'", communication_interface_context.attributes().maximum_client_connection_request_private_data());
+		
+		let mut handle = unsafe { uninitialized() };
+		
+		let (addr, addrlen) = socket_address.suitable_for_ffi();
+		let socket_address = ucs_sock_addr
+		{
+			addr,
+			addrlen,
+		};
+		
+		let status = unsafe { uct_ep_create_sockaddr(communication_interface_context.as_ptr(), &socket_address, private_data_in_connection_request.as_ptr() as *const _, private_data_in_connection_request.len(), &mut handle) };
+		
+		use self::Status::*;
+		
+		match status.parse()
+		{
+			IsOk =>
+			{
+				debug_assert!(!handle.is_null(), "handle is null");
+				let handle = unsafe { NonNull::new_unchecked(handle) };
+				
+				Ok
+				(
+					Self
+					{
+						handle,
+						communication_interface_context_handle_drop_safety: communication_interface_context.handle_drop_safety(),
+						attributes: communication_interface_context.attributes().clone(),
+					}
+				)
+			}
+			
+			Error(error_code) => Err(error_code),
+			
+			unexpected_status @ _ => panic!("Unexpected status '{:?}'", unexpected_status),
+		}
+	}
+	
+	
+	/// Connect an unconnected end point.
+	///
+	/// Equivalent to `uct_ep_connect_to_ep`.
+	///
+	/// `remote_device_address` should be obtained from the remote `CommunicationInterfaceContext.get_device_address()`.
+	///
+	/// `remote_end_point_address` should be obtained from the remote `RemoteEndPoint.get_end_point_address()`.
+	///
+	/// In a debug build the interface must support the `CONNECT_TO_EP` feature.
+	#[inline(always)]
+	pub fn connect_to(&self, remote_device_address: &DeviceAddress, remote_end_point_address: &EndPointAddress) -> Result<(), ErrorCode>
+	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::CONNECT_TO_EP);
+		
+		let status = unsafe { uct_ep_connect_to_ep(self.ep(), remote_device_address.is_reachable_address(), remote_end_point_address.is_reachable_address()) };
+		
+		use self::Status::*;
+		
+		match status.parse()
+		{
+			IsOk => Ok(()),
+			
+			Error(error_code) => Err(error_code),
+			
+			unexpected_status @ _ => panic!("Unexpected status '{:?}'", unexpected_status),
+		}
+	}
+	
+	/// Get address of the end point.
+	///
+	/// Equivalent to `uct_ep_get_address`.
+	pub fn get_end_point_address(&self) -> Result<EndPointAddress, ErrorCode>
+	{
+		let end_point_address = EndPointAddress::new(self.attributes.end_point_address_length());
+		
+		let status = unsafe { uct_ep_get_address(self.ep(), end_point_address.is_reachable_address() as *mut _) };
+		
+		use self::Status::*;
+		
+		match status.parse()
+		{
+			IsOk => Ok(end_point_address),
+			
+			Error(error_code) => Err(error_code),
+			
+			unexpected_status @ _ => panic!("Unexpected status '{:?}'", unexpected_status),
+		}
+	}
+	
 	/// Check if the remote end point is alive with respect to the UCT library.
 	///
 	/// Equivalent to `uct_ep_check`.
@@ -72,17 +221,6 @@ impl RemoteEndPoint
 		
 		unsafe { (self.transport_interface_operations().ep_check)(self.ep(), ReservedForFutureUseFlags, completion_handle.mutable_reference()) }
 	}
-	
-//#[link_name = "\u{1}_uct_ep_connect_to_ep"] pub fn uct_ep_connect_to_ep(ep: uct_ep_h, dev_addr: *const uct_device_addr_t, ep_addr: *const uct_ep_addr_t) -> ucs_status_t;
-
-//#[link_name = "\u{1}_uct_ep_create"] pub fn uct_ep_create(iface: uct_iface_h, ep_p: *mut uct_ep_h) -> ucs_status_t;
-
-//#[link_name = "\u{1}_uct_ep_create_connected"] pub fn uct_ep_create_connected(iface: uct_iface_h, dev_addr: *const uct_device_addr_t, iface_addr: *const uct_iface_addr_t, ep_p: *mut uct_ep_h) -> ucs_status_t;
-
-//#[link_name = "\u{1}_uct_ep_create_sockaddr"] pub fn uct_ep_create_sockaddr(iface: uct_iface_h, sockaddr: *const ucs_sock_addr_t, priv_data: *const c_void, length: usize, ep_p: *mut uct_ep_h) -> ucs_status_t;
-
-//#[link_name = "\u{1}_uct_ep_get_address"] pub fn uct_ep_get_address(ep: uct_ep_h, addr: *mut uct_ep_addr_t) -> ucs_status_t;
-
 }
 
 /// Resources (RESOURCE).
@@ -174,7 +312,15 @@ impl RemoteEndPoint
 		unsafe { (self.transport_interface_operations().ep_am_short)(self.ep(), id.0, header, payload.as_ptr() as *const c_void, payload.len() as u32) }
 	}
 	
-	/// Send a buffered copy-and-send ('bcopy') active message.
+	
+	
+	
+	
+	// uct_pack_callback_t should be responsible for freeing itself.
+	
+	
+	
+	/// Send a buffered copy ('bcopy') active message.
 	///
 	/// Equivalent to `uct_ep_am_bcopy`.
 	///
@@ -183,7 +329,7 @@ impl RemoteEndPoint
 	/// * `pack_callback`: Will be specified a buffer that, including header, must not exceed `attributes().cap.am.max_bcopy`.
 	/// * `flags`: Specify `uct_msg_flags::SIGNALED` to trigger `uct_iface_event_types::RECV_SIG` on the receiver. May not be supported by the interface (in which case it will be ignored). Triggering `uct_iface_event_types::RECV_SIG` may not happen on the receiver in some cases and `uct_iface_event_types::RECV` will occur instead.
 	#[inline(always)]
-	fn send_a_buffered_copy_and_send_active_message<T>(&self, id: ActiveMessageIdentifier, pack_callback: uct_pack_callback_t, pack_callback_data: *mut T, flags: uct_msg_flags) -> ssize_t
+	fn send_a_buffered_copy_active_message<T>(&self, id: ActiveMessageIdentifier, pack_callback: uct_pack_callback_t, pack_callback_data: *mut T, flags: uct_msg_flags) -> ssize_t
 	{
 		self.debug_interface_supports_feature(InterfaceFeaturesSupported::AM_BCOPY);
 		unsafe { (self.transport_interface_operations().ep_am_bcopy)(self.ep(), id.0, pack_callback, pack_callback_data as *mut c_void, flags.0) }
@@ -192,6 +338,8 @@ impl RemoteEndPoint
 	/// Send an active message while avoiding local memory copy, ie by 'zero copy'.
 	///
 	/// Equivalent to `uct_ep_am_zcopy`.
+	///
+	/// `header` and `io_vec` memory must have been registered with, or allocated by, the memory domain for this communication interface for this remote end point.
 	///
 	/// * `header` may be no longer than `self.attributes.cap.am.max_hdr`.
 	/// * `io_vec` maximum length is `uct_iface_attr_cap_am_max_iov`
@@ -250,6 +398,7 @@ impl RemoteEndPoint
 		unsafe { (self.transport_interface_operations().ep_put_short)(self.ep(), buffer, length, remote_addr, rkey) }
 	}
 	
+	// uct_pack_callback_t should be responsible for freeing itself.
 	/// @brief
 	#[inline(always)]
 	fn uct_ep_put_bcopy(&self, pack_cb: uct_pack_callback_t, arg: *mut c_void, remote_addr: uint64_t, rkey: uct_rkey_t) -> ssize_t
@@ -290,6 +439,7 @@ impl RemoteEndPoint
 	
 	// NOTE: There is no `uct_ep_get_short`.
 	
+	// uct_unpack_callback_t should be responsible for freeing itself.
 	/// @brief
 	#[inline(always)]
 	fn uct_ep_get_bcopy(&self, unpack_cb: uct_unpack_callback_t, arg: *mut c_void, length: size_t, remote_addr: uint64_t, rkey: uct_rkey_t, comp: *mut uct_completion_t) -> ucs_status_t

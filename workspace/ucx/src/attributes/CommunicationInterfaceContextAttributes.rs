@@ -36,6 +36,20 @@ impl CommunicationInterfaceContextAttributes
 		self.0.iface_addr_len
 	}
 	
+	/// Interface address length.
+	#[inline(always)]
+	pub fn end_point_address_length(&self) -> usize
+	{
+		self.0.ep_addr_len
+	}
+	
+	/// Maximum client request private data (in bytes).
+	#[inline(always)]
+	pub fn maximum_client_connection_request_private_data(&self) -> usize
+	{
+		self.0.ep_addr_len
+	}
+	
 	/// Get constraints.
 	#[inline(always)]
 	pub fn put_constraints(&self) -> &PutConstraints

@@ -6,6 +6,7 @@ use self::communication_interface_context::*;
 use super::attributes::*;
 use super::ffi_helpers::*;
 use super::handle_drop_safeties::*;
+use super::sockets::*;
 use super::status::*;
 use ::libc::c_uint;
 use ::libc::c_void;

@@ -718,7 +718,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 	}
 	
 	#[inline(always)]
-	fn debug_interface_supports_feature(&self, required_to_support: InterfaceFeaturesSupported)
+	pub(crate) fn debug_interface_supports_feature(&self, required_to_support: InterfaceFeaturesSupported)
 	{
 		debug_assert!(self.interface_supports_feature(required_to_support), "Unsupported");
 	}
@@ -730,7 +730,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 	}
 	
 	#[inline(always)]
-	fn interface_supports_feature(&self, required_to_support: InterfaceFeaturesSupported) -> bool
+	pub(crate) fn interface_supports_feature(&self, required_to_support: InterfaceFeaturesSupported) -> bool
 	{
 		self.attributes().supports_all_of(required_to_support)
 	}
