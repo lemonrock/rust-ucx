@@ -116,7 +116,7 @@ impl MemoryDomain
 	///
 	/// The underlying memory domain must support allocations (`ALLOC`).
 	#[inline(always)]
-	pub fn allocate_memory_region(&self, address_allocation_request: MemoryRegionAddressAllocationRequest, requested_length: usize, support_atomic_operations: bool, faster_registration_but_slower_access: bool, name_for_debugging_and_memory_tracking: &str) -> Result<MemoryRegion, ErrorCode>
+	pub fn allocate_memory_region(&self, address_allocation_request: MemoryRegionAddressAllocationRequest, requested_length: usize, faster_registration_but_slower_access: bool, name_for_debugging_and_memory_tracking: &str) -> Result<MemoryRegion, ErrorCode>
 	{
 		self.debug_assert_supports_feature(_bindgen_ty_1::ALLOC);
 		debug_assert_ne!(requested_length, 0, "request_length can not be zero");
@@ -137,22 +137,17 @@ impl MemoryDomain
 		
 		// Of the RMA / ATOMIC flags, only InfiniBand takes any notice of atomic; everything else is ignored.
 		// So everything essentially assumes RMA.
-		let mut flags = uct_md_mem_flags::RMA;
-		
-		if support_atomic_operations
-		{
-			flags |= uct_md_mem_flags::REMOTE_ATOMIC;
-		}
-		
+		// Additionally, internally, uct checks that ACCESS_REMOTE_PUT, ACCESS_REMOTE_GET and ACCESS_REMOTE_ATOMIC are set.
+		let mut flags = uct_md_mem_flags::ACCESS_ALL;
 		
 		let was_allocated_non_blocking = if faster_registration_but_slower_access
 		{
-			flags |= uct_md_mem_flags::NONBLOCK;
+			flags |= uct_md_mem_flags::FLAG_NONBLOCK;
 			true
 		}
 		else
 		{
-			flags |= uct_md_mem_flags::LOCK;
+			flags |= uct_md_mem_flags::FLAG_LOCK;
 			false
 		};
 		
@@ -192,13 +187,16 @@ impl MemoryDomain
 	
 //	/// `length` can not be zero (0).
 //	#[inline(always)]
-//	pub fn register_memory_for_zero_copy_sends_and_remote_access(&self, address_allocation_request: MemoryRegionAddressAllocationRequest, length: usize, support_atomic_operations: bool, faster_registration_but_slower_access: bool) -> Result<MemoryRegion, ErrorCode>
+//	pub fn register_memory_for_zero_copy_sends_and_remote_access(&self, address: NonNull<u8>, length: usize, support_atomic_operations: bool, faster_registration_but_slower_access: bool) -> Result<MemoryRegion, ErrorCode>
 //	{
 //		self.debug_assert_supports_feature(_bindgen_ty_1::REG);
 //		debug_assert_ne!(length, 0, "length can not be zero");
 //
+//		// flags: uct_md_mem_flags: UCT_MD_MEM_ACCESS_ALL
+//		// ucs_status_t uct_md_mem_reg(uct_md_h md, void *address, size_t length, unsigned flags, uct_mem_h *memh_p);
 //	}
 	
+	// UCT_MD_FLAG_NEED_MEMH  UCT_MD_FLAG_NEED_RKEY  UCT_MD_FLAG_RKEY_PTR
 	
 	
 	// uct_md_mem_advise      UCT_MD_FLAG_ADVISE

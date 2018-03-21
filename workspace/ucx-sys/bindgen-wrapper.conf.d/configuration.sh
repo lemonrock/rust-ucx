@@ -58,14 +58,13 @@ final_chance_to_tweak()
 	_fix_bitfield UCT_EVENT_ uct_iface_event_types
 	_fix_bitfield UCT_FLUSH_FLAG_ uct_flush_flags
 	_fix_bitfield UCT_IFACE_OPEN_MODE_ uct_iface_open_mode
-	_fix_bitfield UCT_MD_MEM_ACCESS_ uct_md_mem_flags
 	_fix_bitfield UCT_PROGRESS_ uct_progress_types
 	_fix_bitfield UCT_SEND_FLAG_ uct_msg_flags
 	_fix_bitfield UCP_MEM_MAP_PARAM_FIELD_ ucp_mem_map_params_field
 	_fix_bitfield UCS_CALLBACKQ_FLAG_ ucs_callbackq_flags
 	_fix_bitfield UCT_MD_FLAG_ _bindgen_ty_1
 	_fix_bitfield UCP_MEM_MAP_ _bindgen_ty_2
-	_fix_bitfield UCT_MD_MEM_FLAG_ uct_md_mem_flags
+	_fix_bitfield UCT_MD_MEM_ uct_md_mem_flags
 	_fix_bitfield UCS_HANDLE_ERROR_ ucs_handle_error_t
 	_fix_bitfield UCM_MEM_TYPE_ ucm_mem_type
 	_fix_bitfield UCP_EP_PARAMS_FLAGS_ ucp_ep_params_flags_field

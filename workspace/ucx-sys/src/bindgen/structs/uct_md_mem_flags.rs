@@ -50,16 +50,12 @@ impl BitAndAssign for uct_md_mem_flags
 
 impl uct_md_mem_flags
 {
-	pub const ALL: Self = uct_md_mem_flags(224);
-	pub const REMOTE_ATOMIC: Self = uct_md_mem_flags(128);
-	pub const REMOTE_GET: Self = uct_md_mem_flags(64);
-	pub const REMOTE_PUT: Self = uct_md_mem_flags(32);
-	pub const RMA: Self = uct_md_mem_flags(96);
-}
-
-impl uct_md_mem_flags
-{
-	pub const FIXED: Self = uct_md_mem_flags(2);
-	pub const LOCK: Self = uct_md_mem_flags(4);
-	pub const NONBLOCK: Self = uct_md_mem_flags(1);
+	pub const ACCESS_ALL: Self = uct_md_mem_flags(224);
+	pub const ACCESS_REMOTE_ATOMIC: Self = uct_md_mem_flags(128);
+	pub const ACCESS_REMOTE_GET: Self = uct_md_mem_flags(64);
+	pub const ACCESS_REMOTE_PUT: Self = uct_md_mem_flags(32);
+	pub const ACCESS_RMA: Self = uct_md_mem_flags(96);
+	pub const FLAG_FIXED: Self = uct_md_mem_flags(2);
+	pub const FLAG_LOCK: Self = uct_md_mem_flags(4);
+	pub const FLAG_NONBLOCK: Self = uct_md_mem_flags(1);
 }

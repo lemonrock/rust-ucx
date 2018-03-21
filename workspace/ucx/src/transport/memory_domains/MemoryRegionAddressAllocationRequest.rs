@@ -48,7 +48,7 @@ impl MemoryRegionAddressAllocationRequest
 			
 			Hint { address } => (address.as_ptr() as *mut _, flags),
 			
-			Fixed { address } => (address.as_ptr() as *mut _, flags | uct_md_mem_flags::FIXED),
+			Fixed { address } => (address.as_ptr() as *mut _, flags | uct_md_mem_flags::FLAG_FIXED),
 		}
 	}
 	
