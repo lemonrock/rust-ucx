@@ -25,7 +25,7 @@ impl ReceiveDescriptor
 	///
 	/// Releases active message descriptor `active_message_descriptor`, which was passed to `uct_am_callback_t` "the active message callback", and owned by the callee.
 	#[inline(always)]
-	fn release_active_message_descriptor(active_message_descriptor: *mut c_void)
+	fn release_message_descriptor(active_message_descriptor: *mut c_void)
 	{
 		#[inline(always)]
 		unsafe fn uct_recv_desc(_desc: *mut c_void) -> *mut uct_recv_desc
