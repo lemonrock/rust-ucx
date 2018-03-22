@@ -5,6 +5,7 @@
 #[repr(C)]
 pub struct uct_iface_attr__bindgen_ty_1__bindgen_ty_2
 {
+	pub max_short: usize,
 	pub max_bcopy: usize,
 	pub min_zcopy: usize,
 	pub max_zcopy: usize,

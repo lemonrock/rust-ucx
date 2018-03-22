@@ -14,6 +14,7 @@ where A: LocalToRemoteAddressTranslation
 	handle: ucp_rkey_h,
 	parent_end_point: Rc<TheirRemotelyAccessibleEndPoint<E, TheirRemotelyAccessibleWorkerEndPointAddress>>,
 	local_to_remote_address_translation: A,
+	parent_worker: Worker,
 }
 
 impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> Drop for TheirRemotelyAccessibleMemory<E, A>
@@ -77,9 +78,31 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	///
 	/// This routine loads a contiguous block of data of `length` bytes from the remote address and puts into the local address.
 	///
+	/// The `local_source_address` can not be modified until the operation finishes (completes).
+	///
+	/// When `completion_callback` is called, the `local_source_address` can be modified.
+	/// This does not mean that the remote end point has successfully finished.
+	/// Use `::callbacks::send_callback_is_ignored` if the callback isn't needed.
+	///
+	/// `completion_callback` is not called if the operation finishes immediately.
+	#[inline(always)]
+	pub fn non_blocking_store<'worker>(&'worker self, local_source_address: NonNull<u8>, length_in_bytes: usize, completion_callback: ucp_send_callback_t) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
+	{
+		let local_address = local_source_address.as_ptr()  as *mut c_void;
+		let remote_address = self.remote_address(local_source_address).0;
+		
+		let status_pointer = unsafe { ucp_put_nb(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid(), completion_callback) };
+		
+		self.parse_status_pointer(status_pointer)
+	}
+	
+	/// Non-blocking implicit remote store (put) operation.
+	///
+	/// This routine loads a contiguous block of data of `length` bytes from the remote address and puts into the local address.
+	///
 	/// The local memory is ***not*** safe to use immediately afterwards if 'InProgress' is returned; in this case, flush either the end point or the worker.
 	#[inline(always)]
-	pub fn non_blocking_store(&self, local_source_address: NonNull<u8>, length_in_bytes: usize) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
+	pub fn non_blocking_implicit_store(&self, local_source_address: NonNull<u8>, length_in_bytes: usize) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
 	{
 		let local_address = local_source_address.as_ptr()  as *mut c_void;
 		let remote_address = self.remote_address(local_source_address).0;
@@ -109,9 +132,31 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	///
 	/// This routine loads a contiguous block of data of `length` bytes from the remote address and puts into the local address.
 	///
+	/// The `local_source_address` can not be modified until the operation finishes (completes).
+	///
+	/// When `completion_callback` is called, the `local_source_address` can be modified.
+	/// This does not mean that the remote end point has successfully finished.
+	/// Use `::callbacks::send_callback_is_ignored` if the callback isn't needed.
+	///
+	/// `completion_callback` is not called if the operation finishes immediately.
+	#[inline(always)]
+	pub fn non_blocking_load<'worker>(&'worker self, local_source_address: NonNull<u8>, length_in_bytes: usize, completion_callback: ucp_send_callback_t) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
+	{
+		let local_address = local_source_address.as_ptr()  as *mut c_void;
+		let remote_address = self.remote_address(local_source_address).0;
+		
+		let status_pointer = unsafe { ucp_get_nb(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid(), completion_callback) };
+		
+		self.parse_status_pointer(status_pointer)
+	}
+	
+	/// Non-blocking implicit remote load (get) operation.
+	///
+	/// This routine loads a contiguous block of data of `length` bytes from the remote address and puts into the local address.
+	///
 	/// The local memory is ***not*** safe to use immediately afterwards if 'InProgress' is returned; in this case, flush either the end point or the worker.
 	#[inline(always)]
-	pub fn non_blocking_load(&self, local_source_address: NonNull<u8>, length_in_bytes: usize) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
+	pub fn non_blocking_implicit_load(&self, local_source_address: NonNull<u8>, length_in_bytes: usize) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
 	{
 		let local_address = local_source_address.as_ptr()  as *mut c_void;
 		let remote_address = self.remote_address(local_source_address).0;
@@ -143,13 +188,6 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 		let status = unsafe { ucp_atomic_add64(self.end_point_handle(), increment, aligned_remote_address.0, self.debug_assert_handle_is_valid()) };
 		Self::parse_status_for_non_blocking(status)
 	}
-	
-	//
-	// ucp_atomic_post can be used to atomically add but is partly blocking and duplicates existing functionality
-	
-	//
-	// non-blocking; fetch-add, swap or compare-and-swap, with a request returned.
-	// ucp_atomic_fetch_nb allows for non-blocking operations on u32 or u64 values.
 	
 	/// Blocking operation that atomically adds a u32 increment to a remote memory location and returns the previous value.
 	///
@@ -251,6 +289,25 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	fn end_point_handle(&self) -> ucp_ep_h
 	{
 		self.parent_end_point.debug_assert_handle_is_valid()
+	}
+	
+	#[inline(always)]
+	fn parse_status_pointer<'worker>(&'worker self, status_pointer: ucs_status_ptr_t) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
+	{
+		use self::Status::*;
+		use self::StatusOrUcxAllocatedNonBlockingRequest::*;
+		use self::NonBlockingRequestCompletedOrInProgress::*;
+		
+		match status_pointer.parse()
+		{
+			NonBlockingRequest(ucx_allocated_non_blocking_request) => Ok(InProgress(WorkerWithNonBlockingRequest::new(&self.parent_worker, ucx_allocated_non_blocking_request))),
+			
+			Status(IsOk) => Ok(Completed(())),
+			
+			Status(Error(error_code)) => Err(error_code),
+			
+			Status(unexpected_status @ _) => panic!("Unexpected status '{:?}'", unexpected_status),
+		}
 	}
 	
 	#[inline(always)]

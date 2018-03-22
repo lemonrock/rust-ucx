@@ -2,9 +2,9 @@
 // Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-include!("types/ucm_config_t.rs");
 include!("types/ucm_event_callback_t.rs");
 include!("types/ucm_event_t.rs");
+include!("types/ucm_global_config_t.rs");
 include!("types/ucp_address_t.rs");
 include!("types/ucp_config_t.rs");
 include!("types/ucp_context_attr_t.rs");

@@ -3,6 +3,8 @@
 
 
 use self::events::*;
+use super::configuration::values::UcsGlobalLogLevelSetting;
+use super::ffi_helpers::*;
 use super::status::*;
 use ::libc::c_void;
 use ::std::ptr::NonNull;
@@ -24,3 +26,4 @@ include!("MemoryEventConfiguration.rs");
 include!("MemoryEventHandler.rs");
 include!("MemoryEventUser.rs");
 include!("MemoryEventHandlerPriority.rs");
+include!("UcmGlobalConfiguration.rs");

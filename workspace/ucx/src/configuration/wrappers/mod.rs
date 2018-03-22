@@ -23,6 +23,5 @@ use ::ucx_sys::*;
 include!("ConfigurationModifyError.rs");
 include!("ConfigurationParseError.rs");
 include!("ConfigurationWrapper.rs");
-include!("UcmConfigurationWrapper.rs");
 include!("UcpConfigurationWrapper.rs");
 include!("UcsGlobalConfigurationWrapper.rs");

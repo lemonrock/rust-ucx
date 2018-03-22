@@ -5,5 +5,6 @@
 extern "C"
 {
 	#[link_name = "\u{1}_ucp_get"] pub fn ucp_get(ep: ucp_ep_h, buffer: *mut c_void, length: usize, remote_addr: u64, rkey: ucp_rkey_h) -> ucs_status_t;
+	#[link_name = "\u{1}_ucp_get_nb"] pub fn ucp_get_nb(ep: ucp_ep_h, buffer: *mut c_void, length: usize, remote_addr: u64, rkey: ucp_rkey_h, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
 	#[link_name = "\u{1}_ucp_get_nbi"] pub fn ucp_get_nbi(ep: ucp_ep_h, buffer: *mut c_void, length: usize, remote_addr: u64, rkey: ucp_rkey_h) -> ucs_status_t;
 }

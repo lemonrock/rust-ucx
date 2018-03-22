@@ -2,3 +2,4 @@
 // Copyright © 2016 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
+pub const UCS_GLOBAL_OPTS_WARN_UNUSED_CONFIG: &'static [u8; 21usize] = b"WARN_UNUSED_ENV_VARS\0";

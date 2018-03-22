@@ -2,51 +2,16 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// A wrapper around UCM configuration for an `ApplicationContext`.
+/// UCM global configuration.
+///
+/// Can only be modified prior to calls made to memory event functionality.
+///
 /// The configuration is initially populated from environment variables prefixed `MEM_`.
 #[derive(Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct UcmConfigurationWrapper;
+pub struct UcmGlobalConfiguration;
 
-impl Debug for UcmConfigurationWrapper
+impl UcmGlobalConfiguration
 {
-	#[inline(always)]
-	fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error>
-	{
-		self.debug_fmt(f)
-	}
-}
-
-impl PrintInformation for UcmConfigurationWrapper
-{
-	const DebugName: &'static str = "UcpConfigurationWrapper";
-	
-	#[inline(always)]
-	fn print_information_to_stream(&self, stream: *mut FILE)
-	{
-		let print_flags = ucs_config_print_flags_t::CONFIG | ucs_config_print_flags_t::DOC | ucs_config_print_flags_t::HEADER | ucs_config_print_flags_t::HIDDEN;
-		
-		unsafe { ucm_config_print(stream, print_flags) };
-	}
-}
-
-impl ConfigurationWrapper for UcmConfigurationWrapper
-{
-	#[inline(always)]
-	unsafe fn ucx_config_modify(&self, name: *const c_char, value: *const c_char) -> ucs_status_t
-	{
-		ucm_config_modify(name, value)
-	}
-}
-
-impl UcmConfigurationWrapper
-{
-	/// Modify configuration.
-	#[inline(always)]
-	pub fn modify<Setting: UcmConfigurationSetting>(&self, configuration_setting: &Setting) -> Result<(), ConfigurationModifyError>
-	{
-		self.modify_(configuration_setting)
-	}
-	
 	/// Get log level.
 	/// Messages with a level higher or equal to the selected log level will be printed.
 	#[inline(always)]
@@ -119,6 +84,20 @@ impl UcmConfigurationWrapper
 		self.values_mut().enable_malloc_reloc = enabled.to_c_bool()
 	}
 	
+	/// Get if CUDA relocation is enabled.
+	#[inline(always)]
+	pub fn is_cuda_reallocation_enabled(&self) -> bool
+	{
+		self.values().enable_cuda_reloc.from_c_bool()
+	}
+	
+	/// Set if CUDA relocation is enabled.
+	#[inline(always)]
+	pub fn set_cuda_reallocation_is_enabled(&self, enabled: bool)
+	{
+		self.values_mut().enable_cuda_reloc = enabled.to_c_bool()
+	}
+	
 	/// Get if the dynamic mmap threshold is enabled.
 	#[inline(always)]
 	pub fn is_dynamic_mmap_threshold_enabled(&self) -> bool
@@ -132,22 +111,6 @@ impl UcmConfigurationWrapper
 	{
 		self.values_mut().enable_dynamic_mmap_thresh = enabled.to_c_bool()
 	}
-	
-//	/// Get if CUDA hooks are enabled.
-//	/// Not defined if compiled without CUDA support.
-//	#[inline(always)]
-//	pub fn are_cuda_hooks_enabled(&self) -> bool
-//	{
-//		self::self.values().enable_cuda_hooks.from_c_bool()
-//	}
-//
-//	/// Set if CUDA hooks are enabled.
-//	/// Not defined if compiled without CUDA support.
-//	#[inline(always)]
-//	pub fn set_cuda_hooks_are_enabled(&self, enabled: bool)
-//	{
-//		self.values_mut().enable_cuda_hooks = self::enabled.to_c_bool()
-//	}
 	
 	/// Get allocation alignment.
 	/// Should be a power of two, but nothing enforces this in the UCM logic internally.
@@ -168,14 +131,14 @@ impl UcmConfigurationWrapper
 	}
 	
 	#[inline(always)]
-	fn values(&self) -> &'static ucm_config_t
+	fn values(&self) -> &'static ucm_global_config
 	{
-		unsafe { &ucm_global_config }
+		unsafe { &ucm_global_opts }
 	}
 	
 	#[inline(always)]
-	fn values_mut(&self) -> &'static mut ucm_config_t
+	fn values_mut(&self) -> &'static mut ucm_global_config
 	{
-		unsafe { &mut ucm_global_config }
+		unsafe { &mut ucm_global_opts }
 	}
 }

@@ -18,6 +18,7 @@ pub struct ucs_global_opts_t
 	pub gdb_command: *mut c_char,
 	pub debug_signo: c_uint,
 	pub log_level_trigger: ucs_log_level_t,
+	pub warn_unused_env_vars: c_int,
 	pub async_max_events: c_uint,
 	pub stats_dest: *mut c_char,
 	pub stats_trigger: *mut c_char,

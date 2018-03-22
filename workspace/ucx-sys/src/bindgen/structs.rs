@@ -5,7 +5,6 @@
 include!("structs/__BindgenUnionField.rs");
 include!("structs/_bindgen_ty_1.rs");
 include!("structs/_bindgen_ty_2.rs");
-include!("structs/ucm_config.rs");
 include!("structs/ucm_event.rs");
 include!("structs/ucm_event__bindgen_ty_1.rs");
 include!("structs/ucm_event__bindgen_ty_2.rs");
@@ -16,6 +15,7 @@ include!("structs/ucm_event__bindgen_ty_6.rs");
 include!("structs/ucm_event__bindgen_ty_7.rs");
 include!("structs/ucm_event__bindgen_ty_8.rs");
 include!("structs/ucm_event_type.rs");
+include!("structs/ucm_global_config.rs");
 include!("structs/ucm_mem_type.rs");
 include!("structs/ucp_address.rs");
 include!("structs/ucp_config.rs");

@@ -207,7 +207,8 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 				{
 					handle,
 					parent_end_point: this.clone(),
-					local_to_remote_address_translation
+					local_to_remote_address_translation,
+					parent_worker: this.parent_worker.clone(),
 				}
 			),
 			

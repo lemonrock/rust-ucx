@@ -9,6 +9,7 @@ pub struct uct_iface_ops
 	pub ep_put_short: unsafe extern "C" fn(ep: uct_ep_h, buffer: *const c_void, length: c_uint, remote_addr: u64, rkey: uct_rkey_t) -> ucs_status_t,
 	pub ep_put_bcopy: unsafe extern "C" fn(ep: uct_ep_h, pack_cb: uct_pack_callback_t, arg: *mut c_void, remote_addr: u64, rkey: uct_rkey_t) -> isize,
 	pub ep_put_zcopy: unsafe extern "C" fn(ep: uct_ep_h, iov: *const uct_iov_t, iovcnt: usize, remote_addr: u64, rkey: uct_rkey_t, comp: *mut uct_completion_t) -> ucs_status_t,
+	pub ep_get_short: unsafe extern "C" fn(ep: uct_ep_h, buffer: *const c_void, length: c_uint, remote_addr: u64, rkey: uct_rkey_t) -> ucs_status_t,
 	pub ep_get_bcopy: unsafe extern "C" fn(ep: uct_ep_h, unpack_cb: uct_unpack_callback_t, arg: *mut c_void, length: usize, remote_addr: u64, rkey: uct_rkey_t, comp: *mut uct_completion_t) -> ucs_status_t,
 	pub ep_get_zcopy: unsafe extern "C" fn(ep: uct_ep_h, iov: *const uct_iov_t, iovcnt: usize, remote_addr: u64, rkey: uct_rkey_t, comp: *mut uct_completion_t) -> ucs_status_t,
 	pub ep_am_short: unsafe extern "C" fn(ep: uct_ep_h, id: u8, header: u64, payload: *const c_void, length: c_uint) -> ucs_status_t,

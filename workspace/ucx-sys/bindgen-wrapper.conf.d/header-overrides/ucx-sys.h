@@ -6,20 +6,3 @@
 #include "ucm/api/ucm.h"
 #include "ucp/api/ucp.h"
 #include "ucs/config/global_opts.h"
-
-// Included contents of "ucm/config/ucm_config.h"
-typedef struct ucm_config {
-    ucs_log_level_t log_level;
-    int             enable_events;
-    int             enable_mmap_reloc;
-    int             enable_malloc_hooks;
-    int             enable_malloc_reloc;
-    int             enable_dynamic_mmap_thresh;
-#if HAVE_CUDA
-    int             enable_cuda_hooks;
-#endif
-    size_t          alloc_alignment;
-} ucm_config_t;
-
-
-extern ucm_config_t ucm_global_config;
