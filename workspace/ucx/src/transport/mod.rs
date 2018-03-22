@@ -2,26 +2,17 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use self::communication_interface_context::*;
-use super::attributes::*;
 use super::configuration::values::UcsGlobalLogLevelSetting;
 use super::configuration::values::SignalNumber;
 use super::ffi_helpers::*;
 use super::handle_drop_safeties::*;
 use super::print_information::PrintInformation;
-use super::sockets::*;
 use super::status::*;
-use ::libc::c_uint;
-use ::libc::c_void;
 use ::libc::FILE;
-use ::libc::size_t;
-use ::libc::ssize_t;
-use ::libc::uint64_t;
 use ::std::ffi::CString;
 use ::std::fmt;
 use ::std::fmt::Debug;
 use ::std::fmt::Formatter;
-use ::std::mem::size_of_val;
 use ::std::mem::transmute;
 use ::std::mem::uninitialized;
 use ::std::ptr::NonNull;
@@ -32,6 +23,10 @@ use ::ucx_sys::*;
 
 
 /// Communication interface context and supporting logic.
+///
+/// Used to create remote end points.
+///
+/// Used to receive active messages and tagged messages from remote peers.
 pub mod communication_interface_context;
 
 
@@ -43,8 +38,11 @@ pub mod memory_domain;
 pub mod progress_engine;
 
 
+/// A remote end point is used to send data and perform remote memory operations.
+pub mod remote_end_point;
+
+
 include!("ActiveMessageIdentifier.rs");
 include!("AsynchronousContext.rs");
 include!("CompletionHandleHelper.rs");
-include!("RemoteEndPoint.rs");
 include!("UcsGlobalConfiguration.rs");
