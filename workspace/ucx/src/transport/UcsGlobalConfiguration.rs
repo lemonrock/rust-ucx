@@ -5,9 +5,9 @@
 /// A wrapper around UCP configuration for an `ApplicationContext`.
 /// The configuration is initially populated from environment variables.
 #[derive(Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct UcsGlobalConfigurationWrapper;
+pub struct UcsGlobalConfiguration;
 
-impl Debug for UcsGlobalConfigurationWrapper
+impl Debug for UcsGlobalConfiguration
 {
 	#[inline(always)]
 	fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error>
@@ -16,7 +16,7 @@ impl Debug for UcsGlobalConfigurationWrapper
 	}
 }
 
-impl PrintInformation for UcsGlobalConfigurationWrapper
+impl PrintInformation for UcsGlobalConfiguration
 {
 	const DebugName: &'static str = "UcpConfigurationWrapper";
 	
@@ -29,24 +29,8 @@ impl PrintInformation for UcsGlobalConfigurationWrapper
 	}
 }
 
-impl ConfigurationWrapper for UcsGlobalConfigurationWrapper
+impl UcsGlobalConfiguration
 {
-	#[inline(always)]
-	unsafe fn ucx_config_modify(&self, name: *const c_char, value: *const c_char) -> ucs_status_t
-	{
-		ucs_global_opts_set_value(name, value)
-	}
-}
-
-impl UcsGlobalConfigurationWrapper
-{
-	/// Modify configuration.
-	#[inline(always)]
-	pub fn modify<Setting: UcmConfigurationSetting>(&self, configuration_setting: &Setting) -> Result<(), ConfigurationModifyError>
-	{
-		self.modify_(configuration_setting)
-	}
-	
 	/// Get log level.
 	/// Messages with a level higher or equal to the selected log level will be printed.
 	#[inline(always)]
@@ -205,39 +189,39 @@ impl UcsGlobalConfigurationWrapper
 		self.values_mut().log_level_trigger = ucs_log_level.to_ucs_log_level_t()
 	}
 	
-//	/// Get maximum asynchronous events.
-//	/// Maximal number of events which can be handled from one context.
-//	/// Will be removed in future release.
-//	#[inline(always)]
-//	pub fn get_maximum_asynchronous_events(&self) -> u32
-//	{
-//		self.values().async_max_events
-//	}
-//
-//	/// Set maximum asynchronous events.
-//	/// Maximal number of events which can be handled from one context.
-//	/// Will be removed in future release.
-//	#[inline(always)]
-//	pub fn set_maximum_asynchronous_events(&self, maximum_asynchronous_events: u32)
-//	{
-//		self.values_mut().async_max_events = maximum_asynchronous_events
-//	}
-//
-//	/// Only valid if ucx was compiled with statistics.
-//	/// Not thread safe; another thread can cause a de-allocation of the underlying global value.
-//	#[inline(always)]
-//	pub fn get_statistics_destination(&self) -> Option<CString>
-//	{
-//		null_or_empty_c_string(self.values().stats_dest)
-//	}
-//
-//	/// Only valid if ucx was compiled with statistics.
-//	/// Not thread safe; another thread can cause a de-allocation of the underlying global value.
-//	#[inline(always)]
-//	pub fn get_statistics_trigger(&self) -> Option<CString>
-//	{
-//		null_or_empty_c_string(self.values().stats_trigger)
-//	}
+	/// Get maximum asynchronous events.
+	/// Maximal number of events which can be handled from one context.
+	/// Will be removed in future release.
+	#[inline(always)]
+	pub fn get_maximum_asynchronous_events(&self) -> u32
+	{
+		self.values().async_max_events
+	}
+
+	/// Set maximum asynchronous events.
+	/// Maximal number of events which can be handled from one context.
+	/// Will be removed in future release.
+	#[inline(always)]
+	pub fn set_maximum_asynchronous_events(&self, maximum_asynchronous_events: u32)
+	{
+		self.values_mut().async_max_events = maximum_asynchronous_events
+	}
+
+	/// Only valid if ucx was compiled with statistics.
+	/// Not thread safe; another thread can cause a de-allocation of the underlying global value.
+	#[inline(always)]
+	pub fn get_statistics_destination(&self) -> Option<CString>
+	{
+		null_or_empty_c_string(self.values().stats_dest)
+	}
+
+	/// Only valid if ucx was compiled with statistics.
+	/// Not thread safe; another thread can cause a de-allocation of the underlying global value.
+	#[inline(always)]
+	pub fn get_statistics_trigger(&self) -> Option<CString>
+	{
+		null_or_empty_c_string(self.values().stats_trigger)
+	}
 	
 	/// Not thread safe; another thread can cause a de-allocation of the underlying global value.
 	#[inline(always)]
@@ -276,15 +260,15 @@ impl UcsGlobalConfigurationWrapper
 		self.values_mut().async_signo = signal
 	}
 	
-//	/// Only valid if ucx was compiled with memory tracking.
-//	/// Not thread safe; another thread can cause a de-allocation of the underlying global value.
-//	/// If prefixed with `file:` then a file path with subtitutions %h: host, %p: pid, %c: cpu, %t: time, %u: user, %e: exe
-//	/// Otherwise can be `stdout` or `stderr`.
-//	#[inline(always)]
-//	pub fn get_memtrack_destination_file_path_template(&self) -> Option<CString>
-//	{
-//		null_or_empty_c_string(self.values().memtrack_dest)
-//	}
+	/// Only valid if ucx was compiled with memory tracking.
+	/// Not thread safe; another thread can cause a de-allocation of the underlying global value.
+	/// If prefixed with `file:` then a file path with subtitutions %h: host, %p: pid, %c: cpu, %t: time, %u: user, %e: exe
+	/// Otherwise can be `stdout` or `stderr`.
+	#[inline(always)]
+	pub fn get_memtrack_destination_file_path_template(&self) -> Option<CString>
+	{
+		null_or_empty_c_string(self.values().memtrack_dest)
+	}
 	
 	/// Profile collection modes.
 	/// If none is specified, profiling is disabled.
@@ -317,9 +301,6 @@ impl UcsGlobalConfigurationWrapper
 	{
 		self.values_mut().profile_log_size = profile_log_maximal_size
 	}
-	
-//	pub stats_filter: ucs_config_names_array_t,
-//	pub stats_format: ucs_stats_formats_t,
 	
 	#[inline(always)]
 	fn values(&self) -> &'static ucs_global_opts_t

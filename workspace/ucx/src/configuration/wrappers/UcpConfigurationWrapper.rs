@@ -7,7 +7,7 @@
 #[derive(Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct UcpConfigurationWrapper
 {
-	pub(crate) handle: *mut ucp_config_t,
+	pub(crate) handle: *mut ucp_config,
 }
 
 impl Drop for UcpConfigurationWrapper
