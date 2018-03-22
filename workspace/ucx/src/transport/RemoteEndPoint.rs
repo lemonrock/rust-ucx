@@ -114,6 +114,7 @@ impl RemoteEndPoint
 	/// Connection failures are ***not*** reported in the error code; instead, they will be initially successful and then reports to the ***CommunicationInterfaceContext*** error handler.
 	///
 	/// In a debug build the interface must support the `CONNECT_TO_SOCKADDR` feature.
+	/// Currently, only the `RdmaCommunicationManager` memory domain supports this.
 	///
 	/// The `private_data_in_connection_request` has a maximum length (check `communication_interface_context.attributes().maximum_client_connection_request_private_data()`);
 	#[inline(always)]
@@ -158,7 +159,6 @@ impl RemoteEndPoint
 			unexpected_status @ _ => panic!("Unexpected status '{:?}'", unexpected_status),
 		}
 	}
-	
 	
 	/// Connect an unconnected end point.
 	///
@@ -437,7 +437,10 @@ impl RemoteEndPoint
 		unsafe { (self.transport_interface_operations().ep_put_zcopy)(self.ep(), iov, iovcnt, remote_addr, rkey, comp) }
 	}
 	
-	// NOTE: There is no `uct_ep_get_short`.
+	// NOTE: There is NOW `uct_ep_get_short`.
+	
+	
+	
 	
 	// uct_unpack_callback_t should be responsible for freeing itself.
 	/// @brief
