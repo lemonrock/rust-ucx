@@ -392,7 +392,7 @@ impl<'remote_end_point> RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
 	/// * `at_remote_memory_address` must be 32-bit aligned.
 	/// * `previous_value` does not need to be initialized, but must be valid until the completion handler is called.
 	#[inline(always)]
-	fn atomic_fetch_and_add_u32<C: CompletionHandler>(&self, increment: u32, at_remote_memory_address: RemoteMemoryAddress, previous_value: &mut u32, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
+	pub fn atomic_fetch_and_add_u32<C: CompletionHandler>(&self, increment: u32, at_remote_memory_address: RemoteMemoryAddress, previous_value: &mut u32, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		debug_assert!(self.supports_atomic_u32_fetch_and_add, "Interface does not support atomic fetch-and-add for u32");
 		at_remote_memory_address.debug_assert_is_32_bit_aligned();
@@ -409,7 +409,7 @@ impl<'remote_end_point> RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
 	/// * `at_remote_memory_address` must be 64-bit aligned.
 	/// * `previous_value` does not need to be initialized, but must be valid until the completion handler is called.
 	#[inline(always)]
-	fn atomic_fetch_and_add_u64<C: CompletionHandler>(&self, increment: u64, at_remote_memory_address: RemoteMemoryAddress, previous_value: &mut u64, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
+	pub fn atomic_fetch_and_add_u64<C: CompletionHandler>(&self, increment: u64, at_remote_memory_address: RemoteMemoryAddress, previous_value: &mut u64, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		debug_assert!(self.supports_atomic_u64_fetch_and_add, "Interface does not support atomic fetch-and-add for u64");
 		at_remote_memory_address.debug_assert_is_64_bit_aligned();
@@ -426,7 +426,7 @@ impl<'remote_end_point> RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
 	/// * `at_remote_memory_address` must be 32-bit aligned.
 	/// * `previous_value` does not need to be initialized, but must be valid until the completion handler is called.
 	#[inline(always)]
-	fn atomic_swap_u32<C: CompletionHandler>(&self, replacement: u32, at_remote_memory_address: RemoteMemoryAddress, previous_value: &mut u32, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
+	pub fn atomic_swap_u32<C: CompletionHandler>(&self, replacement: u32, at_remote_memory_address: RemoteMemoryAddress, previous_value: &mut u32, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		debug_assert!(self.supports_atomic_u32_swap, "Interface does not support atomic swap for u32");
 		at_remote_memory_address.debug_assert_is_32_bit_aligned();
@@ -443,7 +443,7 @@ impl<'remote_end_point> RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
 	/// * `at_remote_memory_address` must be 64-bit aligned.
 	/// * `previous_value` does not need to be initialized, but must be valid until the completion handler is called.
 	#[inline(always)]
-	fn atomic_swap_u64<C: CompletionHandler>(&self, replacement: u64, at_remote_memory_address: RemoteMemoryAddress, previous_value: &mut u64, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
+	pub fn atomic_swap_u64<C: CompletionHandler>(&self, replacement: u64, at_remote_memory_address: RemoteMemoryAddress, previous_value: &mut u64, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		debug_assert!(self.supports_atomic_u64_swap, "Interface does not support atomic swap for u64");
 		at_remote_memory_address.debug_assert_is_64_bit_aligned();
@@ -460,7 +460,7 @@ impl<'remote_end_point> RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
 	/// * `at_remote_memory_address` must be 32-bit aligned.
 	/// * `is_now` does not need to be initialized, but must be valid until the completion handler is called.
 	#[inline(always)]
-	fn atomic_compare_and_swap_u32<C: CompletionHandler>(&self, was: u32, replacement: u32, at_remote_memory_address: RemoteMemoryAddress, is_now: &mut u32, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
+	pub fn atomic_compare_and_swap_u32<C: CompletionHandler>(&self, was: u32, replacement: u32, at_remote_memory_address: RemoteMemoryAddress, is_now: &mut u32, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		debug_assert!(self.supports_atomic_u32_compare_and_swap, "Interface does not support atomic compare-and-swap for u32");
 		at_remote_memory_address.debug_assert_is_32_bit_aligned();
@@ -477,7 +477,7 @@ impl<'remote_end_point> RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
 	/// * `at_remote_memory_address` must be 64-bit aligned.
 	/// * `is_now` does not need to be initialized, but must be valid until the completion handler is called.
 	#[inline(always)]
-	fn atomic_compare_and_swap_u64<C: CompletionHandler>(&self, was: u64, replacement: u64, at_remote_memory_address: RemoteMemoryAddress, is_now: &mut u64, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
+	pub fn atomic_compare_and_swap_u64<C: CompletionHandler>(&self, was: u64, replacement: u64, at_remote_memory_address: RemoteMemoryAddress, is_now: &mut u64, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		debug_assert!(self.supports_atomic_u64_compare_and_swap, "Interface does not support atomic compare-and-swap for u64");
 		at_remote_memory_address.debug_assert_is_64_bit_aligned();
