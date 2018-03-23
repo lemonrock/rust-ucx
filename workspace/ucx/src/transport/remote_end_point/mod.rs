@@ -22,12 +22,16 @@ use ::std::mem::size_of;
 use ::std::mem::transmute;
 use ::std::mem::uninitialized;
 use ::std::ptr::NonNull;
+use ::std::slice::from_raw_parts;
 use ::std::sync::Arc;
 use ::ucx_sys::*;
 
 
 include!("ActiveMessageImmediateHeader.rs");
 include!("ActiveMessageSendingRemoteEndPoint.rs");
+include!("buffered_copy_deserialize_callback.rs");
+include!("buffered_copy_serialize_callback.rs");
 include!("BufferedCopyDeserializer.rs");
 include!("BufferedCopySerializer.rs");
 include!("RemoteEndPoint.rs");
+include!("RemoteMemoryAccessRemoteEndPoint.rs");

@@ -18,14 +18,16 @@ pub struct ActiveMessageSendingRemoteEndPoint<'remote_end_point>
 	supports_zero_copy: bool,
 	maximum_zero_copy_length: usize,
 	minimum_zero_copy_length: usize,
+	maximum_zero_copy_from_local_memory_items: usize,
+	optimal_alignment_for_from_local_memory_for_zero_copy: usize,
 	maximum_zero_copy_header_length: usize,
-	maximum_zero_copy_io_vec_items: usize,
-	optimal_alignment_for_io_vec_buffers_for_zero_copy: usize,
 }
 
 impl<'remote_end_point> ActiveMessageSendingRemoteEndPoint<'remote_end_point>
 {
 	const UpperLimit: usize = ::std::u32::MAX as usize;
+	
+	const SizeOrStatusLowerLimit: isize = ::std::i8::MIN as isize;
 	
 	const SignalledMessagesAreNotSupportedFlags: uct_msg_flags = uct_msg_flags(0);
 	
@@ -48,39 +50,39 @@ impl<'remote_end_point> ActiveMessageSendingRemoteEndPoint<'remote_end_point>
 			supports_zero_copy: attributes.supports_all_of(InterfaceFeaturesSupported::AM_ZCOPY),
 			maximum_zero_copy_length: active_message_constraints.max_zcopy,
 			minimum_zero_copy_length: active_message_constraints.min_zcopy,
+			maximum_zero_copy_from_local_memory_items: active_message_constraints.max_iov,
+			optimal_alignment_for_from_local_memory_for_zero_copy: active_message_constraints.opt_zcopy_align,
 			maximum_zero_copy_header_length: active_message_constraints.max_hdr,
-			maximum_zero_copy_io_vec_items: active_message_constraints.max_iov,
-			optimal_alignment_for_io_vec_buffers_for_zero_copy: active_message_constraints.opt_zcopy_align,
 		}
 	}
 	
 	/// Maximum.
 	#[inline(always)]
-	pub fn maximum_zero_copy_io_vec_items(&self) -> usize
+	pub fn maximum_zero_copy_from_local_memory_items(&self) -> usize
 	{
-		self.maximum_zero_copy_io_vec_items
+		self.maximum_zero_copy_from_local_memory_items
 	}
 	
 	/// Maximum.
 	#[inline(always)]
 	pub fn maximum_zero_copy_header_length(&self) -> usize
 	{
-		self.optimal_alignment_for_io_vec_buffers_for_zero_copy
+		self.optimal_alignment_for_from_local_memory_for_zero_copy
 	}
 	
 	/// Should be a power-of-two, but this is not enforced.
 	#[inline(always)]
-	pub fn optimal_alignment_for_io_vec_buffers_for_zero_copy(&self) -> usize
+	pub fn optimal_alignment_for_from_local_memory_for_zero_copy(&self) -> usize
 	{
-		self.optimal_alignment_for_io_vec_buffers_for_zero_copy
+		self.optimal_alignment_for_from_local_memory_for_zero_copy
 	}
 	
 	/// Is within limits.
 	#[inline(always)]
-	pub fn is_inclusively_within_number_of_items_and_maximum_and_minimum_size_and(&self, zero_copy_io_vectors: &[ZeroCopyIoVector]) -> bool
+	pub fn is_inclusively_within_number_of_items_and_maximum_and_minimum_size(&self, zero_copy_io_vectors: &[ZeroCopyIoVector]) -> bool
 	{
 		let number_of_items = zero_copy_io_vectors.len();
-		if number_of_items == 0 || number_of_items > self.maximum_zero_copy_io_vec_items
+		if number_of_items == 0 || number_of_items > self.maximum_zero_copy_from_local_memory_items
 		{
 			return false;
 		}
@@ -93,13 +95,13 @@ impl<'remote_end_point> ActiveMessageSendingRemoteEndPoint<'remote_end_point>
 	///
 	/// Equivalent to `uct_ep_am_short`.
 	#[inline(always)]
-	pub fn send_an_immediate_active_message(&self, header: ActiveMessageImmediateHeader, payload: &[u8]) -> Result<(), ErrorCode>
+	pub fn send_an_immediate_active_message(&self, header: ActiveMessageImmediateHeader, from_local_memory: &[u8]) -> Result<(), ErrorCode>
 	{
-		debug_assert!(self.supports_short, "Does not support immediate (short) active messages");
-		debug_assert!(payload.len() <= Self::UpperLimit, "payload length '{}' exceeds upper limit '{}'", payload.len(), Self::UpperLimit);
-		debug_assert!(size_of::<ActiveMessageImmediateHeader>() + payload.len() <= self.maximum_short_length, "header length '{}' + payload length '{}' exceeds maximum for interface '{}'", size_of::<ActiveMessageImmediateHeader>(), payload.len(), self.maximum_short_length);
+		debug_assert!(self.supports_short, "Interface does not support immediate ('short') active messages");
+		debug_assert!(from_local_memory.len() <= Self::UpperLimit, "from_local_memory length '{}' exceeds upper limit '{}'", from_local_memory.len(), Self::UpperLimit);
+		debug_assert!(size_of::<ActiveMessageImmediateHeader>() + from_local_memory.len() <= self.maximum_short_length, "header length '{}' + from_local_memory length '{}' exceeds maximum for interface '{}'", size_of::<ActiveMessageImmediateHeader>(), from_local_memory.len(), self.maximum_short_length);
 		
-		let status = unsafe { (self.transport_interface_operations().ep_am_short)(self.ep(), self.active_message_identifier.0, header, payload.as_ptr() as *const c_void, payload.len() as u32) };
+		let status = unsafe { (self.transport_interface_operations().ep_am_short)(self.ep(), self.active_message_identifier.0, header, from_local_memory.as_ptr() as *const c_void, from_local_memory.len() as u32) };
 		
 		use self::Status::*;
 		
@@ -117,26 +119,19 @@ impl<'remote_end_point> ActiveMessageSendingRemoteEndPoint<'remote_end_point>
 	///
 	/// Equivalent to `uct_ep_am_bcopy`.
 	///
-	/// bcopy == buffered copy-and-send
+	/// bcopy == buffered copy-and-send.
+	///
+	/// Returns serialized (packed) length.
 	///
 	/// Sending signalled messages (using uct_msg_flags) is not supported (only shared memory and loopback devices support it in any event).
 	///
-	/// * `buffered_copy_serializer`: Will be specified a buffer that, including header, must not exceed `maximum_buffered_copy_length`.
+	/// * `from_local_memory`: Will be specified a buffer that, including header, must not exceed `maximum_buffered_copy_length`.
 	#[inline(always)]
-	pub fn send_a_buffered_copy_active_message<BCS: BufferedCopySerializer>(&self, buffered_copy_serializer: Box<BCS>) -> Result<usize, ErrorCode>
+	pub fn send_a_buffered_copy_active_message<BCS: BufferedCopySerializer>(&self, from_local_memory: Box<BCS>) -> Result<usize, ErrorCode>
 	{
-		debug_assert!(self.supports_buffered_copy, "Does not support buffered copy (bcopy) active messages");
+		debug_assert!(self.supports_buffered_copy, "Interface does not support buffered copy ('bcopy') active messages");
 		
-		unsafe extern "C" fn send_a_buffered_copy_active_message_callback<BCS: BufferedCopySerializer>(dest: *mut c_void, arg: *mut c_void) -> usize
-		{
-			debug_assert!(!dest.is_null(), "dest is null");
-			debug_assert!(!arg.is_null(), "arg is null");
-			
-			let buffered_copy_serializer = Box::from_raw(arg as *mut BCS);
-			buffered_copy_serializer.serialize(NonNull::new_unchecked(dest as *mut u8))
-		}
-		
-		let size_or_status = unsafe { (self.transport_interface_operations().ep_am_bcopy)(self.ep(), self.active_message_identifier.0, send_a_buffered_copy_active_message_callback::<BCS>, Box::into_raw(buffered_copy_serializer) as *mut c_void, Self::SignalledMessagesAreNotSupportedFlags.0) };
+		let size_or_status = unsafe { (self.transport_interface_operations().ep_am_bcopy)(self.ep(), self.active_message_identifier.0, buffered_copy_serialize_callback::<BCS>, Box::into_raw(from_local_memory) as *mut c_void, Self::SignalledMessagesAreNotSupportedFlags.0) };
 		
 		if size_or_status >= 0
 		{
@@ -148,7 +143,7 @@ impl<'remote_end_point> ActiveMessageSendingRemoteEndPoint<'remote_end_point>
 		{
 			use self::Status::*;
 			
-			debug_assert!(size_or_status >= ::std::i8::MIN as isize, "size_or_status is out-of-range");
+			debug_assert!(size_or_status >= Self::SizeOrStatusLowerLimit, "size_or_status is out-of-range");
 			let status: ucs_status_t = unsafe { transmute(size_or_status as i8) };
 			
 			match status.parse()
@@ -164,37 +159,30 @@ impl<'remote_end_point> ActiveMessageSendingRemoteEndPoint<'remote_end_point>
 	///
 	/// Equivalent to `uct_ep_am_zcopy`.
 	///
-	/// `header` and `zero_copy_io_vectors` memory must have been registered with, or allocated by, the memory domain for this communication interface for this remote end point.
-	///
-	///
-	///
-	///
-	/// ***The lifetime requirements of `header` and `zero_copy_io_vectors` is not known.***
+	/// `header` and `from_local_memory` memory must have been registered with, or allocated by, the memory domain for this communication interface for this remote end point.
 	///
 	/// If not complete (likely), then this method then needs `progress()` to be called on the ProgressEngine.
 	///
-	///
-	///
 	/// * `header` may be no longer than `self.maximum_zero_copy_header_length()`.
-	/// * `zero_copy_io_vectors` maximum length is `self.maximum_zero_copy_io_vec_items()`. `UCT_IB_MAX_IOV` is 8, and one IoVector seems to be used internally for the header, implying 7 is the normal maximum.
+	/// * `from_local_memory` maximum length is `self.maximum_zero_copy_from_local_memory_items()`. `UCT_IB_MAX_IOV` is 8, and one IoVector seems to be used internally for the header, implying 7 is the normal maximum.
 	///
-	/// Sending signalled messages (using uct_msg_flags) is not supported (only shared memory and loopback devices support it in any event).
-	///
-	/// Note that `zero_copy_io_vectors` buffers should ideally be aligned to `self.optimal_alignment_for_io_vec_buffers_for_zero_copy()`.
+	/// Note that `from_local_memory` buffers should ideally be aligned to `self.optimal_alignment_for_from_local_memory_for_zero_copy()`.
 	/// This is usually one of:-
 	///
 	/// * `UCS_SYS_PCI_MAX_PAYLOAD` (for InfiniBand-like devices; 512 bytes)
 	/// * `UCS_SYS_CACHE_LINE_SIZE` (for Shared Memory devices)
 	/// * `1`
+	///
+	/// Sending signalled messages (using uct_msg_flags) is not supported (only shared memory and loopback devices support it in any event).
 	#[inline(always)]
-	pub fn send_a_zero_copy_active_message<C: CompletionHandler>(&self, header: &[u8], zero_copy_io_vectors: &[ZeroCopyIoVector], completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
+	pub fn send_a_zero_copy_active_message<C: CompletionHandler>(&self, header: &[u8], from_local_memory: &[ZeroCopyIoVector], completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
-		debug_assert!(self.supports_zero_copy, "Does not support zero copy (zcopy) active messages");
+		debug_assert!(self.supports_zero_copy, "Interface does not support zero copy ('zcopy') active messages");
 		debug_assert!(header.len() <= Self::UpperLimit, "header length '{}' exceeds upper limit '{}'", header.len(), Self::UpperLimit);
 		debug_assert!(header.len() <= self.maximum_zero_copy_header_length, "header length '{}' exceeds maximum for interface '{}'", header.len(), self.maximum_zero_copy_header_length);
-		debug_assert!(self.is_inclusively_within_number_of_items_and_maximum_and_minimum_size_and(zero_copy_io_vectors), "zero_copy_io_vectors has too few or too many items, or is too small or too large in total length");
+		debug_assert!(self.is_inclusively_within_number_of_items_and_maximum_and_minimum_size(from_local_memory), "from_local_memory has too few or too many items, or is too small or too large in total length");
 		
-		let status = unsafe { (self.transport_interface_operations().ep_am_zcopy)(self.ep(), self.active_message_identifier.0, header.as_ptr() as *const c_void, header.len() as u32, zero_copy_io_vectors.as_ptr() as * const uct_iov_t, zero_copy_io_vectors.len(), Self::SignalledMessagesAreNotSupportedFlags.0, completion.to_raw_pointer()) };
+		let status = unsafe { (self.transport_interface_operations().ep_am_zcopy)(self.ep(), self.active_message_identifier.0, header.as_ptr() as *const c_void, header.len() as u32, from_local_memory.as_ptr() as * const uct_iov_t, from_local_memory.len(), Self::SignalledMessagesAreNotSupportedFlags.0, completion.to_raw_pointer()) };
 		
 		completion.parse_status(status)
 	}

@@ -7,9 +7,15 @@
 /// Will be drop'd after deserializing.
 pub trait BufferedCopyDeserializer
 {
+	/// Tels UCT how large a buffer to choose for `data_to_unpack_buffer` below.
+	#[inline(always)]
+	fn length(&self) -> usize;
+	
 	/// Deserialize (unpack) the data in the provided buffer `data_to_unpack_buffer`.
 	///
 	/// Must use the unpacked data.
+	///
+	/// A completion callback is also invoked after this.
 	#[inline(always)]
-	fn deserialize_and_use(&self, data_to_unpack_buffer: &[u8]);
+	fn deserialize(&self, data_to_unpack_buffer: &[u8]);
 }
