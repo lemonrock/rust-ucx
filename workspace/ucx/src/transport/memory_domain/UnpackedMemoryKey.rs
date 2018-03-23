@@ -56,11 +56,11 @@ impl UnpackedMemoryKey
 	///
 	/// Does not work for GPU accelerators (eg CUDA, RoCM).
 	#[inline(always)]
-	pub fn to_local_pointer_if_memory_domain_is_intra_node_or_loopback_to_self(&mut self, remote_address: RemoteAddress) -> Result<NonNull<u8>, ErrorCode>
+	pub fn to_local_pointer_if_memory_domain_is_intra_node_or_loopback_to_self(&mut self, remote_memory_address: RemoteMemoryAddress) -> Result<NonNull<u8>, ErrorCode>
 	{
 		let mut local_address = unsafe { uninitialized() };
 		
-		let status = unsafe { uct_rkey_ptr(&mut self.0, remote_address.0, &mut local_address) };
+		let status = unsafe { uct_rkey_ptr(&mut self.0, remote_memory_address.0, &mut local_address) };
 		
 		use self::Status::*;
 		

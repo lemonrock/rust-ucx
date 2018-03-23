@@ -2,11 +2,20 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::super::super::buffers::*;
-use super::super::super::local_to_remote_memory_address_translations::RemoteMemoryAddress;
-use super::super::super::tagged_messages::TagValue;
-use ::std::ptr::NonNull;
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct RemoteMemoryAddress(pub u64);
 
-
-include!("DoNothingUnexpectedTaggedMessageHandler.rs");
-include!("UnexpectedTaggedMessageHandler.rs");
+impl RemoteMemoryAddress
+{
+	#[inline(always)]
+	pub(crate) fn debug_assert_is_32_bit_aligned(&self)
+	{
+		debug_assert_eq!(self.0 % 4, 0, "aligned_remote_memory_address '{}' is not 32-bit (4-byte) aligned", self.0)
+	}
+	
+	#[inline(always)]
+	pub(crate) fn debug_assert_is_64_bit_aligned(&self)
+	{
+		debug_assert_eq!(self.0 % 8, 0, "aligned_remote_memory_address '{}' is not 64-bit (8-byte) aligned", self.0)
+	}
+}

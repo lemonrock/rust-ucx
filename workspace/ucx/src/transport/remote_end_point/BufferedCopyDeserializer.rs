@@ -2,11 +2,14 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::super::super::buffers::*;
-use super::super::super::local_to_remote_memory_address_translations::RemoteMemoryAddress;
-use super::super::super::tagged_messages::TagValue;
-use ::std::ptr::NonNull;
-
-
-include!("DoNothingUnexpectedTaggedMessageHandler.rs");
-include!("UnexpectedTaggedMessageHandler.rs");
+/// Deserializes (unpacks) active messages, tagged messages and remote memory load/stores which are sent using a buffered copy.
+///
+/// Will be drop'd after deserializing.
+pub trait BufferedCopyDeserializer
+{
+	/// Deserialize (unpack) the data in the provided buffer `data_to_unpack_buffer`.
+	///
+	/// Must use the unpacked data.
+	#[inline(always)]
+	fn deserialize_and_use(&self, data_to_unpack_buffer: &[u8]);
+}

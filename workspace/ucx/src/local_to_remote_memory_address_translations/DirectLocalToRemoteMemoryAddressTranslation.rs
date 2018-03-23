@@ -2,10 +2,15 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// How to translate from local addresses to remote addresses for remotely accessible memory.
-pub trait LocalToRemoteAddressTranslation
+/// 1:1 with no offsets.
+#[derive(Default, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct DirectLocalToRemoteMemoryAddressTranslation;
+
+impl LocalToRemoteMemoryAddressTranslation for DirectLocalToRemoteMemoryAddressTranslation
 {
-	/// Convert from a local address to a remote address.
 	#[inline(always)]
-	fn from_local_address_to_remote_address(&self, local_address: NonNull<u8>) -> RemoteAddress;
+	fn from_local_address_to_remote_memory_address(&self, local_memory_address: NonNull<u8>) -> RemoteMemoryAddress
+	{
+		RemoteMemoryAddress(local_memory_address.as_ptr() as usize as u64)
+	}
 }

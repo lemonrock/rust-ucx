@@ -34,7 +34,7 @@ impl<'a> Message for IoVecMessage<'a>
 	{
 		let element_size = Self::element_size();
 		
-		// Rounds count up (normal integer division rounds down).
+		// Rounds number_of_items up (normal integer division rounds down).
 		(length_in_bytes + (element_size + 1)) / element_size
 	}
 }

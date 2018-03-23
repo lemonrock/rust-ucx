@@ -2,21 +2,22 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-use super::ActiveMessageIdentifier;
-use super::CompletionHandleHelper;
 use super::super::ZeroBasedHyperThreadIndex;
 use super::super::attributes::*;
 use super::super::buffers::*;
 use super::super::cpu_set::*;
 use super::super::ffi_helpers::*;
 use super::super::handle_drop_safeties::*;
-use super::super::local_to_remote_address_translations::*;
+use super::super::local_to_remote_memory_address_translations::*;
 use super::super::status::*;
 use super::super::sockets::*;
 use super::super::tagged_messages::*;
 use super::progress_engine::ProgressEngine;
 use super::progress_engine::ProgressCallback;
 use super::progress_engine::ProgressCallbackCancel;
+use super::ActiveMessageIdentifier;
+use super::Completion;
+use super::CompletionHandler;
 use super::memory_domain::*;
 use self::active_message_handlers::*;
 use self::active_message_tracers::*;

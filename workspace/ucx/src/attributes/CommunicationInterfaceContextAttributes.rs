@@ -50,7 +50,7 @@ impl CommunicationInterfaceContextAttributes
 		self.0.ep_addr_len
 	}
 	
-	/// Get constraints.
+	/// Put constraints.
 	#[inline(always)]
 	pub fn put_constraints(&self) -> &PutConstraints
 	{

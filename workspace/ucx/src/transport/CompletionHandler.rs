@@ -2,20 +2,14 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct RemoteAddress(pub u64);
-
-impl RemoteAddress
+/// Called back when complete.
+pub trait CompletionHandler
 {
+	/// Called back when completed OK, including when completed immediately.
 	#[inline(always)]
-	pub(crate) fn debug_assert_is_32_bit_aligned(&self)
-	{
-		debug_assert_eq!(self.0 % 4, 0, "aligned_remote_address '{}' is not 32-bit (4-byte) aligned", self.0)
-	}
+	fn completed_ok(&self);
 	
+	/// Called back when completed with an error, including when completed immediately.
 	#[inline(always)]
-	pub(crate) fn debug_assert_is_64_bit_aligned(&self)
-	{
-		debug_assert_eq!(self.0 % 8, 0, "aligned_remote_address '{}' is not 64-bit (8-byte) aligned", self.0)
-	}
+	fn completed_with_error(&self, error_code: ErrorCode);
 }

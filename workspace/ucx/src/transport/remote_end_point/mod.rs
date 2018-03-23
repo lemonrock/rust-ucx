@@ -5,20 +5,29 @@
 use super::super::attributes::*;
 use super::super::ffi_helpers::*;
 use super::super::handle_drop_safeties::*;
+use super::super::local_to_remote_memory_address_translations::*;
 use super::super::sockets::*;
 use super::super::status::*;
 use super::communication_interface_context::*;
+use super::memory_domain::*;
 use super::ActiveMessageIdentifier;
-use super::CompletionHandleHelper;
+use super::Completion;
+use super::CompletionHandler;
 use ::libc::c_uint;
 use ::libc::c_void;
 use ::libc::size_t;
 use ::libc::ssize_t;
 use ::libc::uint64_t;
-use ::std::mem::size_of_val;
+use ::std::mem::size_of;
+use ::std::mem::transmute;
 use ::std::mem::uninitialized;
 use ::std::ptr::NonNull;
 use ::std::sync::Arc;
 use ::ucx_sys::*;
 
+
+include!("ActiveMessageImmediateHeader.rs");
+include!("ActiveMessageSendingRemoteEndPoint.rs");
+include!("BufferedCopyDeserializer.rs");
+include!("BufferedCopySerializer.rs");
 include!("RemoteEndPoint.rs");

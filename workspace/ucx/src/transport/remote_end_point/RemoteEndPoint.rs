@@ -296,109 +296,47 @@ impl RemoteEndPoint
 	}
 }
 
-/// Active Messages (AM).
-impl RemoteEndPoint
-{
-	/// Send an immediate ('short') active message.
-	///
-	/// Equivalent to `uct_ep_am_short`.
-	#[inline(always)]
-	fn send_an_immediate_active_message(&self, id: ActiveMessageIdentifier, header: u64, payload: &[u8]) -> ucs_status_t
-	{
-		self.debug_interface_supports_feature(InterfaceFeaturesSupported::AM_SHORT);
-		debug_assert!(payload.len() < ::std::u32::MAX as usize, "payload is too long");
-		debug_assert!(size_of_val(&header) + payload.len() <= self.attributes.active_message_constraints().max_short, "header length + payload length exceeds maximum for interface");
-		
-		unsafe { (self.transport_interface_operations().ep_am_short)(self.ep(), id.0, header, payload.as_ptr() as *const c_void, payload.len() as u32) }
-	}
-	
-	
-	
-	
-	
-	// uct_pack_callback_t should be responsible for freeing itself.
-	
-	
-	
-	/// Send a buffered copy ('bcopy') active message.
-	///
-	/// Equivalent to `uct_ep_am_bcopy`.
-	///
-	/// bcopy == buffered copy-and-send
-	///
-	/// * `pack_callback`: Will be specified a buffer that, including header, must not exceed `attributes().cap.am.max_bcopy`.
-	/// * `flags`: Specify `uct_msg_flags::SIGNALED` to trigger `uct_iface_event_types::RECV_SIG` on the receiver. May not be supported by the interface (in which case it will be ignored). Triggering `uct_iface_event_types::RECV_SIG` may not happen on the receiver in some cases and `uct_iface_event_types::RECV` will occur instead.
-	#[inline(always)]
-	fn send_a_buffered_copy_active_message<T>(&self, id: ActiveMessageIdentifier, pack_callback: uct_pack_callback_t, pack_callback_data: *mut T, flags: uct_msg_flags) -> ssize_t
-	{
-		self.debug_interface_supports_feature(InterfaceFeaturesSupported::AM_BCOPY);
-		unsafe { (self.transport_interface_operations().ep_am_bcopy)(self.ep(), id.0, pack_callback, pack_callback_data as *mut c_void, flags.0) }
-	}
-	
-	/// Send an active message while avoiding local memory copy, ie by 'zero copy'.
-	///
-	/// Equivalent to `uct_ep_am_zcopy`.
-	///
-	/// `header` and `io_vec` memory must have been registered with, or allocated by, the memory domain for this communication interface for this remote end point.
-	///
-	/// * `header` may be no longer than `self.attributes.cap.am.max_hdr`.
-	/// * `io_vec` maximum length is `uct_iface_attr_cap_am_max_iov`
-	/// * `flags`: Specify `uct_msg_flags::SIGNALED` to trigger `uct_iface_event_types::RECV_SIG` on the receiver. May not be supported by the interface (in which case it will be ignored). Triggering `uct_iface_event_types::RECV_SIG` may not happen on the receiver in some cases and `uct_iface_event_types::RECV` will occur instead.
-	///
-	/// Note that `iovec` buffers should ideally be aligned to `self.active_message_constraints().opt_zcopy_align`.
-	/// This is usually one of:-
-	///
-	/// * `UCS_SYS_PCI_MAX_PAYLOAD` (for InfiniBand-like devices; 512 bytes)
-	/// * `UCS_SYS_CACHE_LINE_SIZE` (for Shared Memory devices)
-	/// * `1`
-	///
-	/// Returns:-
-	/// * `UCS_INPROGRESS` Some communication operations are still in progress.
-	#[inline(always)]
-	fn send_a_zero_copy_active_message(&self, id: ActiveMessageIdentifier, header: &[u8], io_vec: &[uct_iov], flags: uct_msg_flags, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
-	{
-		self.debug_interface_supports_feature(InterfaceFeaturesSupported::AM_ZCOPY);
-		debug_assert!(header.len() < ::std::u32::MAX as usize, "header is too long");
-		debug_assert!(header.len() <= self.attributes.active_message_constraints().max_hdr, "header exceeds maximum for interface");
-		
-		if cfg!(debug_assertions)
-		{
-			let mut total_length = header.len();
-			for entry in io_vec.iter()
-			{
-				total_length += entry.length;
-			}
-			
-			let min_zcopy = self.attributes.active_message_constraints().min_zcopy;
-			if total_length < min_zcopy
-			{
-				panic!("total_length '{}' is less than min_zcopy '{}'", total_length, min_zcopy)
-			}
-			
-			let max_zcopy = self.attributes.active_message_constraints().max_zcopy;
-			if total_length > max_zcopy
-			{
-				panic!("total_length '{}' exceeds max_zcopy '{}'", total_length, max_zcopy)
-			}
-		}
-		
-		unsafe { (self.transport_interface_operations().ep_am_zcopy)(self.ep(), id.0, header.as_ptr() as *const c_void, header.len() as u32, io_vec.as_ptr(), io_vec.len(), flags.0, completion_handle.mutable_reference()) }
-	}
-}
-
 /// Remote Memory Access (RMA).
 impl RemoteEndPoint
 {
+	/// Stores (puts) a value from `payload` immediately.
+	///
+	/// The value must be quite small (in bytes).
+	///
+	/// Equivalent to `uct_ep_put_short`.
+	///
 	/// @brief
 	#[inline(always)]
-	fn uct_ep_put_short(&self, buffer: *const c_void, length: c_uint, remote_addr: uint64_t, rkey: uct_rkey_t) -> ucs_status_t
+	fn store_immediately(&self, payload: &[u8], remote_memory_address: RemoteMemoryAddress, remote_key_descriptor: uct_rkey_t) -> ucs_status_t
 	{
 		self.debug_interface_supports_feature(InterfaceFeaturesSupported::PUT_SHORT);
+		debug_assert!(payload.len() < ::std::u32::MAX as usize, "payload is too long");
+		debug_assert!(payload.len() <= self.attributes.put_constraints().max_short, "payload length exceeds maximum for interface");
 		
-		unsafe { (self.transport_interface_operations().ep_put_short)(self.ep(), buffer, length, remote_addr, rkey) }
+		unsafe { (self.transport_interface_operations().ep_put_short)(self.ep(), payload.as_ptr() as *const c_void, payload.len() as u32, remote_memory_address.0, remote_key_descriptor) }
 	}
 	
-	// uct_pack_callback_t should be responsible for freeing itself.
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	/// @brief
 	#[inline(always)]
 	fn uct_ep_put_bcopy(&self, pack_cb: uct_pack_callback_t, arg: *mut c_void, remote_addr: uint64_t, rkey: uct_rkey_t) -> ssize_t

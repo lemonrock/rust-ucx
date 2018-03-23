@@ -93,7 +93,7 @@ impl<Operations: GenericDataTypeDescriptorOperations> GenericDataTypeDescriptor<
 	unsafe extern "C" fn start_pack(context: *mut c_void, buffer: *const c_void, count: usize) -> *mut c_void
 	{
 		debug_assert!(!buffer.is_null(), "buffer is null");
-		debug_assert_eq!(count, size_of::<Operations::SerializedAndDeserialized>(), "count '{}' is not size_of::<Operations::SerializedAndDeserialized>() '{}'", count, size_of::<Operations::SerializedAndDeserialized>());
+		debug_assert_eq!(count, size_of::<Operations::SerializedAndDeserialized>(), "number_of_items '{}' is not size_of::<Operations::SerializedAndDeserialized>() '{}'", count, size_of::<Operations::SerializedAndDeserialized>());
 		
 		let untagged_pointer = Box::into_raw(Self::context_to_operations(context).start_serialization(& * (buffer as *const Operations::SerializedAndDeserialized))) as *mut c_void;
 		TagForLowestThreeBits::SerializerTag.tag(untagged_pointer)

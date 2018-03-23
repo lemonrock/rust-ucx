@@ -8,7 +8,7 @@ pub struct TheirRemotelyAccessibleServerEndPointAddress(SocketAddress);
 
 impl TheirRemotelyAccessibleEndPointAddress for TheirRemotelyAccessibleServerEndPointAddress
 {
-	// NOTE: It is important that this instance of `TheirRemoteAddress` is not dropped until after these parameters have been used to create an end point.
+	// NOTE: It is important that this instance of `TheirRemoteMemoryAddress` is not dropped until after these parameters have been used to create an end point.
 	#[inline(always)]
 	fn populate_end_point_parameters(&self, mut end_pointer_parameters: ucp_ep_params_t) -> ucp_ep_params_t
 	{

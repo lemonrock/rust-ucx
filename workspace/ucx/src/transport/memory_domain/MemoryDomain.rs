@@ -79,26 +79,6 @@ impl MemoryDomain
 		CommunicationInterfaceContext::open(hyper_thread_index, self, end_point_address, error_handler, unexpected_tagged_message_handler, progress_engine)
 	}
 	
-	/// Obtains a packed memory key (rkey).
-	#[inline(always)]
-	pub fn packed_memory_key(&self, memory_handle: uct_mem_h) -> Result<PackedMemoryKey, ErrorCode>
-	{
-		let packed_memory_key = PackedMemoryKey::new(self.attributes().packed_memory_key_length());
-		
-		let status = unsafe { uct_md_mkey_pack(self.as_ptr(), memory_handle, packed_memory_key.address().as_ptr() as *mut c_void) };
-		
-		use self::Status::*;
-		
-		match status.parse()
-		{
-			IsOk => Ok(packed_memory_key),
-			
-			Error(error_code) => Err(error_code),
-			
-			_ => panic!("Unexpected status '{:?}'", status),
-		}
-	}
-	
 	/// Does this memory domain own this memory?
 	#[inline(always)]
 	pub fn owns_memory(&self, does_it_own_memory_at_address: NonNull<u8>, does_it_own_memory_length: usize) -> bool
@@ -138,11 +118,10 @@ impl MemoryDomain
 	///
 	/// The underlying memory domain must support allocations (`ALLOC`).
 	#[inline(always)]
-	pub fn allocate_memory_region(&self, address_allocation_request: MemoryRegionAddressAllocationRequest, requested_length: usize, faster_allocation_but_slower_access: bool, name_for_debugging_and_memory_tracking: &str) -> Result<MemoryRegion, ErrorCode>
+	pub fn allocate_memory_region(&self, address_allocation_request: MemoryRegionAddressAllocationRequest, mut requested_length: usize, faster_allocation_but_slower_access: bool) -> Result<MemoryRegion, ErrorCode>
 	{
 		self.debug_assert_supports_feature(_bindgen_ty_1::ALLOC);
 		debug_assert_ne!(requested_length, 0, "request_length can not be zero");
-		
 		#[cfg(debug_assertions)]
 		{
 			if address_allocation_request.is_fixed()
@@ -169,19 +148,9 @@ impl MemoryDomain
 		
 		let (mut address, flags) = address_allocation_request.for_allocate(flags);
 		
-		let mut memory_region = MemoryRegion
-		{
-			memory_domain_handle: self.handle,
-			memory_domain_handle_drop_safety: self.handle_drop_safety(),
-			address: NonNull::dangling(),
-			length: requested_length,
-			memory_region_handle: null_mut(),
-			name_for_debugging_and_memory_tracking: CString::new(name_for_debugging_and_memory_tracking).unwrap(),
-			#[cfg(debug_assertions)] was_allocated_non_blocking,
-			#[cfg(debug_assertions)] memory_advice_is_supported: self.supports_feature(_bindgen_ty_1::ADVISE),
-		};
+		let mut handle = unsafe { uninitialized() };
 		
-		let status = unsafe { uct_md_mem_alloc(self.as_ptr(), &mut memory_region.length, &mut address, flags.0, memory_region.name_for_debugging_and_memory_tracking.as_ptr(), &mut memory_region.memory_region_handle) };
+		let status = unsafe { uct_md_mem_alloc(self.as_ptr(), &mut requested_length, &mut address, flags.0, b"0".as_ptr() as *mut c_char, &mut handle) };
 		
 		use self::Status::*;
 		
@@ -190,8 +159,23 @@ impl MemoryDomain
 			IsOk =>
 			{
 				debug_assert!(!address.is_null());
-				memory_region.address = unsafe { NonNull::new_unchecked(address as *mut u8) };
-				Ok(memory_region)
+				debug_assert!(!handle.is_null());
+				debug_assert_ne!(requested_length, 0);
+				let handle = unsafe { NonNull::new_unchecked(handle) };
+				Ok
+				(
+					MemoryRegion
+					{
+						handle,
+						handle_drop_safety: MemoryRegionHandleDropSafety::new(handle, self.handle, self.handle_drop_safety()),
+						address: unsafe { NonNull::new_unchecked(address as *mut u8) },
+						length: requested_length,
+						packed_memory_key: self.packed_memory_key(handle)?,
+						memory_domain_handle: self.handle,
+						#[cfg(debug_assertions)] was_allocated_non_blocking,
+						#[cfg(debug_assertions)] memory_advice_is_supported: self.supports_feature(_bindgen_ty_1::ADVISE),
+					}
+				)
 			},
 			
 			Error(error_code) => Err(error_code),
@@ -213,35 +197,60 @@ impl MemoryDomain
 		self.debug_assert_supports_feature(_bindgen_ty_1::REG);
 		debug_assert_ne!(length, 0, "length can not be zero");
 		
-		use self::Status::*;
-		
-		let mut memory_registration = MemoryRegistration
-		{
-			memory_domain_handle: self.handle,
-			memory_domain_handle_drop_safety: self.handle_drop_safety(),
-			address,
-			length,
-			memory_region_handle: null_mut(),
-		};
-		
 		// Of the RMA / ATOMIC flags, only InfiniBand takes any notice of atomic; everything else is ignored.
 		// So everything essentially assumes RMA.
 		// Additionally, internally, uct checks that ACCESS_REMOTE_PUT, ACCESS_REMOTE_GET and ACCESS_REMOTE_ATOMIC are set.
-		let flags = uct_md_mem_flags::ACCESS_ALL;
+		const flags: uct_md_mem_flags = uct_md_mem_flags::ACCESS_ALL;
 		
-		let status = unsafe { uct_md_mem_reg(self.as_ptr(), address.as_ptr() as *mut c_void, length, flags.0, &mut memory_registration.memory_region_handle) };
+		let mut handle = unsafe { uninitialized() };
+		
+		let status = unsafe { uct_md_mem_reg(self.as_ptr(), address.as_ptr() as *mut c_void, length, flags.0, &mut handle) };
+		
+		use self::Status::*;
 		
 		match status.parse()
 		{
 			IsOk =>
 			{
-				debug_assert!(!memory_registration.memory_region_handle.is_null(), "memory_registration.memory_region_handle is null");
-				Ok(memory_registration)
+				debug_assert!(!handle.is_null());
+				let handle = unsafe { NonNull::new_unchecked(handle) };
+				Ok
+				(
+					MemoryRegistration
+					{
+						handle,
+						handle_drop_safety: MemoryRegistrationHandleDropSafety::new(handle, self.handle, self.handle_drop_safety()),
+						address,
+						length,
+						packed_memory_key: self.packed_memory_key(handle)?,
+					}
+				)
 			}
 			
 			Error(error_code) => Err(error_code),
 			
 			unexpected_status @ _ => panic!("Unexpected status '{:?}'", unexpected_status)
+		}
+	}
+	
+	#[inline(always)]
+	fn packed_memory_key(&self, memory_handle: NonNull<c_void>) -> Result<Vec<u8>, ErrorCode>
+	{
+		let packed_memory_key_length = self.attributes().packed_memory_key_length();
+		let mut packed_memory_key = Vec::with_capacity(packed_memory_key_length);
+		unsafe { packed_memory_key.set_len(packed_memory_key_length) };
+		
+		let status = unsafe { uct_md_mkey_pack(self.as_ptr(), memory_handle.as_ptr(), packed_memory_key.as_mut_ptr() as *mut c_void) };
+		
+		use self::Status::*;
+		
+		match status.parse()
+		{
+			IsOk => Ok(packed_memory_key),
+			
+			Error(error_code) => Err(error_code),
+			
+			_ => panic!("Unexpected status '{:?}'", status),
 		}
 	}
 	

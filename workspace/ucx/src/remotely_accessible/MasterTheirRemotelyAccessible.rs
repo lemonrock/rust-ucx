@@ -117,14 +117,14 @@ impl MasterTheirRemotelyAccessible
 		
 		// Loop over all per-thread copies and try to update them.
 		// If the spin lock is not available (ie they are locked by a reading thread), add them to a list (`were_locked_retry`) to retry.
-		// `were_locked_retry_index` is, after `try_to_update`, a length (count).
+		// `were_locked_retry_index` is, after `try_to_update`, a length (number_of_items).
 		let mut were_locked_retry_index = try_to_update!(self, were_locked_retry, ZeroBasedHyperThreadIndex::MaximumNumberOfHyperThreads, |index| self.thread_entry(index));
 		
 		// Retry any per-thread copies that were locked.
 		// Loops repeatedly until there are no more per-thread copies that are locked.
 		while were_locked_retry_index != 0
 		{
-			// `were_locked_retry_index` is, after `try_to_update`, a length (count).
+			// `were_locked_retry_index` is, after `try_to_update`, a length (number_of_items).
 			were_locked_retry_index = try_to_update!(self, were_locked_retry, were_locked_retry_index, |index| * were_locked_retry.get_unchecked(index));
 		}
 	}

@@ -26,12 +26,12 @@ impl UnexpectedTaggedMessageHandler for DoNothingUnexpectedTaggedMessageHandler
 	}
 	
 	#[inline(always)]
-	fn unexpected_rendezvous_tagged_message(&self, _sender_tag: TagValue, _header: UcxAllocatedByteBuffer, _remote_memory_address: RemoteAddress, _remote_length: usize, _sender_buffer_packed_remote_key: NonNull<u8>)
+	fn unexpected_rendezvous_tagged_message(&self, _sender_tag: TagValue, _header: UcxAllocatedByteBuffer, _remote_memory_address: RemoteMemoryAddress, _remote_length: usize, _sender_buffer_packed_remote_key: NonNull<u8>)
 	{
 	}
 	
 	#[inline(always)]
-	fn unexpected_rendezvous_tagged_message_with_descriptor_with_user_defined_receive_headroom(&self, _sender_tag: TagValue, _header: UcxAllocatedByteBuffer, _remote_memory_address: RemoteAddress, _remote_length: usize, _sender_buffer_packed_remote_key: NonNull<u8>) -> bool
+	fn unexpected_rendezvous_tagged_message_with_descriptor_with_user_defined_receive_headroom(&self, _sender_tag: TagValue, _header: UcxAllocatedByteBuffer, _remote_memory_address: RemoteMemoryAddress, _remote_length: usize, _sender_buffer_packed_remote_key: NonNull<u8>) -> bool
 	{
 		true
 	}

@@ -136,7 +136,6 @@ impl<SCR: ServerConnectionRequest, E : ErrorHandler, UETM: UnexpectedTaggedMessa
 	}
 }
 
-
 impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessageHandler, AT: ActiveMessageTracer, A0: ActiveMessageHandler, A1: ActiveMessageHandler, A2: ActiveMessageHandler, A3: ActiveMessageHandler, A4: ActiveMessageHandler, A5: ActiveMessageHandler, A6: ActiveMessageHandler, A7: ActiveMessageHandler, A8: ActiveMessageHandler, A9: ActiveMessageHandler, A10: ActiveMessageHandler, A11: ActiveMessageHandler, A12: ActiveMessageHandler, A13: ActiveMessageHandler, A14: ActiveMessageHandler, A15: ActiveMessageHandler, A16: ActiveMessageHandler, A17: ActiveMessageHandler, A18: ActiveMessageHandler, A19: ActiveMessageHandler, A20: ActiveMessageHandler, A21: ActiveMessageHandler, A22: ActiveMessageHandler, A23: ActiveMessageHandler, A24: ActiveMessageHandler, A25: ActiveMessageHandler, A26: ActiveMessageHandler, A27: ActiveMessageHandler, A28: ActiveMessageHandler, A29: ActiveMessageHandler, A30: ActiveMessageHandler, A31: ActiveMessageHandler> CommunicationInterfaceContext<SCR, E, UETM, AT, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22, A23, A24, A25, A26, A27, A28, A29, A30, A31>
 {
 	/// Open an interface.
@@ -300,7 +299,7 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 		
 		let sender_tag = TagValue(stag);
 		let header = UcxAllocatedByteBuffer::new(header as *mut _, header_length as usize);
-		let remote_memory_address = RemoteAddress(remote_addr);
+		let remote_memory_address = RemoteMemoryAddress(remote_addr);
 		let remote_length = length;
 		let remote_key = NonNull::new_unchecked(rkey_buf as *mut u8);
 		
@@ -633,21 +632,14 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 	/// Flushes all outstanding communications issued on the interface prior to this call.
 	/// The operations are completed at the origin or at the target as well. The exact completion semantic depends on flags parameter; currently, only `uct_flush_flags::LOCAL` is supported.
 	/// This flag guarantees that the data transfer is completed but the target buffer may not be updated yet.
-	///
-	///  * `flags`: See above.
-	///  * `completion_handle`: Modified by this call. It can be null (which means that the call will return the current state of the interface and no completion will be generated in case of outstanding communications). If not-null, then the completion counter is decremented by one (1) when this call completes. The completion callback is called when the completion counter reaches zero (0).
-	///
-	/// Returns:-
-	/// * `UCS_OK`: No outstanding communications left.
-	/// * `UCS_INPROGRESS`: Some communication operations are still in progress. If Some() was provided for `completion_handle`, it will be updated upon completion of these operations.
 	#[inline(always)]
-	pub fn flush(&self, flags: uct_flush_flags, completion_handle: Option<&mut uct_completion>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
+	pub fn flush<C: CompletionHandler>(&self, flags: uct_flush_flags, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		debug_assert_eq!(flags, uct_flush_flags::LOCAL, "Only LOCAL is supported currently");
 		
-		let status = unsafe { (self.transport_interface_operations().iface_flush)(self.as_ptr(), flags.0, completion_handle.mutable_reference()) };
+		let status = unsafe { (self.transport_interface_operations().iface_flush)(self.as_ptr(), flags.0, completion.to_raw_pointer()) };
 		
-		Self::parse_status_with_in_progress(status, ())
+		completion.parse_status(status)
 	}
 	
 	/// Ensures ordering of outstanding communications on the interface.

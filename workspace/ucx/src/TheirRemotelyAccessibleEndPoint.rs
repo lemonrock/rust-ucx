@@ -192,7 +192,7 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 	/// Think of the world as multiple threads (worker), each of which is connected to a remote peer (end point), each of which is connected to zero or more remote memory regions.
 	/// Remote memory regions are not needed for tagged messages and streams.
 	#[inline(always)]
-	pub fn use_remote_memory_region<A: LocalToRemoteAddressTranslation>(this: &Rc<Self>, their_remotely_accessible_memory_address: TheirRemotelyAccessibleMemoryAddress, local_to_remote_address_translation: A) -> Result<TheirRemotelyAccessibleMemory<E, A>, ErrorCode>
+	pub fn use_remote_memory_region<A: LocalToRemoteMemoryAddressTranslation>(this: &Rc<Self>, their_remotely_accessible_memory_address: TheirRemotelyAccessibleMemoryAddress, local_to_remote_memory_address_translation: A) -> Result<TheirRemotelyAccessibleMemory<E, A>, ErrorCode>
 	{
 		let mut handle = unsafe { uninitialized() };
 		let status = unsafe { ucp_ep_rkey_unpack(this.debug_assert_handle_is_valid(), their_remotely_accessible_memory_address.0.as_ptr() as *mut _, &mut handle) };
@@ -207,7 +207,7 @@ impl<E: EndPointPeerFailureErrorHandler> TheirRemotelyAccessibleEndPoint<E, Thei
 				{
 					handle,
 					parent_end_point: this.clone(),
-					local_to_remote_address_translation,
+					local_to_remote_memory_address_translation,
 					parent_worker: this.parent_worker.clone(),
 				}
 			),

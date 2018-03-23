@@ -2,21 +2,10 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-trait CompletionHandleHelper
-{
-	#[inline(always)]
-	fn mutable_reference(self) -> *mut uct_completion;
-}
+use ::std::ptr::NonNull;
 
-impl<'a> CompletionHandleHelper for Option<&'a mut uct_completion>
-{
-	#[inline(always)]
-	fn mutable_reference(self) -> *mut uct_completion
-	{
-		match self
-		{
-			None => null_mut(),
-			Some(mutable_reference) => mutable_reference as *mut _
-		}
-	}
-}
+
+include!("DirectLocalToRemoteMemoryAddressTranslation.rs");
+include!("LocalToRemoteMemoryAddressTranslation.rs");
+include!("OffsetLocalToRemoteMemoryAddressTranslation.rs");
+include!("RemoteMemoryAddress.rs");

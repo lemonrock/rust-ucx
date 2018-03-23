@@ -2,15 +2,16 @@
 // Copyright © 2017 The developers of ucx. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx/master/COPYRIGHT.
 
 
-/// 1:1 with no offsets.
-#[derive(Default, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct DirectLocalToRemoteAddressTranslation;
-
-impl LocalToRemoteAddressTranslation for DirectLocalToRemoteAddressTranslation
+/// A MemoryRegion or MemoryRegistration
+pub trait HasMemoryKey: ByteBuffer
 {
+	/// Obtains a packed memory key suitable for sharing with other peers.
 	#[inline(always)]
-	fn from_local_address_to_remote_address(&self, local_address: NonNull<u8>) -> RemoteAddress
-	{
-		RemoteAddress(local_address.as_ptr() as usize as u64)
-	}
+	fn packed_memory_key(&self) -> &[u8];
+	
+	/// Creates a valid IoVector.
+	///
+	/// Sadly, the resultant IoVector references this memory region or registration unsafely, and so `self` must be kept alive by the caller for as long as ZeroCopyIoVector is alive.
+	#[inline(always)]
+	fn zero_copy_io_vector(&self, offset: usize, length: usize) -> ZeroCopyIoVector;
 }

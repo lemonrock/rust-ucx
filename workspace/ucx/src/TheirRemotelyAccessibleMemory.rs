@@ -8,16 +8,16 @@
 ///
 /// Dereferences to its parent end point, so one can call `non_blocking_flush()`, etc.
 #[derive(Debug)]
-pub struct TheirRemotelyAccessibleMemory<E: EndPointPeerFailureErrorHandler, A = DirectLocalToRemoteAddressTranslation>
-where A: LocalToRemoteAddressTranslation
+pub struct TheirRemotelyAccessibleMemory<E: EndPointPeerFailureErrorHandler, A = DirectLocalToRemoteMemoryAddressTranslation>
+where A: LocalToRemoteMemoryAddressTranslation
 {
 	handle: ucp_rkey_h,
 	parent_end_point: Rc<TheirRemotelyAccessibleEndPoint<E, TheirRemotelyAccessibleWorkerEndPointAddress>>,
-	local_to_remote_address_translation: A,
+	local_to_remote_memory_address_translation: A,
 	parent_worker: Worker,
 }
 
-impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> Drop for TheirRemotelyAccessibleMemory<E, A>
+impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteMemoryAddressTranslation> Drop for TheirRemotelyAccessibleMemory<E, A>
 {
 	#[inline(always)]
 	fn drop(&mut self)
@@ -26,7 +26,7 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> Dro
 	}
 }
 
-impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> Deref for TheirRemotelyAccessibleMemory<E, A>
+impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteMemoryAddressTranslation> Deref for TheirRemotelyAccessibleMemory<E, A>
 {
 	type Target = Rc<TheirRemotelyAccessibleEndPoint<E, TheirRemotelyAccessibleWorkerEndPointAddress>>;
 	
@@ -37,23 +37,23 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> Der
 	}
 }
 
-impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> TheirRemotelyAccessibleMemory<E, A>
+impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteMemoryAddressTranslation> TheirRemotelyAccessibleMemory<E, A>
 {
 	/// Translates a local address to a remote address.
 	#[inline(always)]
-	pub fn remote_address(&self, local_address: NonNull<u8>) -> RemoteAddress
+	pub fn remote_memory_address(&self, local_address: NonNull<u8>) -> RemoteMemoryAddress
 	{
-		self.local_to_remote_address_translation.from_local_address_to_remote_address(local_address)
+		self.local_to_remote_memory_address_translation.from_local_address_to_remote_memory_address(local_address)
 	}
 	
 	/// Returns a local pointer which can be used for all atomic memory operations.
 	///
 	/// Will only work for `mmap`, `shmem`, `xpmem`, and `knmem` memory domains, ie memory on the same machine.
 	#[inline(always)]
-	pub fn local_pointer_if_remote_memory_is_shared_memory(&self, remote_address: u64) -> *mut u8
+	pub fn local_pointer_if_remote_memory_is_shared_memory(&self, remote_memory_address: u64) -> *mut u8
 	{
 		let mut local_address = unsafe { uninitialized() };
-		panic_on_error!(ucp_rkey_ptr, self.handle, remote_address, &mut local_address);
+		panic_on_error!(ucp_rkey_ptr, self.handle, remote_memory_address, &mut local_address);
 		local_address as *mut u8
 	}
 	
@@ -68,9 +68,9 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	pub fn blocking_store(&self, local_source_address: NonNull<u8>, length_in_bytes: usize) -> Result<(), ErrorCode>
 	{
 		let local_address = local_source_address.as_ptr()  as *mut c_void;
-		let remote_address = self.remote_address(local_source_address).0;
+		let remote_memory_address = self.remote_memory_address(local_source_address).0;
 		
-		let status = unsafe { ucp_put(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
+		let status = unsafe { ucp_put(self.end_point_handle(), local_address, length_in_bytes, remote_memory_address, self.debug_assert_handle_is_valid()) };
 		Self::parse_status_for_blocking(status, ())
 	}
 	
@@ -89,9 +89,9 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	pub fn non_blocking_store<'worker>(&'worker self, local_source_address: NonNull<u8>, length_in_bytes: usize, completion_callback: ucp_send_callback_t) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
 	{
 		let local_address = local_source_address.as_ptr()  as *mut c_void;
-		let remote_address = self.remote_address(local_source_address).0;
+		let remote_memory_address = self.remote_memory_address(local_source_address).0;
 		
-		let status_pointer = unsafe { ucp_put_nb(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid(), completion_callback) };
+		let status_pointer = unsafe { ucp_put_nb(self.end_point_handle(), local_address, length_in_bytes, remote_memory_address, self.debug_assert_handle_is_valid(), completion_callback) };
 		
 		self.parse_status_pointer(status_pointer)
 	}
@@ -105,9 +105,9 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	pub fn non_blocking_implicit_store(&self, local_source_address: NonNull<u8>, length_in_bytes: usize) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
 	{
 		let local_address = local_source_address.as_ptr()  as *mut c_void;
-		let remote_address = self.remote_address(local_source_address).0;
+		let remote_memory_address = self.remote_memory_address(local_source_address).0;
 		
-		let status = unsafe { ucp_put_nbi(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
+		let status = unsafe { ucp_put_nbi(self.end_point_handle(), local_address, length_in_bytes, remote_memory_address, self.debug_assert_handle_is_valid()) };
 		Self::parse_status_for_non_blocking(status)
 	}
 	
@@ -122,9 +122,9 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	pub fn blocking_load(&self, local_destination_address: NonNull<u8>, length_in_bytes: usize) -> Result<(), ErrorCode>
 	{
 		let local_address = local_destination_address.as_ptr()  as *mut c_void;
-		let remote_address = self.remote_address(local_destination_address).0;
+		let remote_memory_address = self.remote_memory_address(local_destination_address).0;
 		
-		let status = unsafe { ucp_get(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
+		let status = unsafe { ucp_get(self.end_point_handle(), local_address, length_in_bytes, remote_memory_address, self.debug_assert_handle_is_valid()) };
 		Self::parse_status_for_blocking(status, ())
 	}
 	
@@ -143,9 +143,9 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	pub fn non_blocking_load<'worker>(&'worker self, local_source_address: NonNull<u8>, length_in_bytes: usize, completion_callback: ucp_send_callback_t) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
 	{
 		let local_address = local_source_address.as_ptr()  as *mut c_void;
-		let remote_address = self.remote_address(local_source_address).0;
+		let remote_memory_address = self.remote_memory_address(local_source_address).0;
 		
-		let status_pointer = unsafe { ucp_get_nb(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid(), completion_callback) };
+		let status_pointer = unsafe { ucp_get_nb(self.end_point_handle(), local_address, length_in_bytes, remote_memory_address, self.debug_assert_handle_is_valid(), completion_callback) };
 		
 		self.parse_status_pointer(status_pointer)
 	}
@@ -159,9 +159,9 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	pub fn non_blocking_implicit_load(&self, local_source_address: NonNull<u8>, length_in_bytes: usize) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
 	{
 		let local_address = local_source_address.as_ptr()  as *mut c_void;
-		let remote_address = self.remote_address(local_source_address).0;
+		let remote_memory_address = self.remote_memory_address(local_source_address).0;
 		
-		let status = unsafe { ucp_get_nbi(self.end_point_handle(), local_address, length_in_bytes, remote_address, self.debug_assert_handle_is_valid()) };
+		let status = unsafe { ucp_get_nbi(self.end_point_handle(), local_address, length_in_bytes, remote_memory_address, self.debug_assert_handle_is_valid()) };
 		Self::parse_status_for_non_blocking(status)
 	}
 	
@@ -169,11 +169,11 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	///
 	/// The remote address must be 4-byte (32-bit) aligned.
 	#[inline(always)]
-	pub fn partly_blocking_atomic_add_u32_increment(&self, aligned_remote_address: RemoteAddress, increment: u32) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
+	pub fn partly_blocking_atomic_add_u32_increment(&self, aligned_remote_memory_address: RemoteMemoryAddress, increment: u32) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
 	{
-		aligned_remote_address.debug_assert_is_32_bit_aligned();
+		aligned_remote_memory_address.debug_assert_is_32_bit_aligned();
 		
-		let status = unsafe { ucp_atomic_add32(self.end_point_handle(), increment, aligned_remote_address.0, self.debug_assert_handle_is_valid()) };
+		let status = unsafe { ucp_atomic_add32(self.end_point_handle(), increment, aligned_remote_memory_address.0, self.debug_assert_handle_is_valid()) };
 		Self::parse_status_for_non_blocking(status)
 	}
 	
@@ -181,11 +181,11 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	///
 	/// The remote address must be 8-byte (64-bit) aligned.
 	#[inline(always)]
-	pub fn partly_blocking_atomic_add_u64_increment(&self, aligned_remote_address: RemoteAddress, increment: u64) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
+	pub fn partly_blocking_atomic_add_u64_increment(&self, aligned_remote_memory_address: RemoteMemoryAddress, increment: u64) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ErrorCode>
 	{
-		aligned_remote_address.debug_assert_is_64_bit_aligned();
+		aligned_remote_memory_address.debug_assert_is_64_bit_aligned();
 		
-		let status = unsafe { ucp_atomic_add64(self.end_point_handle(), increment, aligned_remote_address.0, self.debug_assert_handle_is_valid()) };
+		let status = unsafe { ucp_atomic_add64(self.end_point_handle(), increment, aligned_remote_memory_address.0, self.debug_assert_handle_is_valid()) };
 		Self::parse_status_for_non_blocking(status)
 	}
 	
@@ -195,13 +195,13 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	///
 	/// The remote address must be 4-byte (32-bit) aligned.
 	#[inline(always)]
-	pub fn blocking_atomic_fetch_and_add_u32_increment(&self, aligned_remote_address: RemoteAddress, increment: u32) -> Result<u32, ErrorCode>
+	pub fn blocking_atomic_fetch_and_add_u32_increment(&self, aligned_remote_memory_address: RemoteMemoryAddress, increment: u32) -> Result<u32, ErrorCode>
 	{
-		aligned_remote_address.debug_assert_is_32_bit_aligned();
+		aligned_remote_memory_address.debug_assert_is_32_bit_aligned();
 		
 		let mut previous_value = unsafe { uninitialized() };
 		
-		let status = unsafe { ucp_atomic_fadd32(self.end_point_handle(), increment, aligned_remote_address.0, self.debug_assert_handle_is_valid(), &mut previous_value) };
+		let status = unsafe { ucp_atomic_fadd32(self.end_point_handle(), increment, aligned_remote_memory_address.0, self.debug_assert_handle_is_valid(), &mut previous_value) };
 		Self::parse_status_for_blocking(status, previous_value)
 	}
 	
@@ -211,13 +211,13 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	///
 	/// The remote address must be 8-byte (64-bit) aligned.
 	#[inline(always)]
-	pub fn blocking_atomic_fetch_and_add_u64_increment(&self, aligned_remote_address: RemoteAddress, increment: u64) -> Result<u64, ErrorCode>
+	pub fn blocking_atomic_fetch_and_add_u64_increment(&self, aligned_remote_memory_address: RemoteMemoryAddress, increment: u64) -> Result<u64, ErrorCode>
 	{
-		aligned_remote_address.debug_assert_is_64_bit_aligned();
+		aligned_remote_memory_address.debug_assert_is_64_bit_aligned();
 		
 		let mut previous_value = unsafe { uninitialized() };
 		
-		let status = unsafe { ucp_atomic_fadd64(self.end_point_handle(), increment, aligned_remote_address.0, self.debug_assert_handle_is_valid(), &mut previous_value) };
+		let status = unsafe { ucp_atomic_fadd64(self.end_point_handle(), increment, aligned_remote_memory_address.0, self.debug_assert_handle_is_valid(), &mut previous_value) };
 		Self::parse_status_for_blocking(status, previous_value)
 	}
 	
@@ -227,13 +227,13 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	///
 	/// The remote address must be 4-byte (32-bit) aligned.
 	#[inline(always)]
-	pub fn blocking_atomic_swap_u32_value(&self, aligned_remote_address: RemoteAddress, value_to_swap_for: u32) -> Result<u32, ErrorCode>
+	pub fn blocking_atomic_swap_u32_value(&self, aligned_remote_memory_address: RemoteMemoryAddress, value_to_swap_for: u32) -> Result<u32, ErrorCode>
 	{
-		aligned_remote_address.debug_assert_is_32_bit_aligned();
+		aligned_remote_memory_address.debug_assert_is_32_bit_aligned();
 		
 		let mut previous_value = unsafe { uninitialized() };
 		
-		let status = unsafe { ucp_atomic_swap32(self.end_point_handle(), value_to_swap_for, aligned_remote_address.0, self.debug_assert_handle_is_valid(), &mut previous_value) };
+		let status = unsafe { ucp_atomic_swap32(self.end_point_handle(), value_to_swap_for, aligned_remote_memory_address.0, self.debug_assert_handle_is_valid(), &mut previous_value) };
 		Self::parse_status_for_blocking(status, previous_value)
 	}
 	
@@ -243,13 +243,13 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	///
 	/// The remote address must be 8-byte (64-bit) aligned.
 	#[inline(always)]
-	pub fn blocking_atomic_swap_u64_value(&self, aligned_remote_address: RemoteAddress, value_to_swap_for: u64) -> Result<u64, ErrorCode>
+	pub fn blocking_atomic_swap_u64_value(&self, aligned_remote_memory_address: RemoteMemoryAddress, value_to_swap_for: u64) -> Result<u64, ErrorCode>
 	{
-		aligned_remote_address.debug_assert_is_64_bit_aligned();
+		aligned_remote_memory_address.debug_assert_is_64_bit_aligned();
 		
 		let mut previous_value = unsafe { uninitialized() };
 		
-		let status = unsafe { ucp_atomic_swap64(self.end_point_handle(), value_to_swap_for, aligned_remote_address.0, self.debug_assert_handle_is_valid(), &mut previous_value) };
+		let status = unsafe { ucp_atomic_swap64(self.end_point_handle(), value_to_swap_for, aligned_remote_memory_address.0, self.debug_assert_handle_is_valid(), &mut previous_value) };
 		Self::parse_status_for_blocking(status, previous_value)
 	}
 	
@@ -259,13 +259,13 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	///
 	/// The remote address must be 4-byte (32-bit) aligned.
 	#[inline(always)]
-	pub fn blocking_atomic_compare_and_swap_u32_value(&self, aligned_remote_address: RemoteAddress, value_to_expect: u32, value_to_swap_for: u32) -> Result<u32, ErrorCode>
+	pub fn blocking_atomic_compare_and_swap_u32_value(&self, aligned_remote_memory_address: RemoteMemoryAddress, value_to_expect: u32, value_to_swap_for: u32) -> Result<u32, ErrorCode>
 	{
-		aligned_remote_address.debug_assert_is_32_bit_aligned();
+		aligned_remote_memory_address.debug_assert_is_32_bit_aligned();
 		
 		let mut previous_value = unsafe { uninitialized() };
 		
-		let status = unsafe { ucp_atomic_cswap32(self.end_point_handle(), value_to_expect, value_to_swap_for, aligned_remote_address.0, self.debug_assert_handle_is_valid(), &mut previous_value) };
+		let status = unsafe { ucp_atomic_cswap32(self.end_point_handle(), value_to_expect, value_to_swap_for, aligned_remote_memory_address.0, self.debug_assert_handle_is_valid(), &mut previous_value) };
 		Self::parse_status_for_blocking(status, previous_value)
 	}
 	
@@ -275,13 +275,13 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteAddressTranslation> The
 	///
 	/// The remote address must be 8-byte (64-bit) aligned.
 	#[inline(always)]
-	pub fn blocking_atomic_compare_and_swap_u64_value(&self, aligned_remote_address: RemoteAddress, value_to_expect: u64, value_to_swap_for: u64) -> Result<u64, ErrorCode>
+	pub fn blocking_atomic_compare_and_swap_u64_value(&self, aligned_remote_memory_address: RemoteMemoryAddress, value_to_expect: u64, value_to_swap_for: u64) -> Result<u64, ErrorCode>
 	{
-		aligned_remote_address.debug_assert_is_64_bit_aligned();
+		aligned_remote_memory_address.debug_assert_is_64_bit_aligned();
 		
 		let mut previous_value = unsafe { uninitialized() };
 		
-		let status = unsafe { ucp_atomic_cswap64(self.end_point_handle(), value_to_expect, value_to_swap_for, aligned_remote_address.0, self.debug_assert_handle_is_valid(), &mut previous_value) };
+		let status = unsafe { ucp_atomic_cswap64(self.end_point_handle(), value_to_expect, value_to_swap_for, aligned_remote_memory_address.0, self.debug_assert_handle_is_valid(), &mut previous_value) };
 		Self::parse_status_for_blocking(status, previous_value)
 	}
 	

@@ -40,7 +40,7 @@ pub trait UnexpectedTaggedMessageHandler
 	///
 	/// `sender_buffer_packed_remote_key` can be passed to `UnpackedMemoryKey::from_tagged_message_rendezvous_sender_buffer_packed_remote_key(sender_buffer_packed_remote_key).remote_key_descriptor()`.
 	#[inline(always)]
-	fn unexpected_rendezvous_tagged_message(&self, sender_tag: TagValue, header: UcxAllocatedByteBuffer, remote_memory_address: RemoteAddress, remote_length: usize, sender_buffer_packed_remote_key: NonNull<u8>);
+	fn unexpected_rendezvous_tagged_message(&self, sender_tag: TagValue, header: UcxAllocatedByteBuffer, remote_memory_address: RemoteMemoryAddress, remote_length: usize, sender_buffer_packed_remote_key: NonNull<u8>);
 	
 	/// Received an unexpected rendezvous tagged message.
 	///
@@ -56,5 +56,5 @@ pub trait UnexpectedTaggedMessageHandler
 	///
 	/// `sender_buffer_packed_remote_key` can be passed to `UnpackedMemoryKey::from_tagged_message_rendezvous_sender_buffer_packed_remote_key(sender_buffer_packed_remote_key).remote_key_descriptor()`.
 	#[inline(always)]
-	fn unexpected_rendezvous_tagged_message_with_descriptor_with_user_defined_receive_headroom(&self, sender_tag: TagValue, header: UcxAllocatedByteBuffer, remote_memory_address: RemoteAddress, remote_length: usize, sender_buffer_packed_remote_key: NonNull<u8>) -> bool;
+	fn unexpected_rendezvous_tagged_message_with_descriptor_with_user_defined_receive_headroom(&self, sender_tag: TagValue, header: UcxAllocatedByteBuffer, remote_memory_address: RemoteMemoryAddress, remote_length: usize, sender_buffer_packed_remote_key: NonNull<u8>) -> bool;
 }

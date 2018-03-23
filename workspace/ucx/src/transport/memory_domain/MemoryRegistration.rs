@@ -6,26 +6,30 @@
 #[derive(Debug)]
 pub struct MemoryRegistration
 {
-	memory_domain_handle: NonNull<uct_md>,
-	memory_domain_handle_drop_safety: Arc<MemoryDomainHandleDropSafety>,
+	handle: NonNull<c_void>,
+	handle_drop_safety: Arc<MemoryRegistrationHandleDropSafety>,
 	address: NonNull<u8>,
 	length: usize,
-	memory_region_handle: uct_mem_h,
+	packed_memory_key: Vec<u8>,
 }
 
-impl Drop for MemoryRegistration
+impl HasMemoryKey for MemoryRegistration
 {
 	#[inline(always)]
-	fn drop(&mut self)
+	fn packed_memory_key(&self) -> &[u8]
 	{
-		if !self.memory_region_handle.is_null()
-		{
-			let status = unsafe { uct_md_mem_dereg(self.memory_domain_handle.as_ptr(), self.memory_region_handle) };
-			if !status.is_ok()
-			{
-				panic!("Unexpected status '{:?}'", status.parse())
-			}
-		}
+		self.packed_memory_key.as_slice()
+	}
+	
+	#[inline(always)]
+	fn zero_copy_io_vector(&self, offset: usize, length: usize) -> ZeroCopyIoVector
+	{
+		debug_assert_ne!(length, 0, "length can not be zero");
+		debug_assert!(offset <= self.length, "offset '{}' is equal to or greater than self.length '{}'", offset, self.length);
+		debug_assert!(offset + length <= self.length, "offset '{}' + length '{}' is equal to or greater than self.length '{}'", offset, length, self.length);
+		
+		let address = unsafe { NonNull::new_unchecked(((self.address.as_ptr() as usize) + offset) as *mut u8) };
+		ZeroCopyIoVector::new(address, length, self.handle)
 	}
 }
 
@@ -43,4 +47,3 @@ impl ByteBuffer for MemoryRegistration
 		self.length
 	}
 }
-
