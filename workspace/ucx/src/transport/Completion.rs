@@ -24,8 +24,6 @@ impl<C: CompletionHandler> Drop for Completion<C>
 		{
 			drop(self.reference_counted_copy_used_by_uct_completion_callback());
 		}
-		
-		drop(self.reference_counted_copy_kept_in_rust_form);
 	}
 }
 
@@ -82,7 +80,7 @@ impl<C: CompletionHandler> Completion<C>
 	#[inline(always)]
 	pub(crate) fn parse_status(&self, status: ucs_status_t) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
-		CompletionInternal::callback_by_rust(self.reference_counted_copy_kept_in_raw_form_used_by_uct_completion_callback, status)
+		CompletionInternal::<C>::callback_by_rust(self.reference_counted_copy_kept_in_raw_form_used_by_uct_completion_callback, status)
 	}
 	
 	#[inline(always)]

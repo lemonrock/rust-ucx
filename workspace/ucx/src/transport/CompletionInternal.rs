@@ -3,11 +3,11 @@
 
 
 #[derive(Debug)]
-#[repr(C, packed)]
+#[repr(C)]
 struct CompletionInternal<C: CompletionHandler>
 {
 	completion_handler: C,
-	uct_required_field_which_must_be_last_field_in_struct: uct_completion,
+	uct_required_field_which_must_be_last_field_in_struct: UnsafeCell<uct_completion>,
 }
 
 impl<C: CompletionHandler> CompletionInternal<C>
@@ -20,20 +20,23 @@ impl<C: CompletionHandler> CompletionInternal<C>
 			Self
 			{
 				completion_handler,
-				uct_required_field_which_must_be_last_field_in_struct: uct_completion
-				{
-					func: Self::callback_by_uct,
-					count: 0,
-				}
+				uct_required_field_which_must_be_last_field_in_struct: UnsafeCell::new
+				(
+					uct_completion
+					{
+						func: Self::callback_by_uct,
+						count: 0,
+					}
+				)
 			}
 		)
 	}
 	
 	unsafe extern "C" fn callback_by_uct(raw_pointer: *mut uct_completion_t, status: ucs_status_t)
 	{
-		let mut this = Self::from_raw_pointer(raw_pointer);
+		let this = Self::from_raw_pointer(raw_pointer);
 		
-		debug_assert!(this.uct_required_field_which_must_be_last_field_in_struct.count <= 0, "UCX count was not zero or negative");
+		debug_assert!(this.get_count() <= 0, "UCX count was not zero or negative");
 		
 		use self::Status::*;
 		
@@ -59,21 +62,21 @@ impl<C: CompletionHandler> CompletionInternal<C>
 			
 			IsOk =>
 			{
-				CompletionInternal::as_if_called_by_uct(raw_pointer, |completion_internal| completion_internal.completed_ok());
+				Self::as_if_called_by_uct(raw_pointer, |completion_internal| completion_internal.completed_ok());
 				
 				Ok(Completed(()))
 			}
 			
 			Error(error_code) =>
 			{
-				CompletionInternal::as_if_called_by_uct(raw_pointer, |completion_internal| completion_internal.completed_with_error(error_code));
+				Self::as_if_called_by_uct(raw_pointer, |completion_internal| completion_internal.completed_with_error(error_code));
 				
 				Err(())
 			}
 			
 			unexpected_status @ _ =>
 			{
-				CompletionInternal::as_if_called_by_uct(raw_pointer, |_completion_internal| {});
+				Self::as_if_called_by_uct(raw_pointer, |_completion_internal| {});
 				
 				panic!("Unexpected status '{:?}'", unexpected_status)
 			}
@@ -85,11 +88,11 @@ impl<C: CompletionHandler> CompletionInternal<C>
 	{
 		let this = Self::from_raw_pointer(raw_pointer);
 		
-		this.uct_required_field_which_must_be_last_field_in_struct.count -= 1;
-		if this.uct_required_field_which_must_be_last_field_in_struct.count <= 0
+		let count = this.get_count() - 1;
+		this.set_count(count);
+		if count <= 0
 		{
 			action(this);
-			drop(this)
 		}
 		else
 		{
@@ -114,13 +117,13 @@ impl<C: CompletionHandler> CompletionInternal<C>
 	{
 		let count = self.corrected_count();
 		debug_assert_ne!(count, ::std::i32::MAX as u32, "Maximum count reached");
-		self.uct_required_field_which_must_be_last_field_in_struct.count = (count + 1) as i32;
+		self.set_count((count + 1) as i32);
 	}
 	
 	#[inline(always)]
 	fn corrected_count(&self) -> u32
 	{
-		let count = self.uct_required_field_which_must_be_last_field_in_struct.count;
+		let count = self.get_count();
 		if count <= 0
 		{
 			0
@@ -129,6 +132,18 @@ impl<C: CompletionHandler> CompletionInternal<C>
 		{
 			count as u32
 		}
+	}
+	
+	#[inline(always)]
+	fn get_count(&self) -> i32
+	{
+		(unsafe { & * self.uct_required_field_which_must_be_last_field_in_struct.get() }).count
+	}
+	
+	#[inline(always)]
+	fn set_count(&self, count: i32)
+	{
+		(unsafe { &mut * self.uct_required_field_which_must_be_last_field_in_struct.get() }).count = count
 	}
 	
 	#[inline(always)]

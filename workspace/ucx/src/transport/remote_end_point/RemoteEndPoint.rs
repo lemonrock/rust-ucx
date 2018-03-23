@@ -215,11 +215,13 @@ impl RemoteEndPoint
 	///
 	///  * `completion_handle`: Modified by this call. It can be null (which means that the call will return the current state of the interface and no completion will be generated in case of outstanding communications). If not-null, then the completion counter is decremented by one (1) when this call completes. The completion callback is called when the completion counter reaches zero (0).
 	#[inline(always)]
-	pub fn check_if_destination_is_alive(&self, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
+	pub fn check_if_destination_is_alive<C: CompletionHandler>(&self, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		self.debug_interface_supports_feature(InterfaceFeaturesSupported::EP_CHECK);
 		
-		unsafe { (self.transport_interface_operations().ep_check)(self.ep(), ReservedForFutureUseFlags, completion_handle.mutable_reference()) }
+		let status = unsafe { (self.transport_interface_operations().ep_check)(self.ep(), ReservedForFutureUseFlags, completion.to_raw_pointer()) };
+		
+		completion.parse_status(status)
 	}
 }
 
@@ -279,9 +281,11 @@ impl RemoteEndPoint
 	/// * `UCS_INPROGRESS`: Some communication operations are still in progress. If Some() was provided for `completion_handle`, it will be updated upon completion of these operations.
 	/// * `UCS_ERR_NO_RESOURCE`: Flush operation could not be initiated. A subsequent call to `pending_add` would add a pending/ operation, which provides an opportunity to retry/ the flush.
 	#[inline(always)]
-	fn flush(&self, flags: uct_flush_flags, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
+	fn flush<C: CompletionHandler>(&self, flags: uct_flush_flags, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
-		unsafe { (self.transport_interface_operations().ep_flush)(self.ep(), flags.0, completion_handle.mutable_reference()) }
+		let status = unsafe { (self.transport_interface_operations().ep_flush)(self.ep(), flags.0, completion.to_raw_pointer()) };
+		
+		completion.parse_status(status)
 	}
 	
 	/// Ensures ordering of outstanding communications on the end point.
@@ -444,11 +448,13 @@ impl RemoteEndPoint
 	/// * `UCS_OK`: No outstanding communications left.
 	/// * `UCS_INPROGRESS`: Some communication operations are still in progress. If Some() was provided for `completion_handle`, it will be updated upon completion of these operations.
 	#[inline(always)]
-	fn atomic_fetch_and_add_u64(&self, add: u64, remote_addr: u64, rkey: uct_rkey_t, result: &mut u64, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
+	fn atomic_fetch_and_add_u64<C: CompletionHandler>(&self, add: u64, remote_addr: u64, rkey: uct_rkey_t, result: &mut u64, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		self.debug_interface_supports_feature(InterfaceFeaturesSupported::ATOMIC_FADD64);
 		
-		unsafe { (self.transport_interface_operations().ep_atomic_fadd64)(self.ep(), add, remote_addr, rkey, result, completion_handle.mutable_reference()) }
+		let status = unsafe { (self.transport_interface_operations().ep_atomic_fadd64)(self.ep(), add, remote_addr, rkey, result, completion.to_raw_pointer()) };
+		
+		completion.parse_status(status)
 	}
 	
 	/// Atomic swap.
@@ -461,11 +467,13 @@ impl RemoteEndPoint
 	/// * `UCS_OK`: No outstanding communications left.
 	/// * `UCS_INPROGRESS`: Some communication operations are still in progress. If Some() was provided for `completion_handle`, it will be updated upon completion of these operations.
 	#[inline(always)]
-	fn atomic_swap_u64(&self, swap: u64, remote_addr: u64, rkey: uct_rkey_t, result: &mut u64, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
+	fn atomic_swap_u64<C: CompletionHandler>(&self, swap: u64, remote_addr: u64, rkey: uct_rkey_t, result: &mut u64, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		self.debug_interface_supports_feature(InterfaceFeaturesSupported::ATOMIC_SWAP64);
 		
-		unsafe { (self.transport_interface_operations().ep_atomic_swap64)(self.ep(), swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
+		let status = unsafe { (self.transport_interface_operations().ep_atomic_swap64)(self.ep(), swap, remote_addr, rkey, result, completion.to_raw_pointer()) };
+		
+		completion.parse_status(status)
 	}
 	
 	/// Atomic compare_and_swap.
@@ -478,11 +486,13 @@ impl RemoteEndPoint
 	/// * `UCS_OK`: No outstanding communications left.
 	/// * `UCS_INPROGRESS`: Some communication operations are still in progress. If Some() was provided for `completion_handle`, it will be updated upon completion of these operations.
 	#[inline(always)]
-	fn atomic_compare_and_swap_u64(&self, compare: u64, swap: u64, remote_addr: u64, rkey: uct_rkey_t, result: &mut u64, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
+	fn atomic_compare_and_swap_u64<C: CompletionHandler>(&self, compare: u64, swap: u64, remote_addr: u64, rkey: uct_rkey_t, result: &mut u64, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		self.debug_interface_supports_feature(InterfaceFeaturesSupported::ATOMIC_CSWAP64);
 		
-		unsafe { (self.transport_interface_operations().ep_atomic_cswap64)(self.ep(), compare, swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
+		let status = unsafe { (self.transport_interface_operations().ep_atomic_cswap64)(self.ep(), compare, swap, remote_addr, rkey, result, completion.to_raw_pointer()) };
+		
+		completion.parse_status(status)
 	}
 	
 	/// Atomic add.
@@ -506,11 +516,13 @@ impl RemoteEndPoint
 	/// * `UCS_OK`: No outstanding communications left.
 	/// * `UCS_INPROGRESS`: Some communication operations are still in progress. If Some() was provided for `completion_handle`, it will be updated upon completion of these operations.
 	#[inline(always)]
-	fn atomic_fetch_and_add_u32(&self, add: u32, remote_addr: u64, rkey: uct_rkey_t, result: &mut u32, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
+	fn atomic_fetch_and_add_u32<C: CompletionHandler>(&self, add: u32, remote_addr: u64, rkey: uct_rkey_t, result: &mut u32, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		self.debug_interface_supports_feature(InterfaceFeaturesSupported::ATOMIC_FADD32);
 		
-		unsafe { (self.transport_interface_operations().ep_atomic_fadd32)(self.ep(), add, remote_addr, rkey, result, completion_handle.mutable_reference()) }
+		let status = unsafe { (self.transport_interface_operations().ep_atomic_fadd32)(self.ep(), add, remote_addr, rkey, result, completion.to_raw_pointer()) };
+		
+		completion.parse_status(status)
 	}
 	
 	/// Atomic swap.
@@ -523,11 +535,13 @@ impl RemoteEndPoint
 	/// * `UCS_OK`: No outstanding communications left.
 	/// * `UCS_INPROGRESS`: Some communication operations are still in progress. If Some() was provided for `completion_handle`, it will be updated upon completion of these operations.
 	#[inline(always)]
-	fn atomic_swap_u32(&self, swap: u32, remote_addr: u64, rkey: uct_rkey_t, result: &mut u32, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
+	fn atomic_swap_u32<C: CompletionHandler>(&self, swap: u32, remote_addr: u64, rkey: uct_rkey_t, result: &mut u32, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		self.debug_interface_supports_feature(InterfaceFeaturesSupported::ATOMIC_SWAP32);
 		
-		unsafe { (self.transport_interface_operations().ep_atomic_swap32)(self.ep(), swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
+		let status = unsafe { (self.transport_interface_operations().ep_atomic_swap32)(self.ep(), swap, remote_addr, rkey, result, completion.to_raw_pointer()) };
+		
+		completion.parse_status(status)
 	}
 	
 	/// Atomic compare_and_swap.
@@ -540,11 +554,13 @@ impl RemoteEndPoint
 	/// * `UCS_OK`: No outstanding communications left.
 	/// * `UCS_INPROGRESS`: Some communication operations are still in progress. If Some() was provided for `completion_handle`, it will be updated upon completion of these operations.
 	#[inline(always)]
-	fn atomic_compare_and_swap_u32(&self, compare: u32, swap: u32, remote_addr: u64, rkey: uct_rkey_t, result: &mut u32, completion_handle: Option<&mut uct_completion>) -> ucs_status_t
+	fn atomic_compare_and_swap_u32<C: CompletionHandler>(&self, compare: u32, swap: u32, remote_addr: u64, rkey: uct_rkey_t, result: &mut u32, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		self.debug_interface_supports_feature(InterfaceFeaturesSupported::ATOMIC_CSWAP32);
 		
-		unsafe { (self.transport_interface_operations().ep_atomic_cswap32)(self.ep(), compare, swap, remote_addr, rkey, result, completion_handle.mutable_reference()) }
+		let status = unsafe { (self.transport_interface_operations().ep_atomic_cswap32)(self.ep(), compare, swap, remote_addr, rkey, result, completion.to_raw_pointer()) };
+		
+		completion.parse_status(status)
 	}
 }
 
@@ -630,11 +646,13 @@ impl RemoteEndPoint
 	/// @return UCS_INPROGRESS      - started: operation, and comp will be used to
 	/// notify when it's completed.
 	#[inline(always)]
-	fn uct_ep_tag_eager_zcopy(&self, tag: uct_tag_t, imm: uint64_t, iov: *const uct_iov_t, iovcnt: size_t, flags: c_uint, comp: *mut uct_completion_t) -> ucs_status_t
+	fn uct_ep_tag_eager_zcopy<C: CompletionHandler>(&self, tag: uct_tag_t, imm: uint64_t, iov: *const uct_iov_t, iovcnt: size_t, flags: c_uint, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		self.debug_interface_supports_feature(InterfaceFeaturesSupported::TAG_EAGER_ZCOPY);
 		
-		unsafe { (self.transport_interface_operations().ep_tag_eager_zcopy)(self.ep(), tag, imm, iov, iovcnt, flags, comp) }
+		let status = unsafe { (self.transport_interface_operations().ep_tag_eager_zcopy)(self.ep(), tag, imm, iov, iovcnt, flags, completion.to_raw_pointer()) };
+		
+		completion.parse_status(status)
 	}
 	
 	/// Rendezvous tagged-send operation.
@@ -667,7 +685,7 @@ impl RemoteEndPoint
 	/// rendezvous operation.
 	/// @return otherwise - Error code.
 	#[inline(always)]
-	fn uct_ep_tag_rndv_zcopy(&self, tag: uct_tag_t, header: *const c_void, header_length: c_uint, iov: *const uct_iov_t, iovcnt: size_t, flags: c_uint, comp: *mut uct_completion_t) -> ucs_status_ptr_t
+	fn uct_ep_tag_rndv_zcopy<C: CompletionHandler>(&self, tag: uct_tag_t, header: *const c_void, header_length: c_uint, iov: *const uct_iov_t, iovcnt: size_t, flags: c_uint, comp: *mut uct_completion_t) -> ucs_status_ptr_t
 	{
 		self.debug_interface_supports_feature(InterfaceFeaturesSupported::TAG_RNDV_ZCOPY);
 		

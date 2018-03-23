@@ -10,6 +10,7 @@ use super::print_information::PrintInformation;
 use super::status::*;
 use ::libc::FILE;
 use ::std::cell::Cell;
+use ::std::cell::UnsafeCell;
 use ::std::ffi::CString;
 use ::std::fmt;
 use ::std::fmt::Debug;
