@@ -217,6 +217,7 @@ compile_platformSpecificPreparation()
 			export PATH="$(brew --prefix coreutils)"/libexec/gnubin:"$(brew --prefix gnu-sed)"/libexec/gnubin:"$PATH"
 
 			muslIncludeFolderPath="$(brew --prefix musl-cross)"/libexec/x86_64-linux-musl/include
+			targetSysRootFolderPath="$(brew --prefix musl-cross)"/libexec/"$configureHost"
 
 			if [ $numberOfMakeJobs -eq 0 ]; then
 				compile_ensureRequiredBinariesArePresent sysctl
@@ -226,7 +227,9 @@ compile_platformSpecificPreparation()
 
 		Linux)
 			compile_ensureRequiredBinariesArePresent make sed x86_64-linux-musl-gcc x86_64-linux-musl-ar rm mkdir rsync cat
+			
 			muslIncludeFolderPath='/usr/include'
+			targetSysRootFolderPath='/usr'
 
 			if [ $numberOfMakeJobs -eq 0 ]; then
 				compile_ensureRequiredBinariesArePresent grep
@@ -340,6 +343,7 @@ compile_main()
 
 	local platform
 	local muslIncludeFolderPath
+	local targetSysRootFolderPath
 	local numberOfMakeJobs
 	compile_platformSpecificPreparation
 
