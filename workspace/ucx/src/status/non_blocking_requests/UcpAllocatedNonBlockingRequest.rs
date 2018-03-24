@@ -4,9 +4,9 @@
 
 /// A wrapper around requests to make them easier to work with.
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct UcxAllocatedNonBlockingRequest(NonNull<u8>);
+pub struct UcpAllocatedNonBlockingRequest(NonNull<u8>);
 
-impl Drop for UcxAllocatedNonBlockingRequest
+impl Drop for UcpAllocatedNonBlockingRequest
 {
 	#[inline(always)]
 	fn drop(&mut self)
@@ -15,7 +15,7 @@ impl Drop for UcxAllocatedNonBlockingRequest
 	}
 }
 
-impl NonBlockingRequest for UcxAllocatedNonBlockingRequest
+impl NonBlockingRequest for UcpAllocatedNonBlockingRequest
 {
 	#[inline(always)]
 	fn non_null_pointer(&self) -> NonNull<u8>
@@ -24,11 +24,11 @@ impl NonBlockingRequest for UcxAllocatedNonBlockingRequest
 	}
 }
 
-impl UcxAllocatedNonBlockingRequest
+impl UcpAllocatedNonBlockingRequest
 {
 	#[inline(always)]
 	pub(crate) fn new(pointer: NonNull<u8>) -> Self
 	{
-		UcxAllocatedNonBlockingRequest(pointer)
+		UcpAllocatedNonBlockingRequest(pointer)
 	}
 }

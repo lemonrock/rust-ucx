@@ -6,7 +6,7 @@
 ///
 /// If a `ReceivingStreamNonBlockingRequest` is neither cancelled or completed (ie it falls out of scope) then the request will be cancelled and the `message` dropped.
 #[derive(Debug)]
-pub struct ReceivingStreamNonBlockingRequest<'worker, M: Message, Request = UcxAllocatedNonBlockingRequest>
+pub struct ReceivingStreamNonBlockingRequest<'worker, M: Message, Request = UcpAllocatedNonBlockingRequest>
 where Request: NonBlockingRequest
 {
 	drop_limitation_on_moving_out_work_around: Option<(WorkerWithNonBlockingRequest<'worker, Request>, M)>,

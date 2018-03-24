@@ -5,7 +5,7 @@
 /// A simple struct to make it easier to work with non-blocking requests.
 /// Dereferences to the parent worker, so one can call `progress()` on this instance.
 #[derive(Debug)]
-pub struct WorkerWithNonBlockingRequest<'worker, Request = UcxAllocatedNonBlockingRequest>
+pub struct WorkerWithNonBlockingRequest<'worker, Request = UcpAllocatedNonBlockingRequest>
 {
 	pub(crate) parent_worker: &'worker Worker,
 	

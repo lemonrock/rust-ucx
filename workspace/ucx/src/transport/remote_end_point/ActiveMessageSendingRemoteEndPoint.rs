@@ -3,6 +3,8 @@
 
 
 /// Logic separation for sending active messages with a particular identifier.
+///
+/// Dereferences to `RemoteEndPoint` to provide access to `flush()`, `fence()`, `progress_thread_unsafe()`, etc.
 #[derive(Debug, Clone)]
 pub struct ActiveMessageSendingRemoteEndPoint<'remote_end_point>
 {
@@ -21,6 +23,17 @@ pub struct ActiveMessageSendingRemoteEndPoint<'remote_end_point>
 	maximum_zero_copy_from_local_memory_items: usize,
 	optimal_alignment_for_from_local_memory_for_zero_copy: usize,
 	maximum_zero_copy_header_length: usize,
+}
+
+impl<'remote_end_point> Deref for ActiveMessageSendingRemoteEndPoint<'remote_end_point>
+{
+	type Target = RemoteEndPoint;
+	
+	#[inline(always)]
+	fn deref(&self) -> &Self::Target
+	{
+		self.remote_end_point
+	}
 }
 
 impl<'remote_end_point> ActiveMessageSendingRemoteEndPoint<'remote_end_point>
@@ -79,15 +92,15 @@ impl<'remote_end_point> ActiveMessageSendingRemoteEndPoint<'remote_end_point>
 	
 	/// Is within limits.
 	#[inline(always)]
-	pub fn is_inclusively_within_number_of_items_and_maximum_and_minimum_size(&self, zero_copy_io_vectors: &[ZeroCopyIoVector]) -> bool
+	pub fn is_inclusively_within_number_of_items_and_maximum_and_minimum_size(&self, from_local_memory: &[ZeroCopyIoVector]) -> bool
 	{
-		let number_of_items = zero_copy_io_vectors.len();
+		let number_of_items = from_local_memory.len();
 		if number_of_items == 0 || number_of_items > self.maximum_zero_copy_from_local_memory_items
 		{
 			return false;
 		}
 		
-		let total_length = ZeroCopyIoVector::total_length(zero_copy_io_vectors);
+		let total_length = ZeroCopyIoVector::total_length(from_local_memory);
 		total_length >= self.minimum_zero_copy_length && total_length <= self.maximum_zero_copy_length
 	}
 	
@@ -136,7 +149,7 @@ impl<'remote_end_point> ActiveMessageSendingRemoteEndPoint<'remote_end_point>
 		if size_or_status >= 0
 		{
 			let size = size_or_status as usize;
-			debug_assert!(size <= self.maximum_buffered_copy_length, "size '{}' exceeds maximum_buffered_copy_length '{}'", size, self.maximum_buffered_copy_length);
+			debug_assert!(size <= self.maximum_buffered_copy_length, "size '{}' exceeds maximum for interface '{}'", size, self.maximum_buffered_copy_length);
 			Ok(size)
 		}
 		else

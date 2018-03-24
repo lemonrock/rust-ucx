@@ -4,12 +4,14 @@
 
 /// A convenience to work with remote memory.
 ///
+/// Dereferences to `RemoteEndPoint` to provide access to `flush()`, `fence()`, `progress_thread_unsafe()`, etc.
+///
 /// Note that InfiniBand memory domains do not require holding onto the UnpackedMemoryKey, but nearly all other kinds do, as they pack a heap-allocated pointed into the `uct_rkey_t` type of `remote_key_descriptor`.
 pub struct RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
 {
 	remote_end_point: &'remote_end_point RemoteEndPoint,
 	remote_key_descriptor: uct_rkey_t,
-	unpacked_memory_key_handle_drop_safety: &'remote_end_point UnpackedMemoryKey,
+	_unpacked_memory_key_handle_drop_safety: &'remote_end_point UnpackedMemoryKey,
 	
 	supports_put_short: bool,
 	maximum_put_short_length: usize,
@@ -46,6 +48,17 @@ pub struct RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
 	supports_atomic_u64_compare_and_swap: bool,
 }
 
+impl<'remote_end_point> Deref for RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
+{
+	type Target = RemoteEndPoint;
+	
+	#[inline(always)]
+	fn deref(&self) -> &Self::Target
+	{
+		self.remote_end_point
+	}
+}
+
 impl<'remote_end_point> RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
 {
 	const UpperLimit: usize = ::std::u32::MAX as usize;
@@ -62,7 +75,7 @@ impl<'remote_end_point> RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
 		{
 			remote_end_point,
 			remote_key_descriptor: unpacked_memory_key.remote_key_descriptor(),
-			unpacked_memory_key_handle_drop_safety: unpacked_memory_key,
+			_unpacked_memory_key_handle_drop_safety: unpacked_memory_key,
 			
 			supports_put_short: attributes.supports_all_of(InterfaceFeaturesSupported::PUT_SHORT),
 			maximum_put_short_length: put_constraints.max_short,
@@ -176,7 +189,7 @@ impl<'remote_end_point> RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
 	///
 	/// Equivalent to `uct_ep_put_short`.
 	#[inline(always)]
-	fn put_immediately(&self, from_local_memory: &[u8], to_remote_memory_address: RemoteMemoryAddress) -> Result<(), ErrorCode>
+	pub fn put_immediately(&self, from_local_memory: &[u8], to_remote_memory_address: RemoteMemoryAddress) -> Result<(), ErrorCode>
 	{
 		debug_assert!(self.supports_put_short, "Interface does not support put immediately ('put short')");
 		debug_assert!(from_local_memory.len() <= Self::UpperLimit, "from_local_memory length '{}' exceeds upper limit '{}'", from_local_memory.len(), Self::UpperLimit);
@@ -204,7 +217,7 @@ impl<'remote_end_point> RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
 	///
 	/// Returns serialized (packed) length.
 	#[inline(always)]
-	fn put_using_a_buffered_copy<BCS: BufferedCopySerializer>(&self, from_local_memory: Box<BCS>, to_remote_memory_address: RemoteMemoryAddress) -> Result<usize, ErrorCode>
+	pub fn put_using_a_buffered_copy<BCS: BufferedCopySerializer>(&self, from_local_memory: Box<BCS>, to_remote_memory_address: RemoteMemoryAddress) -> Result<usize, ErrorCode>
 	{
 		debug_assert!(self.supports_put_buffered_copy, "Interface does not support put using buffered copy ('put bcopy')");
 		
@@ -213,7 +226,7 @@ impl<'remote_end_point> RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
 		if size_or_status >= 0
 		{
 			let size = size_or_status as usize;
-			debug_assert!(size <= self.maximum_put_buffered_copy_length, "size '{}' exceeds maximum_put_buffered_copy_length '{}'", size, self.maximum_put_buffered_copy_length);
+			debug_assert!(size <= self.maximum_put_buffered_copy_length, "size '{}' exceeds maximum for interface '{}'", size, self.maximum_put_buffered_copy_length);
 			Ok(size)
 		}
 		else
@@ -266,7 +279,7 @@ impl<'remote_end_point> RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
 	///
 	/// Equivalent to `uct_ep_get_short`.
 	#[inline(always)]
-	fn get_immediately(&self, to_remote_memory_address: RemoteMemoryAddress, to_local_memory: &mut [u8]) -> Result<(), ErrorCode>
+	pub fn get_immediately(&self, to_remote_memory_address: RemoteMemoryAddress, to_local_memory: &mut [u8]) -> Result<(), ErrorCode>
 	{
 		debug_assert!(self.supports_get_short, "Interface does not support get immediately ('get short')");
 		debug_assert!(to_local_memory.len() <= Self::UpperLimit, "from_local_memory length '{}' exceeds upper limit '{}'", to_local_memory.len(), Self::UpperLimit);
@@ -294,13 +307,13 @@ impl<'remote_end_point> RemoteMemoryAccessRemoteEndPoint<'remote_end_point>
 	///
 	/// Returns serialized (packed) length.
 	#[inline(always)]
-	fn get_using_a_buffered_copy<BCD: BufferedCopyDeserializer, C: CompletionHandler>(&self, from_remote_memory_address: RemoteMemoryAddress, to_local_memory: Box<BCD>, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
+	pub fn get_using_a_buffered_copy<BCD: BufferedCopyDeserializer, C: CompletionHandler>(&self, from_remote_memory_address: RemoteMemoryAddress, to_local_memory: Box<BCD>, completion: &Completion<C>) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		debug_assert!(self.supports_get_buffered_copy, "Interface does not support get using buffered copy ('get bcopy')");
 		
 		let length = to_local_memory.length();
 		debug_assert_ne!(length, 0, "to_local_memory.length() can not be zero");
-		debug_assert!(length <= self.maximum_get_buffered_copy_length, "to_local_memory.length() '{}' exceeds self.maximum_get_buffered_copy_length '{}'", length, self.maximum_get_buffered_copy_length);
+		debug_assert!(length <= self.maximum_get_buffered_copy_length, "to_local_memory.length() '{}' exceeds maximum for interface '{}'", length, self.maximum_get_buffered_copy_length);
 		
 		let status = unsafe { (self.transport_interface_operations().ep_get_bcopy)(self.ep(), buffered_copy_deserialize_callback::<BCD>, Box::into_raw(to_local_memory) as *mut c_void, length, from_remote_memory_address.0, self.remote_key_descriptor, completion.to_raw_pointer()) };
 		

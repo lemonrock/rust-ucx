@@ -673,25 +673,6 @@ impl<SCR: ServerConnectionRequest, E: ErrorHandler, UETM: UnexpectedTaggedMessag
 	}
 	
 	#[inline(always)]
-	fn parse_status_with_in_progress<R>(status: ucs_status_t, ok: R) -> Result<NonBlockingRequestCompletedOrInProgress<R, R>, ErrorCode>
-	{
-		use self::Status::*;
-		
-		use self::NonBlockingRequestCompletedOrInProgress::*;
-		
-		match status.parse()
-		{
-			IsOk => Ok(Completed(ok)),
-			
-			OperationInProgress => Ok(InProgress(ok)),
-			
-			Error(error_code) => Err(error_code),
-			
-			_ => panic!("Unexpected status '{:?}'", status),
-		}
-	}
-	
-	#[inline(always)]
 	pub(crate) fn transport_interface_operations(&self) -> &mut uct_iface_ops
 	{
 		&mut unsafe { &mut * self.handle.as_ptr() }.ops

@@ -73,6 +73,7 @@ impl<C: CompletionHandler> Completion<C>
 		{
 			panic!("Callback has already been invoked by UCT");
 		}
+		self.reference_counted_copy_kept_in_rust_form.increment_count();
 		self.reference_counted_copy_kept_in_raw_form_used_by_uct_completion_callback_has_been_passed_to_uct.set(true);
 		self.reference_counted_copy_kept_in_raw_form_used_by_uct_completion_callback
 	}
@@ -81,6 +82,12 @@ impl<C: CompletionHandler> Completion<C>
 	pub(crate) fn parse_status(&self, status: ucs_status_t) -> Result<NonBlockingRequestCompletedOrInProgress<(), ()>, ()>
 	{
 		CompletionInternal::<C>::callback_by_rust(self.reference_counted_copy_kept_in_raw_form_used_by_uct_completion_callback, status)
+	}
+	
+	#[inline(always)]
+	pub(crate) fn completed_with_error(&self, error_code: ErrorCode)
+	{
+		CompletionInternal::<C>::callback_by_rust_completed_with_error(self.reference_counted_copy_kept_in_raw_form_used_by_uct_completion_callback, error_code)
 	}
 	
 	#[inline(always)]

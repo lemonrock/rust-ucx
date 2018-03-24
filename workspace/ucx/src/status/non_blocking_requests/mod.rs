@@ -17,4 +17,4 @@ use ::ucx_sys::*;
 
 include!("NonBlockingRequest.rs");
 include!("UserAllocatedNonBlockingRequest.rs");
-include!("UcxAllocatedNonBlockingRequest.rs");
+include!("UcpAllocatedNonBlockingRequest.rs");

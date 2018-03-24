@@ -284,7 +284,7 @@ impl Worker
 	pub(crate) fn parse_status_pointer<'worker>(&'worker self, status_pointer: ucs_status_ptr_t) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
 	{
 		use self::Status::*;
-		use self::StatusOrUcxAllocatedNonBlockingRequest::*;
+		use self::StatusOrUcpAllocatedNonBlockingRequest::*;
 		
 		match status_pointer.parse()
 		{

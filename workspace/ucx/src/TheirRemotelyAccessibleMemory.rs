@@ -295,12 +295,12 @@ impl<E: EndPointPeerFailureErrorHandler, A: LocalToRemoteMemoryAddressTranslatio
 	fn parse_status_pointer<'worker>(&'worker self, status_pointer: ucs_status_ptr_t) -> Result<NonBlockingRequestCompletedOrInProgress<(), WorkerWithNonBlockingRequest<'worker>>, ErrorCode>
 	{
 		use self::Status::*;
-		use self::StatusOrUcxAllocatedNonBlockingRequest::*;
+		use self::StatusOrUcpAllocatedNonBlockingRequest::*;
 		use self::NonBlockingRequestCompletedOrInProgress::*;
 		
 		match status_pointer.parse()
 		{
-			NonBlockingRequest(ucx_allocated_non_blocking_request) => Ok(InProgress(WorkerWithNonBlockingRequest::new(&self.parent_worker, ucx_allocated_non_blocking_request))),
+			NonBlockingRequest(ucp_allocated_non_blocking_request) => Ok(InProgress(WorkerWithNonBlockingRequest::new(&self.parent_worker, ucp_allocated_non_blocking_request))),
 			
 			Status(IsOk) => Ok(Completed(())),
 			

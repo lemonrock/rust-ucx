@@ -81,19 +81,19 @@ impl UnpackedMemoryKey
 		self.0.rkey
 	}
 	
-	/// Handle.
-	#[inline(always)]
-	pub(crate) fn handle(&self) -> *mut c_void
-	{
-		self.0.handle
-	}
-	
-	/// Memory domain component pointer.
-	///
-	/// (ie `*mut uct_md_component_t`).
-	#[inline(always)]
-	pub(crate) fn uct_md_component_t(&self) -> *mut c_void
-	{
-		self.0.type_
-	}
+//	/// Handle.
+//	#[inline(always)]
+//	pub(crate) fn handle(&self) -> *mut c_void
+//	{
+//		self.0.handle
+//	}
+//
+//	/// Memory domain component pointer.
+//	///
+//	/// (ie `*mut uct_md_component_t`).
+//	#[inline(always)]
+//	pub(crate) fn uct_md_component_t(&self) -> *mut c_void
+//	{
+//		self.0.type_
+//	}
 }

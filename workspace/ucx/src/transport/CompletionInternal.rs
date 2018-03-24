@@ -69,7 +69,7 @@ impl<C: CompletionHandler> CompletionInternal<C>
 			
 			Error(error_code) =>
 			{
-				Self::as_if_called_by_uct(raw_pointer, |completion_internal| completion_internal.completed_with_error(error_code));
+				Self::callback_by_rust_completed_with_error(raw_pointer, error_code);
 				
 				Err(())
 			}
@@ -81,6 +81,12 @@ impl<C: CompletionHandler> CompletionInternal<C>
 				panic!("Unexpected status '{:?}'", unexpected_status)
 			}
 		}
+	}
+	
+	#[inline(always)]
+	fn callback_by_rust_completed_with_error(raw_pointer: *mut uct_completion_t, error_code: ErrorCode)
+	{
+		Self::as_if_called_by_uct(raw_pointer, |completion_internal| completion_internal.completed_with_error(error_code))
 	}
 	
 	#[inline(always)]
@@ -113,7 +119,7 @@ impl<C: CompletionHandler> CompletionInternal<C>
 	}
 	
 	#[inline(always)]
-	fn increment_count(&mut self)
+	fn increment_count(&self)
 	{
 		let count = self.corrected_count();
 		debug_assert_ne!(count, ::std::i32::MAX as u32, "Maximum count reached");

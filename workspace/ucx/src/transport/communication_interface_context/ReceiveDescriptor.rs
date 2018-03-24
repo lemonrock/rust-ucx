@@ -4,13 +4,13 @@
 
 /// Receive descriptor.
 #[derive(Debug)]
-pub(crate) struct ReceiveDescriptor(uct_recv_desc);
+pub struct ReceiveDescriptor(uct_recv_desc);
 
 impl ReceiveDescriptor
 {
 	/// Release callback.
 	#[inline(always)]
-	pub(crate) fn release_callback(&self) -> unsafe extern "C" fn(this: *mut uct_recv_desc_t, desc: *mut c_void)
+	pub fn release_callback(&self) -> unsafe extern "C" fn(this: *mut uct_recv_desc_t, desc: *mut c_void)
 	{
 		self.0.cb
 	}
@@ -25,7 +25,7 @@ impl ReceiveDescriptor
 	///
 	/// Releases active message descriptor `active_message_descriptor`, which was passed to `uct_am_callback_t` "the active message callback", and owned by the callee.
 	#[inline(always)]
-	fn release_message_descriptor(active_message_descriptor: *mut c_void)
+	pub fn release_message_descriptor(active_message_descriptor: *mut c_void)
 	{
 		#[inline(always)]
 		unsafe fn uct_recv_desc(_desc: *mut c_void) -> *mut uct_recv_desc

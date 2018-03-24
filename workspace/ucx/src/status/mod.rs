@@ -28,7 +28,7 @@ include!("EndPointReadyToConsumeStreamingData.rs");
 include!("ErrorCode.rs");
 include!("NonBlockingRequestCompletedOrInProgress.rs");
 include!("Status.rs");
-include!("StatusOrUcxAllocatedNonBlockingRequest.rs");
+include!("StatusOrUcpAllocatedNonBlockingRequest.rs");
 include!("ucs_status_tExt.rs");
 include!("ucs_status_ptr_tExt.rs");
 include!("WorkerWithNonBlockingRequest.rs");
