@@ -192,6 +192,7 @@ impl RemoteEndPoint
 	/// Get address of the end point.
 	///
 	/// Equivalent to `uct_ep_get_address`.
+	#[inline(always)]
 	pub fn get_end_point_address(&self) -> Result<EndPointAddress, ErrorCode>
 	{
 		let end_point_address = EndPointAddress::new(self.attributes.end_point_address_length());
@@ -245,47 +246,6 @@ impl RemoteEndPoint
 	{
 		RemoteMemoryAccessRemoteEndPoint::new(self, unpacked_memory_key, &self.attributes)
 	}
-}
-
-/// Resources (RESOURCE).
-impl RemoteEndPoint
-{
-	/// Add a pending request to the end point pending queue.
-	///
-	/// Equivalent to `uct_ep_pending_add`.
-	///
-	/// The request will be dispatched when the end point could potentially have additional send resources.
-	///
-	/// The `pending_request` will be dispatched when more resources become available.
-	/// The user is expected to initialize the `func` field.
-	///
-	/// After the `pending_request` is passed to the function, the request is owned by UCT until the callback is called and returns UCS_OK.
-	///
-	/// Returns:-
-	///
-	/// * `UCS_OK`: Request added to pending queue.
-	/// * `UCS_ERR_BUSY`: Send resources are not available; retry.
-	#[inline(always)]
-	fn pending_add(&self, pending_request: Box<uct_pending_req>) -> ucs_status_t
-	{
-		self.debug_interface_supports_feature(InterfaceFeaturesSupported::PENDING);
-		
-		unsafe { (self.transport_interface_operations().ep_pending_add)(self.ep(), Box::into_raw(pending_request)) }
-	}
-	
-	/// Remove all pending requests from an end point and pass them to the provided `purge_callback`.
-	///
-	/// Equivalent to `uct_ep_pending_purge`.
-	///
-	/// Remove pending requests from the given endpoint and pass them to the provided callback function.
-	/// The callback return value is ignored.
-	#[inline(always)]
-	fn pending_purge(&self, callback_to_pass_removed_requests_to: unsafe extern "C" fn(removed_pending_request: *mut uct_pending_req_t, callback_context: *mut c_void), callback_context: *mut c_void)
-	{
-		self.debug_interface_supports_feature(InterfaceFeaturesSupported::PENDING);
-		
-		unsafe { (self.transport_interface_operations().ep_pending_purge)(self.ep(), callback_to_pass_removed_requests_to, callback_context) }
-	}
 	
 	/// Flush outstanding communication operations issued on this end prior to this call.
 	///
@@ -322,13 +282,66 @@ impl RemoteEndPoint
 		}
 	}
 	
-	/// Cancel outstanding rendezvous operation.
+	/// Add a pending request to the end point pending queue.
 	///
-	/// Equivalent to `uct_ep_tag_rndv_cancel`
+	/// Equivalent to `uct_ep_pending_add`.
 	///
-	/// The completion callback is not called.
+	/// The request will be dispatched when the end point could potentially have additional send resources.
 	///
-	/// Called via `RendezvousCancellation.cancel()` and so ***not public***.
+	/// The `pending_request` will be dispatched when more resources become available.
+	/// The user is expected to initialize the `func` field.
+	///
+	/// After the `pending_request` is passed to the function, the request is owned by UCT until the callback is called and returns UCS_OK.
+	///
+	/// Returns `DeviceIsBusy` if a pending callback can not be added; retry later.
+	#[inline(always)]
+	pub fn enqueue_a_pending_request<P: PendingRequestHandler>(&self, pending_request: Box<PendingRequest<P>>) -> Result<(), ErrorCode>
+	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::PENDING);
+		
+		let status = unsafe { (self.transport_interface_operations().ep_pending_add)(self.ep(), PendingRequest::to_raw_pointer(pending_request)) };
+		
+		use self::Status::*;
+		
+		match status.parse()
+		{
+			IsOk => Ok(()),
+			
+			Error(error_code) => Err(error_code),
+			
+			unexpected_status @ _ => panic!("Unexpected status '{:?}'", unexpected_status),
+		}
+	}
+
+	/// Remove all pending requests from this remote end point and pass them to the provided `purge_callback`.
+	///
+	/// Equivalent to `uct_ep_pending_purge`.
+	///
+	/// Remove pending requests from the given endpoint and pass them to the provided callback function.
+	/// The callback return value is ignored.
+	#[inline(always)]
+	pub fn purge_all_outstanding_pending_requests(&self)
+	{
+		self.debug_interface_supports_feature(InterfaceFeaturesSupported::PENDING);
+
+		unsafe extern "C" fn purge_callback(self_: *mut uct_pending_req_t, arg: *mut c_void)
+		{
+			debug_assert!(!self_.is_null(), "self_ is null");
+			debug_assert!(arg.is_null(), "arg is not null");
+			
+			PendingRequest::<()>::pending_request_purged(self_)
+		}
+		
+		unsafe { (self.transport_interface_operations().ep_pending_purge)(self.ep(), purge_callback, null_mut()) }
+	}
+	
+	// Cancel outstanding rendezvous operation.
+	//
+	// Equivalent to `uct_ep_tag_rndv_cancel`.
+	//
+	// The completion callback is not called.
+	//
+	// Called via `RendezvousCancellation.cancel()` and so ***not public***.
 	#[inline(always)]
 	fn cancel_rendezvous_zero_copy_tagged_message(&self, cancellation_handle: *mut c_void) -> ucs_status_t
 	{

@@ -162,11 +162,11 @@ impl<C: CompletionHandler> CompletionInternal<C>
 	#[inline(always)]
 	fn from_raw_pointer(raw_pointer: *mut uct_completion_t) -> Rc<Self>
 	{
-		debug_assert!(!raw_pointer.is_null(), "self is null");
+		debug_assert!(!raw_pointer.is_null(), "raw_pointer is null");
 		unsafe
 		{
-			let raw_rc = (raw_pointer as *mut u8).offset(-Self::offset());
-			Rc::from_raw(raw_rc as *mut Self)
+			let raw = (raw_pointer as *mut u8).offset(-Self::offset());
+			Rc::from_raw(raw as *mut Self)
 		}
 	}
 	

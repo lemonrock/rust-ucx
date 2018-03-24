@@ -16,7 +16,7 @@ impl<'remote_end_point, 'completion, C: 'completion + CompletionHandler> Rendezv
 	/// Cancels a completion.
 	///
 	/// Returns `true` if successful and `false` if not.
-	/// Will also call the completion handle.
+	/// Does not call the completion handle and so MAY RESULT IN A MEMORY LEAK.
 	#[inline(always)]
 	pub fn cancel(self) -> bool
 	{
