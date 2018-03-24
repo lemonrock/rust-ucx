@@ -246,10 +246,12 @@ compile_makeCopyToAlter()
 	rsync --archive --quiet --exclude=.git "$CARGO_MANIFEST_DIR"/lib/ucx/ "$temporaryFolderPath"/
 }
 
-compile_musl_fix_patchBrokenCode()
+compile_patch()
 {
 	cd "$temporaryFolderPath" 1>/dev/null 2>/dev/null
-		diff -r -U 3 . "$configurationFolderPath"/patches/ | LC_ALL=C grep -v '^Only in' | patch -p1 -d "$temporaryFolderPath"
+		if [ -d "$configurationFolderPath"/patches ]; then
+			diff -r -U 3 . "$configurationFolderPath"/patches/ | LC_ALL=C grep -v '^Only in' | patch -p1 -d "$temporaryFolderPath"
+		fi
 	cd - 1>/dev/null 2>/dev/null
 }
 
@@ -309,6 +311,15 @@ compile_make()
 	cd - 1>/dev/null 2>/dev/null
 }
 
+compile_now()
+{
+	compile_autoreconf
+	
+	compile_configure
+	
+	compile_make
+}
+
 compile_main()
 {
 	local configureHost='x86_64-linux-musl'
@@ -334,13 +345,11 @@ compile_main()
 
 	compile_makeCopyToAlter
 
-	compile_musl_fix_patchBrokenCode
+	compile_patch
 
-	compile_autoreconf
-	compile_configure
-	compile_make
+	compile_now
 
-	printf '\n\n\nFINISHED\n\n\n' 1>&2
+	printf '\n\n\nCOMPILE FINISHED\n\n\n' 1>&2
 }
 
 compile_main "$@"
