@@ -155,7 +155,7 @@ build_under_cargo_outputCargoKeyValuePairs()
 
 build_under_cargo_steps()
 {
-	if [ ! -d "$CARGO_MANIFEST_DIR"/bindgen-wrapper.conf.d/temporary/usr/lib ]; then
+	if [ ! -d "$CARGO_MANIFEST_DIR"/bindgen-wrapper.conf.d/temporary/root ]; then
 		build_under_cargo_compile
 	fi
 
