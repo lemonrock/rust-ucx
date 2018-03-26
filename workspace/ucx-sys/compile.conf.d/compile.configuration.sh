@@ -19,12 +19,6 @@ compile_library()
 	{
 		cd "$rootOutputFolderPath" 1>/dev/null 2>/dev/null
 
-			# 			CFLAGS="-D_GNU_SOURCE -isystem${DEP_LIBNUMA_ROOT}/include -isystem${DEP_RDMA_CORE_ROOT}/include -L${DEP_LIBNUMA_ROOT}/lib -L${DEP_RDMA_CORE_ROOT}/lib" \
-
-			# -rpath or -rpath-link for rdmacm - can't find libibverbs, so need LIBS=  - config.log
-
-			# --with-rte(=SYSROOT) - probably needed for Mellanox stuff, ie DPDK.
-			# --disable-openmp
 			# --enable-tuning
 			# --with-ugni(=SYSROOT)
 			CPPFLAGS="-D_GNU_SOURCE -isystem${DEP_LIBNUMA_ROOT}/include -isystem${DEP_RDMA_CORE_ROOT}/include" \
