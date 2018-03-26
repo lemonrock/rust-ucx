@@ -4,6 +4,6 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_listener_create"] pub fn ucp_listener_create(worker: ucp_worker_h, params: *const ucp_listener_params_t, listener_p: *mut ucp_listener_h) -> ucs_status_t;
-	#[link_name = "\u{1}_ucp_listener_destroy"] pub fn ucp_listener_destroy(listener: ucp_listener_h);
+	pub fn ucp_listener_create(worker: ucp_worker_h, params: *const ucp_listener_params_t, listener_p: *mut ucp_listener_h) -> ucs_status_t;
+	pub fn ucp_listener_destroy(listener: ucp_listener_h);
 }

@@ -4,5 +4,5 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucs_status_string"] pub fn ucs_status_string(status: ucs_status_t) -> *const c_char;
+	pub fn ucs_status_string(status: ucs_status_t) -> *const c_char;
 }

@@ -4,6 +4,6 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_rkey_destroy"] pub fn ucp_rkey_destroy(rkey: ucp_rkey_h);
-	#[link_name = "\u{1}_ucp_rkey_ptr"] pub fn ucp_rkey_ptr(rkey: ucp_rkey_h, raddr: u64, addr_p: *mut *mut c_void) -> ucs_status_t;
+	pub fn ucp_rkey_destroy(rkey: ucp_rkey_h);
+	pub fn ucp_rkey_ptr(rkey: ucp_rkey_h, raddr: u64, addr_p: *mut *mut c_void) -> ucs_status_t;
 }

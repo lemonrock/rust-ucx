@@ -4,6 +4,6 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_uct_mem_alloc"] pub fn uct_mem_alloc(addr: *mut c_void, min_length: usize, flags: c_uint, methods: *mut uct_alloc_method_t, num_methods: c_uint, mds: *mut uct_md_h, num_mds: c_uint, name: *const c_char, mem: *mut uct_allocated_memory_t) -> ucs_status_t;
-	#[link_name = "\u{1}_uct_mem_free"] pub fn uct_mem_free(mem: *const uct_allocated_memory_t) -> ucs_status_t;
+	pub fn uct_mem_alloc(addr: *mut c_void, min_length: usize, flags: c_uint, methods: *mut uct_alloc_method_t, num_methods: c_uint, mds: *mut uct_md_h, num_mds: c_uint, name: *const c_char, mem: *mut uct_allocated_memory_t) -> ucs_status_t;
+	pub fn uct_mem_free(mem: *const uct_allocated_memory_t) -> ucs_status_t;
 }

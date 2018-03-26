@@ -4,7 +4,7 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_uct_config_get"] pub fn uct_config_get(config: *mut c_void, name: *const c_char, value: *mut c_char, max: usize) -> ucs_status_t;
-	#[link_name = "\u{1}_uct_config_modify"] pub fn uct_config_modify(config: *mut c_void, name: *const c_char, value: *const c_char) -> ucs_status_t;
-	#[link_name = "\u{1}_uct_config_release"] pub fn uct_config_release(config: *mut c_void);
+	pub fn uct_config_get(config: *mut c_void, name: *const c_char, value: *mut c_char, max: usize) -> ucs_status_t;
+	pub fn uct_config_modify(config: *mut c_void, name: *const c_char, value: *const c_char) -> ucs_status_t;
+	pub fn uct_config_release(config: *mut c_void);
 }

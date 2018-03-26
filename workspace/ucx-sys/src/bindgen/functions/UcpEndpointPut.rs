@@ -4,7 +4,7 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_put"] pub fn ucp_put(ep: ucp_ep_h, buffer: *const c_void, length: usize, remote_addr: u64, rkey: ucp_rkey_h) -> ucs_status_t;
-	#[link_name = "\u{1}_ucp_put_nb"] pub fn ucp_put_nb(ep: ucp_ep_h, buffer: *const c_void, length: usize, remote_addr: u64, rkey: ucp_rkey_h, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
-	#[link_name = "\u{1}_ucp_put_nbi"] pub fn ucp_put_nbi(ep: ucp_ep_h, buffer: *const c_void, length: usize, remote_addr: u64, rkey: ucp_rkey_h) -> ucs_status_t;
+	pub fn ucp_put(ep: ucp_ep_h, buffer: *const c_void, length: usize, remote_addr: u64, rkey: ucp_rkey_h) -> ucs_status_t;
+	pub fn ucp_put_nb(ep: ucp_ep_h, buffer: *const c_void, length: usize, remote_addr: u64, rkey: ucp_rkey_h, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
+	pub fn ucp_put_nbi(ep: ucp_ep_h, buffer: *const c_void, length: usize, remote_addr: u64, rkey: ucp_rkey_h) -> ucs_status_t;
 }

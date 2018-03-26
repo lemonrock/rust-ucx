@@ -4,5 +4,5 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_uct_alloc_method_names"] pub static mut uct_alloc_method_names: [*const c_char; 0usize];
+	#[link_name = "\u{1}uct_alloc_method_names"] pub static mut uct_alloc_method_names: [*const c_char; 0usize];
 }

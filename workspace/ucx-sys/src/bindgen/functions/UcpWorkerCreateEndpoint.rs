@@ -4,5 +4,5 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_ep_create"] pub fn ucp_ep_create(worker: ucp_worker_h, params: *const ucp_ep_params_t, ep_p: *mut ucp_ep_h) -> ucs_status_t;
+	pub fn ucp_ep_create(worker: ucp_worker_h, params: *const ucp_ep_params_t, ep_p: *mut ucp_ep_h) -> ucs_status_t;
 }

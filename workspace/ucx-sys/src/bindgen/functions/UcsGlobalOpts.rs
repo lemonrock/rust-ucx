@@ -4,10 +4,10 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucs_global_opts_clone"] pub fn ucs_global_opts_clone(dst: *mut c_void) -> ucs_status_t;
-	#[link_name = "\u{1}_ucs_global_opts_get_value"] pub fn ucs_global_opts_get_value(name: *const c_char, value: *mut c_char, max: usize) -> ucs_status_t;
-	#[link_name = "\u{1}_ucs_global_opts_init"] pub fn ucs_global_opts_init();
-	#[link_name = "\u{1}_ucs_global_opts_print"] pub fn ucs_global_opts_print(stream: *mut FILE, print_flags: ucs_config_print_flags_t);
-	#[link_name = "\u{1}_ucs_global_opts_release"] pub fn ucs_global_opts_release();
-	#[link_name = "\u{1}_ucs_global_opts_set_value"] pub fn ucs_global_opts_set_value(name: *const c_char, value: *const c_char) -> ucs_status_t;
+	pub fn ucs_global_opts_clone(dst: *mut c_void) -> ucs_status_t;
+	pub fn ucs_global_opts_get_value(name: *const c_char, value: *mut c_char, max: usize) -> ucs_status_t;
+	pub fn ucs_global_opts_init();
+	pub fn ucs_global_opts_print(stream: *mut FILE, print_flags: ucs_config_print_flags_t);
+	pub fn ucs_global_opts_release();
+	pub fn ucs_global_opts_set_value(name: *const c_char, value: *const c_char) -> ucs_status_t;
 }

@@ -4,5 +4,5 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_dt_destroy"] pub fn ucp_dt_destroy(datatype: ucp_datatype_t);
+	pub fn ucp_dt_destroy(datatype: ucp_datatype_t);
 }

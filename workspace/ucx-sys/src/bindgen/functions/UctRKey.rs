@@ -4,7 +4,7 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_uct_rkey_ptr"] pub fn uct_rkey_ptr(rkey_ob: *mut uct_rkey_bundle_t, remote_addr: u64, addr_p: *mut *mut c_void) -> ucs_status_t;
-	#[link_name = "\u{1}_uct_rkey_release"] pub fn uct_rkey_release(rkey_ob: *const uct_rkey_bundle_t) -> ucs_status_t;
-	#[link_name = "\u{1}_uct_rkey_unpack"] pub fn uct_rkey_unpack(rkey_buffer: *const c_void, rkey_ob: *mut uct_rkey_bundle_t) -> ucs_status_t;
+	pub fn uct_rkey_ptr(rkey_ob: *mut uct_rkey_bundle_t, remote_addr: u64, addr_p: *mut *mut c_void) -> ucs_status_t;
+	pub fn uct_rkey_release(rkey_ob: *const uct_rkey_bundle_t) -> ucs_status_t;
+	pub fn uct_rkey_unpack(rkey_buffer: *const c_void, rkey_ob: *mut uct_rkey_bundle_t) -> ucs_status_t;
 }

@@ -4,8 +4,8 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucm_set_event_handler"] pub fn ucm_set_event_handler(events: c_int, priority: c_int, cb: ucm_event_callback_t, arg: *mut c_void) -> ucs_status_t;
-	#[link_name = "\u{1}_ucm_set_external_event"] pub fn ucm_set_external_event(events: c_int);
-	#[link_name = "\u{1}_ucm_unset_event_handler"] pub fn ucm_unset_event_handler(events: c_int, cb: ucm_event_callback_t, arg: *mut c_void);
-	#[link_name = "\u{1}_ucm_unset_external_event"] pub fn ucm_unset_external_event(events: c_int);
+	pub fn ucm_set_event_handler(events: c_int, priority: c_int, cb: ucm_event_callback_t, arg: *mut c_void) -> ucs_status_t;
+	pub fn ucm_set_external_event(events: c_int);
+	pub fn ucm_unset_event_handler(events: c_int, cb: ucm_event_callback_t, arg: *mut c_void);
+	pub fn ucm_unset_external_event(events: c_int);
 }

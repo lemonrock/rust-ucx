@@ -4,7 +4,7 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_tag_send_nb"] pub fn ucp_tag_send_nb(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
-	#[link_name = "\u{1}_ucp_tag_send_nbr"] pub fn ucp_tag_send_nbr(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, req: *mut c_void) -> ucs_status_t;
-	#[link_name = "\u{1}_ucp_tag_send_sync_nb"] pub fn ucp_tag_send_sync_nb(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
+	pub fn ucp_tag_send_nb(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
+	pub fn ucp_tag_send_nbr(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, req: *mut c_void) -> ucs_status_t;
+	pub fn ucp_tag_send_sync_nb(ep: ucp_ep_h, buffer: *const c_void, count: usize, datatype: ucp_datatype_t, tag: ucp_tag_t, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
 }

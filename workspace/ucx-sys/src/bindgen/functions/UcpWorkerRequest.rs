@@ -4,5 +4,5 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_request_cancel"] pub fn ucp_request_cancel(worker: ucp_worker_h, request: *mut c_void);
+	pub fn ucp_request_cancel(worker: ucp_worker_h, request: *mut c_void);
 }

@@ -4,6 +4,6 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_get_version"] pub fn ucp_get_version(major_version: *mut c_uint, minor_version: *mut c_uint, release_number: *mut c_uint);
-	#[link_name = "\u{1}_ucp_get_version_string"] pub fn ucp_get_version_string() -> *const c_char;
+	pub fn ucp_get_version(major_version: *mut c_uint, minor_version: *mut c_uint, release_number: *mut c_uint);
+	pub fn ucp_get_version_string() -> *const c_char;
 }

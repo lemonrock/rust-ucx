@@ -4,11 +4,11 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_disconnect_nb"] pub fn ucp_disconnect_nb(ep: ucp_ep_h) -> ucs_status_ptr_t;
-	#[link_name = "\u{1}_ucp_ep_close_nb"] pub fn ucp_ep_close_nb(ep: ucp_ep_h, mode: c_uint) -> ucs_status_ptr_t;
-	#[link_name = "\u{1}_ucp_ep_flush"] pub fn ucp_ep_flush(ep: ucp_ep_h) -> ucs_status_t;
-	#[link_name = "\u{1}_ucp_ep_flush_nb"] pub fn ucp_ep_flush_nb(ep: ucp_ep_h, flags: c_uint, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
-	#[link_name = "\u{1}_ucp_ep_modify_nb"] pub fn ucp_ep_modify_nb(ep: ucp_ep_h, params: *const ucp_ep_params_t) -> ucs_status_ptr_t;
-	#[link_name = "\u{1}_ucp_ep_print_info"] pub fn ucp_ep_print_info(ep: ucp_ep_h, stream: *mut FILE);
-	#[link_name = "\u{1}_ucp_ep_rkey_unpack"] pub fn ucp_ep_rkey_unpack(ep: ucp_ep_h, rkey_buffer: *const c_void, rkey_p: *mut ucp_rkey_h) -> ucs_status_t;
+	pub fn ucp_disconnect_nb(ep: ucp_ep_h) -> ucs_status_ptr_t;
+	pub fn ucp_ep_close_nb(ep: ucp_ep_h, mode: c_uint) -> ucs_status_ptr_t;
+	pub fn ucp_ep_flush(ep: ucp_ep_h) -> ucs_status_t;
+	pub fn ucp_ep_flush_nb(ep: ucp_ep_h, flags: c_uint, cb: ucp_send_callback_t) -> ucs_status_ptr_t;
+	pub fn ucp_ep_modify_nb(ep: ucp_ep_h, params: *const ucp_ep_params_t) -> ucs_status_ptr_t;
+	pub fn ucp_ep_print_info(ep: ucp_ep_h, stream: *mut FILE);
+	pub fn ucp_ep_rkey_unpack(ep: ucp_ep_h, rkey_buffer: *const c_void, rkey_p: *mut ucp_rkey_h) -> ucs_status_t;
 }

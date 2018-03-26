@@ -4,5 +4,5 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_init_version"] pub fn ucp_init_version(api_major_version: c_uint, api_minor_version: c_uint, params: *const ucp_params_t, config: *const ucp_config_t, context_p: *mut ucp_context_h) -> ucs_status_t;
+	pub fn ucp_init_version(api_major_version: c_uint, api_minor_version: c_uint, params: *const ucp_params_t, config: *const ucp_config_t, context_p: *mut ucp_context_h) -> ucs_status_t;
 }

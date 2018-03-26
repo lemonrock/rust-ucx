@@ -4,7 +4,7 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_cleanup"] pub fn ucp_cleanup(context_p: ucp_context_h);
-	#[link_name = "\u{1}_ucp_context_print_info"] pub fn ucp_context_print_info(context: ucp_context_h, stream: *mut FILE);
-	#[link_name = "\u{1}_ucp_context_query"] pub fn ucp_context_query(context_p: ucp_context_h, attr: *mut ucp_context_attr_t) -> ucs_status_t;
+	pub fn ucp_cleanup(context_p: ucp_context_h);
+	pub fn ucp_context_print_info(context: ucp_context_h, stream: *mut FILE);
+	pub fn ucp_context_query(context_p: ucp_context_h, attr: *mut ucp_context_attr_t) -> ucs_status_t;
 }

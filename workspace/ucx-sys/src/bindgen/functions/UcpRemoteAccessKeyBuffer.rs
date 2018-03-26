@@ -4,5 +4,5 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_rkey_buffer_release"] pub fn ucp_rkey_buffer_release(rkey_buffer: *mut c_void);
+	pub fn ucp_rkey_buffer_release(rkey_buffer: *mut c_void);
 }

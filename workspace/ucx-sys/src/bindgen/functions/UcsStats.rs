@@ -4,5 +4,5 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucs_stats_get_root"] pub fn ucs_stats_get_root() -> *mut ucs_stats_node_t;
+	pub fn ucs_stats_get_root() -> *mut ucs_stats_node_t;
 }

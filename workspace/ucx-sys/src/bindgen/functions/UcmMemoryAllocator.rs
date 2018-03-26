@@ -4,12 +4,12 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucm_mmap"] pub fn ucm_mmap(addr: *mut c_void, length: usize, prot: c_int, flags: c_int, fd: c_int, offset: off_t) -> *mut c_void;
-	#[link_name = "\u{1}_ucm_mremap"] pub fn ucm_mremap(old_address: *mut c_void, old_size: usize, new_size: usize, flags: c_int) -> *mut c_void;
-	#[link_name = "\u{1}_ucm_munmap"] pub fn ucm_munmap(addr: *mut c_void, length: usize) -> c_int;
-	#[link_name = "\u{1}_ucm_sbrk"] pub fn ucm_sbrk(increment: isize) -> *mut c_void;
-	#[link_name = "\u{1}_ucm_shmat"] pub fn ucm_shmat(shmid: c_int, shmaddr: *const c_void, shmflg: c_int) -> *mut c_void;
-	#[link_name = "\u{1}_ucm_shmdt"] pub fn ucm_shmdt(shmaddr: *const c_void) -> c_int;
-	#[link_name = "\u{1}_ucm_vm_mmap"] pub fn ucm_vm_mmap(addr: *mut c_void, length: usize);
-	#[link_name = "\u{1}_ucm_vm_munmap"] pub fn ucm_vm_munmap(addr: *mut c_void, length: usize);
+	pub fn ucm_mmap(addr: *mut c_void, length: usize, prot: c_int, flags: c_int, fd: c_int, offset: off_t) -> *mut c_void;
+	pub fn ucm_mremap(old_address: *mut c_void, old_size: usize, new_size: usize, flags: c_int) -> *mut c_void;
+	pub fn ucm_munmap(addr: *mut c_void, length: usize) -> c_int;
+	pub fn ucm_sbrk(increment: isize) -> *mut c_void;
+	pub fn ucm_shmat(shmid: c_int, shmaddr: *const c_void, shmflg: c_int) -> *mut c_void;
+	pub fn ucm_shmdt(shmaddr: *const c_void) -> c_int;
+	pub fn ucm_vm_mmap(addr: *mut c_void, length: usize);
+	pub fn ucm_vm_munmap(addr: *mut c_void, length: usize);
 }

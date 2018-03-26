@@ -4,5 +4,5 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucm_global_opts"] pub static mut ucm_global_opts: ucm_global_config_t;
+	#[link_name = "\u{1}ucm_global_opts"] pub static mut ucm_global_opts: ucm_global_config_t;
 }

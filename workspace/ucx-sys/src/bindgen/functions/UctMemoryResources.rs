@@ -4,6 +4,6 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_uct_query_md_resources"] pub fn uct_query_md_resources(resources_p: *mut *mut uct_md_resource_desc_t, num_resources_p: *mut c_uint) -> ucs_status_t;
-	#[link_name = "\u{1}_uct_release_md_resource_list"] pub fn uct_release_md_resource_list(resources: *mut uct_md_resource_desc_t);
+	pub fn uct_query_md_resources(resources_p: *mut *mut uct_md_resource_desc_t, num_resources_p: *mut c_uint) -> ucs_status_t;
+	pub fn uct_release_md_resource_list(resources: *mut uct_md_resource_desc_t);
 }

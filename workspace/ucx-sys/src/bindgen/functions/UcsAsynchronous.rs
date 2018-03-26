@@ -4,11 +4,11 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucs_async_add_timer"] pub fn ucs_async_add_timer(mode: ucs_async_mode_t, interval: ucs_time_t, cb: ucs_async_event_cb_t, arg: *mut c_void, async: *mut ucs_async_context_t, timer_id_p: *mut c_int) -> ucs_status_t;
-	#[link_name = "\u{1}_ucs_async_context_create"] pub fn ucs_async_context_create(mode: ucs_async_mode_t, async_p: *mut *mut ucs_async_context_t) -> ucs_status_t;
-	#[link_name = "\u{1}_ucs_async_context_destroy"] pub fn ucs_async_context_destroy(async: *mut ucs_async_context_t);
-	#[link_name = "\u{1}_ucs_async_modify_handler"] pub fn ucs_async_modify_handler(fd: c_int, events: c_int) -> ucs_status_t;
-	#[link_name = "\u{1}_ucs_async_poll"] pub fn ucs_async_poll(async: *mut ucs_async_context_t);
-	#[link_name = "\u{1}_ucs_async_remove_handler"] pub fn ucs_async_remove_handler(id: c_int, sync: c_int) -> ucs_status_t;
-	#[link_name = "\u{1}_ucs_async_set_event_handler"] pub fn ucs_async_set_event_handler(mode: ucs_async_mode_t, event_fd: c_int, events: c_int, cb: ucs_async_event_cb_t, arg: *mut c_void, async: *mut ucs_async_context_t) -> ucs_status_t;
+	pub fn ucs_async_add_timer(mode: ucs_async_mode_t, interval: ucs_time_t, cb: ucs_async_event_cb_t, arg: *mut c_void, async: *mut ucs_async_context_t, timer_id_p: *mut c_int) -> ucs_status_t;
+	pub fn ucs_async_context_create(mode: ucs_async_mode_t, async_p: *mut *mut ucs_async_context_t) -> ucs_status_t;
+	pub fn ucs_async_context_destroy(async: *mut ucs_async_context_t);
+	pub fn ucs_async_modify_handler(fd: c_int, events: c_int) -> ucs_status_t;
+	pub fn ucs_async_poll(async: *mut ucs_async_context_t);
+	pub fn ucs_async_remove_handler(id: c_int, sync: c_int) -> ucs_status_t;
+	pub fn ucs_async_set_event_handler(mode: ucs_async_mode_t, event_fd: c_int, events: c_int, cb: ucs_async_event_cb_t, arg: *mut c_void, async: *mut ucs_async_context_t) -> ucs_status_t;
 }

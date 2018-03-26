@@ -4,5 +4,5 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_rkey_pack"] pub fn ucp_rkey_pack(context: ucp_context_h, memh: ucp_mem_h, rkey_buffer_p: *mut *mut c_void, size_p: *mut usize) -> ucs_status_t;
+	pub fn ucp_rkey_pack(context: ucp_context_h, memh: ucp_mem_h, rkey_buffer_p: *mut *mut c_void, size_p: *mut usize) -> ucs_status_t;
 }

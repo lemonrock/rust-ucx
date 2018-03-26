@@ -4,5 +4,5 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_dt_create_generic"] pub fn ucp_dt_create_generic(ops: *const ucp_generic_dt_ops_t, context: *mut c_void, datatype_p: *mut ucp_datatype_t) -> ucs_status_t;
+	pub fn ucp_dt_create_generic(ops: *const ucp_generic_dt_ops_t, context: *mut c_void, datatype_p: *mut ucp_datatype_t) -> ucs_status_t;
 }

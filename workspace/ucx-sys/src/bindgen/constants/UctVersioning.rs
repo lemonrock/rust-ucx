@@ -5,7 +5,7 @@
 pub const UCT_API: u32 = 17039360;
 pub const UCT_MAJOR_BIT: u32 = 24;
 pub const UCT_MINOR_BIT: u32 = 16;
-pub const UCT_SCM_VERSION: &'static [u8; 8usize] = b"bbffc3c\0";
+pub const UCT_SCM_VERSION: &'static [u8; 8usize] = b"a2a5f50\0";
 pub const UCT_VERNO_MAJOR: u32 = 1;
 pub const UCT_VERNO_MINOR: u32 = 4;
 pub const UCT_VERNO_STRING: &'static [u8; 6usize] = b"1.4.0\0";

@@ -4,7 +4,7 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_request_check_status"] pub fn ucp_request_check_status(request: *mut c_void) -> ucs_status_t;
-	#[link_name = "\u{1}_ucp_request_free"] pub fn ucp_request_free(request: *mut c_void);
-	#[link_name = "\u{1}_ucp_request_test"] pub fn ucp_request_test(request: *mut c_void, info: *mut ucp_tag_recv_info_t) -> ucs_status_t;
+	pub fn ucp_request_check_status(request: *mut c_void) -> ucs_status_t;
+	pub fn ucp_request_free(request: *mut c_void);
+	pub fn ucp_request_test(request: *mut c_void, info: *mut ucp_tag_recv_info_t) -> ucs_status_t;
 }

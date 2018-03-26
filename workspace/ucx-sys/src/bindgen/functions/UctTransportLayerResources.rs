@@ -4,5 +4,5 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_uct_release_tl_resource_list"] pub fn uct_release_tl_resource_list(resources: *mut uct_tl_resource_desc_t);
+	pub fn uct_release_tl_resource_list(resources: *mut uct_tl_resource_desc_t);
 }

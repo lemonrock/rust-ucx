@@ -2,9 +2,6 @@
 // Copyright © 2016 The developers of ucx-sys. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/lemonrock/ucx-sys/master/COPYRIGHT.
 
 
-#![allow(non_snake_case)]
-#![allow(non_upper_case_globals)]
-
 
 use ::std::env;
 use ::std::process::Command;
@@ -12,24 +9,24 @@ use ::std::process::Command;
 
 fn main()
 {
-	let absoluteHomeFolderPath = env::var("CARGO_MANIFEST_DIR").unwrap();
+	let cargo_manifest_folder_path = variable("CARGO_MANIFEST_DIR");
 	
 	// We deliberately run as much as possible outside of cargo as it makes it far easier to debug a long, complex build which has little to do with Rust.
 	// Of course, this script, being shell, won't run under Windows.
-	tool(&absoluteHomeFolderPath, "build-under-cargo");
+	println!("{}", tool(&cargo_manifest_folder_path, "bindgen-wrapper/build-under-cargo"));
 }
 
-fn tool(absoluteHomeFolderPath: &str, programName: &'static str) -> String
+fn tool(cargo_manifest_folder_path: &str, program_name: &'static str) -> String
 {
-	let fullPath = format!("{}/tools/{}", absoluteHomeFolderPath.to_owned(), programName.to_owned());
-	panicIfProcessNotSuccessful(programName, absoluteHomeFolderPath, Command::new(fullPath))
+	let full_path = format!("{}/tools/{}", cargo_manifest_folder_path.to_owned(), program_name.to_owned());
+	panic_if_process_not_successul(program_name, cargo_manifest_folder_path, Command::new(full_path))
 }
 
-fn panicIfProcessNotSuccessful(programName: &'static str, absoluteHomeFolderPath: &str, mut command: Command) -> String
+fn panic_if_process_not_successul(program_name: &'static str, cargo_manifest_folder_path: &str, mut command: Command) -> String
 {
 	let output = command.output().unwrap_or_else(|error|
 	{
-		panic!("Failed to execute '{}' in '{}' error was '{}'", programName, absoluteHomeFolderPath, error);
+		panic!("Failed to execute '{}' in '{}' error was '{}'", program_name, cargo_manifest_folder_path, error);
 	});
 		
 	let code = output.status.code().unwrap_or_else(||
@@ -37,12 +34,17 @@ fn panicIfProcessNotSuccessful(programName: &'static str, absoluteHomeFolderPath
 		panic!("Failed to retrieve exit status from command - was it killed by a signal?");
 	});
 
-	let standardOut = String::from_utf8_lossy(&output.stdout);
+	let standard_out = String::from_utf8_lossy(&output.stdout);
 	if code == 0
 	{
-		return standardOut.into_owned();
+		return standard_out.into_owned();
 	}
 	
-	let standardError = String::from_utf8_lossy(&output.stderr);
-	panic!("Command '{}' failed with exit code '{}' (standard out was '{}'; standard error was '{}')", programName, code, standardOut.into_owned(), standardError.into_owned());
+	let standard_error = String::from_utf8_lossy(&output.stderr);
+	panic!("Command '{}' failed with exit code '{}' (standard out was '{}'; standard error was '{}')", program_name, code, standard_out.into_owned(), standard_error.into_owned());
+}
+
+fn variable(environment_variable_name: &str) -> String
+{
+	env::var(environment_variable_name).unwrap()
 }

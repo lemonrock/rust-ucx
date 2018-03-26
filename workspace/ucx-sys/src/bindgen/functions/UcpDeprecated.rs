@@ -4,7 +4,7 @@
 
 extern "C"
 {
-	#[link_name = "\u{1}_ucp_ep_destroy"] pub fn ucp_ep_destroy(ep: ucp_ep_h);
-	#[link_name = "\u{1}_ucp_request_is_completed"] pub fn ucp_request_is_completed(request: *mut c_void) -> c_int;
-	#[link_name = "\u{1}_ucp_request_release"] pub fn ucp_request_release(request: *mut c_void);
+	pub fn ucp_ep_destroy(ep: ucp_ep_h);
+	pub fn ucp_request_is_completed(request: *mut c_void) -> c_int;
+	pub fn ucp_request_release(request: *mut c_void);
 }
