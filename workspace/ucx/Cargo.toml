@@ -3,10 +3,10 @@
 
 
 [package]
-name = "ucx"
-description = "ucx"
-keywords = ["ucx"]
-categories = ["ffi"]
+name = "OpenUCX"
+description = "High-level wrappers for using the high performance HPC library OpenUCX"
+keywords = ["ucx", "OpenUCX"]
+categories = ["external-ffi-bindings"]
 license = "MIT"
 authors = ["Raphael Cohn <raphael.cohn@stormmq.com>"]
 documentation = "https://github.com/lemonrock/ucx/blob/master/README.md"
@@ -16,7 +16,7 @@ exclude = ["*"]
 include = ["README.md", "LICENSE", "COPYRIGHT", "src/**/*.rs", "Cargo.toml", "rustfmt.toml", "clippy.toml"]
 readme = "README.md"
 publish = true
-version = "0.1.0"
+version = "0.1.1"
 
 [dependencies]
 interpolate_idents = "0.2"
@@ -33,4 +33,4 @@ ring = "0.12"
 serde = { version = "1.0", features = ["rc"] }
 serde_derive = "1.0"
 spin-locks = "0.0.2"
-ucx-sys = { path = "../ucx-sys", version = "0.1.0" }
+ucx-sys = { path = "../ucx-sys", version = "0.1.1" }
