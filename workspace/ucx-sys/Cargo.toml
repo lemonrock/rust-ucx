@@ -5,8 +5,8 @@
 [package]
 name = "ucx-sys"
 description = "Low-level FFI bindings to the RDMA C-library libucx"
-keywords = ["ucx"]
-categories = ["ffi"]
+keywords = ["ucx", "OpenUCX"]
+categories = ["external-ffi-bindings"]
 license = "MIT"
 authors = ["Raphael Cohn <raphael.cohn@stormmq.com>"]
 documentation = "https://github.com/lemonrock/ucx/blob/master/README.md"
