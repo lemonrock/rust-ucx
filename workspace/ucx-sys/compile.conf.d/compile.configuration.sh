@@ -21,9 +21,9 @@ compile_library()
 
 			# --enable-tuning
 			# --with-ugni(=SYSROOT)
-			CPPFLAGS="-D_GNU_SOURCE -isystem${DEP_LIBNUMA_ROOT}/include -isystem${DEP_RDMA_CORE_ROOT}/include" \
+			CPPFLAGS="-D_GNU_SOURCE -isystem${DEP_LIBNUMA_ROOT}/include -isystem${DEP_MLNX_OFED_LIBIBVERBS_ROOT}/include -isystem${DEP_MLNX_OFED_LIBMLX5_ROOT}/include -isystem${DEP_RDMA_CORE_ROOT}/include" \
 			CFLAGS="-mavx -msse4.1 -msse4.2" \
-			LDFLAGS="-L${DEP_LIBNUMA_ROOT}/lib -L${DEP_RDMA_CORE_ROOT}/lib" \
+			LDFLAGS="-L${DEP_LIBNUMA_ROOT}/lib -L${DEP_MLNX_OFED_LIBIBVERBS_ROOT}/lib -L${DEP_RDMA_CORE_ROOT}/lib -L${DEP_MLNX_OFED_LIBMLX5_ROOT}/lib" \
 			LIBS="-libverbs" \
 			./contrib/configure-release-mt --prefix=/usr --host="$configureHost" --disable-shared --enable-static --disable-dependency-tracking --disable-silent-rules --enable-fast-install \
 				--enable-compiler-opt=3 \
@@ -41,7 +41,7 @@ compile_library()
 				--with-sse42 \
 				--with-cache-line-size=128 \
 				--with-allocator=ptmalloc286 \
-				--with-verbs="$DEP_RDMA_CORE_ROOT" \
+				--with-verbs="$DEP_MLNX_OFED_LIBIBVERBS_ROOT" \
 				--with-rc \
 				--with-ud \
 				--with-dc \
@@ -71,16 +71,20 @@ compile_library()
 		cd - 1>/dev/null 2>/dev/null
 	}
 
-	if [ -z "${DEP_RDMA_CORE_ROOT+is_unset}" ]; then
-		compile_fail 'Please specify the environment variable DEP_RDMA_CORE_ROOT which must point to a sys-root folder path containing an include and a lib folder'
-	else
-		local rdmaCoreSystemRootFolderPath="$DEP_RDMA_CORE_ROOT"
-	fi
-
 	if [ -z "${DEP_LIBNUMA_ROOT+is_unset}" ]; then
 		compile_fail 'Please specify the environment variable DEP_LIBNUMA_ROOT which must point to a sys-root folder path containing an include and a lib folder'
-	else
-		local numaSystemRootFolderPath="$DEP_LIBNUMA_ROOT"
+	fi
+
+	if [ -z "${DEP_MLNX_OFED_LIBIBVERBS_ROOT+is_unset}" ]; then
+		compile_fail 'Please specify the environment variable DEP_MLNX_OFED_LIBIBVERBS_ROOT which must point to a sys-root folder path containing an include and a lib folder'
+	fi
+
+	if [ -z "${DEP_MLNX_OFED_LIBMLX5_ROOT+is_unset}" ]; then
+		compile_fail 'Please specify the environment variable DEP_MLNX_OFED_LIBMLX5_ROOT which must point to a sys-root folder path containing an include and a lib folder'
+	fi
+
+	if [ -z "${DEP_RDMA_CORE_ROOT+is_unset}" ]; then
+		compile_fail 'Please specify the environment variable DEP_RDMA_CORE_ROOT which must point to a sys-root folder path containing an include and a lib folder'
 	fi
 
 	compile_autoreconf 2>&1

@@ -28,7 +28,7 @@ fn panic_if_process_not_successul(program_name: &'static str, cargo_manifest_fol
 	{
 		panic!("Failed to execute '{}' in '{}' error was '{}'", program_name, cargo_manifest_folder_path, error);
 	});
-		
+	
 	let code = output.status.code().unwrap_or_else(||
 	{
 		panic!("Failed to retrieve exit status from command - was it killed by a signal?");
