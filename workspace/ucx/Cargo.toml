@@ -15,8 +15,8 @@ repository = "https://github.com/lemonrock/ucx.git"
 exclude = ["*"]
 include = ["README.md", "LICENSE", "COPYRIGHT", "src/**/*.rs", "Cargo.toml", "rustfmt.toml", "clippy.toml"]
 readme = "README.md"
-publish = false
-version = "0.0.0"
+publish = true
+version = "0.1.0"
 
 [dependencies]
 interpolate_idents = "0.2"
@@ -33,4 +33,4 @@ ring = "0.12"
 serde = { version = "1.0", features = ["rc"] }
 serde_derive = "1.0"
 spin-locks = "0.0.2"
-ucx-sys = { path = "../ucx-sys", version = "0.0.0" }
+ucx-sys = { path = "../ucx-sys", version = "0.1.0" }

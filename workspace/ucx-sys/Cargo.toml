@@ -17,8 +17,8 @@ include = ["README.md", "LICENSE", "COPYRIGHT", "src/**/*.rs", "Cargo.toml", "ru
 build = "src/build.rs"
 links = "ucx"
 readme = "README.md"
-publish = false
-version = "0.0.0"
+publish = true
+version = "0.1.0"
 
 [dependencies]
 libnuma-sys = "0.0.8"
