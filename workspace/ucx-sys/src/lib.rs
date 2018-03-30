@@ -7,4 +7,9 @@
 #![feature(untagged_unions)]
 
 
+#[cfg(target_os = "linux")] extern crate libnuma_sys;
+#[cfg(target_os = "linux")] extern crate mlnx_ofed_libibverbs_sys;
+#[cfg(target_os = "linux")] extern crate mlnx_ofed_libmlx5_sys;
+
+
 #[cfg(target_os = "linux")] include!("bindgen/lib.rs");
