@@ -18,13 +18,13 @@ build = "src/build.rs"
 links = "ucx"
 readme = "README.md"
 publish = true
-version = "0.1.1"
+version = "0.1.2"
 
 [dependencies]
-libnuma-sys = "0.0.8"
-mlnx-ofed-libibverbs-sys = "0.0.5"
-mlnx-ofed-libmlx5-sys = "0.0.5"
-mlnx-ofed-librdmacm-sys = "0.0.5"
+libnuma-sys = "0.0.9"
+mlnx-ofed-libibverbs-sys = "0.0.6"
+mlnx-ofed-libmlx5-sys = "0.0.6"
+mlnx-ofed-librdmacm-sys = "0.0.6"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 libc = "0.2"
